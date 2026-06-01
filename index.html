@@ -763,6 +763,7 @@
     let videoPlayerInstance = null;
     let youtubeControls = null;
 
+    const renderedMessages = new Set();
     const loginScreen = document.getElementById('loginScreen');
     const usernameInput = document.getElementById('usernameInput');
     const loginBtn = document.getElementById('loginBtn');
@@ -842,16 +843,20 @@
       };
 
       messagesRef.limitToLast(100).on("child_added", snap => {
-        addMessageToUI(snap.key, snap.val());
-      });
+  if (renderedMessages.has(snap.key)) return;
+
+  renderedMessages.add(snap.key);
+  addMessageToUI(snap.key, snap.val());
+});
 
       messagesRef.on("child_removed", snap => {
-        const msgElement = document.getElementById(`msg-${snap.key}`);
-        if (msgElement) {
-            msgElement.style.opacity = '0';
-            setTimeout(() => msgElement.remove(), 300);
-        }
-      });
+  renderedMessages.delete(snap.key);
+
+  const msgElement = document.getElementById(`msg-${snap.key}`);
+  if (msgElement) {
+      msgElement.remove();
+  }
+});
 
       // إعداد قائمة المستخدمين المتصلين
       onlineRef.on("value", snap => {
