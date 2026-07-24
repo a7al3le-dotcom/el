@@ -246,16 +246,27 @@
 <div id="modalContainer"></div>
 
 <script>
-  // أيقونات SVG
   const icons = {
-    play: '<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>',
-    pause: '<svg viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>',
     close: '<svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>',
     trash: '<svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>',
   };
 
-  // خدمة وكيل CORS (للاستخدام المؤقت فقط!)
-  const CORS_PROXY = 'https://corsproxy.io/?'; // يمكن تغييرها إذا تعطلت
+  // قائمة وكلاء CORS موثوقة
+  const CORS_PROXIES = [
+    'https://api.allorigins.win/raw?url=',
+    'https://corsproxy.io/?',
+    'https://cors-anywhere.herokuapp.com/',
+  ];
+  let activeProxyIndex = 0;
+
+  function getProxiedUrl(originalUrl) {
+    return CORS_PROXIES[activeProxyIndex] + encodeURIComponent(originalUrl);
+  }
+
+  function tryNextProxy() {
+    activeProxyIndex = (activeProxyIndex + 1) % CORS_PROXIES.length;
+    console.log(`🔄 التبديل إلى الوكيل ${activeProxyIndex + 1}`);
+  }
 
   class ChatApp {
     constructor() {
@@ -451,7 +462,7 @@
     showSetVideoModal() {
       const content = `
         <input type="text" id="videoUrlInput" placeholder="أدخل رابط الفيديو" style="margin-bottom:10px;">
-        <small style="display:block;text-align:center;color:var(--text-secondary);margin-bottom:15px;">الروابط المدعومة: YouTube, HLS/M3U8, MP4</small>
+        <small style="display:block;text-align:center;color:var(--text-secondary);margin-bottom:15px;">YouTube | HLS/M3U8 | MP4 | Twitter</small>
         <button id="submitVideoBtn" class="btn-primary">🎬 تثبيت الفيديو</button>
       `;
       const { overlay, box } = this.showModal('📺 تثبيت فيديو', content);
@@ -481,6 +492,8 @@
       if (tw) return { type: 'twitter', id: tw[1] };
       if (url.includes('.m3u8') || url.includes('m3u')) return { type: 'hls', url };
       if (/\.(mp4|webm|ogv)(\?.*)?$/i.test(url)) return { type: 'direct', url };
+      // إذا كان الرابط يبدو كـ HLS لكن بدون امتداد واضح
+      if (url.includes('master') || url.includes('playlist') || url.includes('token')) return { type: 'hls', url };
       return null;
     }
 
@@ -499,7 +512,7 @@
     escapeHtml(text) { const d = document.createElement('div'); d.textContent = text; return d.innerHTML; }
   }
 
-  // مشغل الفيديو المحسن مع وكيل CORS
+  // مشغل الفيديو مع دعم Proxy
   class VideoPlayerManager {
     constructor(container, data, onClose) {
       this.container = container;
@@ -532,6 +545,7 @@
       const vc = document.getElementById('videoContainer');
       try {
         let src = null, type = '';
+
         if (this.data.type === 'youtube') {
           src = `https://www.youtube.com/watch?v=${this.data.id}`;
           type = 'video/youtube';
@@ -540,9 +554,9 @@
           const d = await r.json();
           if (d?.media_extended?.[0]?.url) { src = d.media_extended[0].url; type = 'video/mp4'; }
           else { this.showError('تعذر تحميل الفيديو من تويتر'); return; }
-        } else {
-          // HLS أو مباشر: نستخدم الرابط الأصلي
-          src = this.data.url;
+        } else if (this.data.type === 'hls' || this.data.type === 'direct') {
+          // استخدام Proxy للروابط المباشرة
+          src = getProxiedUrl(this.data.url);
           type = (this.data.type === 'hls') ? 'application/x-mpegURL' : 'video/mp4';
         }
 
@@ -564,10 +578,10 @@
         this.player = videojs(video, opts);
         this.player.ready(() => {
           this.player.on('error', () => {
-            console.error('مشغل video.js خطأ');
-            // إذا كان HLS، نحاول HLS.js مع وكيل CORS إذا لزم الأمر
-            if (this.data.type === 'hls' && Hls.isSupported()) {
-              this.tryHlsWithProxy(video, src);
+            console.error('❌ خطأ video.js');
+            if (this.data.type === 'hls') {
+              // تجربة HLS.js مع Proxy
+              this.tryHlsWithProxy(video, this.data.url);
             } else {
               this.showError('تعذر تشغيل الفيديو');
             }
@@ -580,39 +594,50 @@
       }
     }
 
-    // محاولة تشغيل HLS مع وكيل CORS إذا كان الأصل null (ملف محلي)
     tryHlsWithProxy(videoEl, originalUrl) {
-      // إذا كنا على ملف محلي، نستخدم وكيل CORS
-      const isFileProtocol = window.location.protocol === 'file:';
-      const proxiedUrl = isFileProtocol ? CORS_PROXY + encodeURIComponent(originalUrl) : originalUrl;
-      
       if (this.player) { this.player.dispose(); this.player = null; }
       videoEl.removeAttribute('id');
       videoEl.className = '';
       
+      const proxiedUrl = getProxiedUrl(originalUrl);
+      console.log('🔄 محاولة تشغيل HLS عبر:', proxiedUrl.substring(0, 80) + '...');
+      
       if (Hls.isSupported()) {
         const hls = new Hls({
           enableWorker: true,
-          xhrSetup: (xhr, url) => {
-            // يمكن إضافة رؤوس إضافية إذا لزم الأمر
-          }
+          lowLatencyMode: false,
         });
+        
         hls.loadSource(proxiedUrl);
         hls.attachMedia(videoEl);
-        hls.on(Hls.Events.MANIFEST_PARSED, () => videoEl.play().catch(()=>{}));
+        
+        hls.on(Hls.Events.MANIFEST_PARSED, () => {
+          console.log('✅ تم تحميل البيان بنجاح');
+          videoEl.play().catch(() => {});
+        });
+        
         hls.on(Hls.Events.ERROR, (event, data) => {
           if (data.fatal) {
-            if (data.type === Hls.ErrorTypes.NETWORK_ERROR) hls.startLoad();
-            else if (data.type === Hls.ErrorTypes.MEDIA_ERROR) hls.recoverMediaError();
-            else { this.showError('فشل تشغيل البث'); hls.destroy(); }
+            console.error('❌ خطأ HLS:', data.type, data.details);
+            if (data.type === Hls.ErrorTypes.NETWORK_ERROR) {
+              console.log('🔄 إعادة المحاولة مع وكيل مختلف...');
+              tryNextProxy();
+              hls.loadSource(getProxiedUrl(originalUrl));
+            } else if (data.type === Hls.ErrorTypes.MEDIA_ERROR) {
+              hls.recoverMediaError();
+            } else {
+              this.showError('فشل تشغيل البث بعد عدة محاولات');
+              hls.destroy();
+            }
           }
         });
+        
         this.hls = hls;
       } else if (videoEl.canPlayType('application/vnd.apple.mpegurl')) {
         videoEl.src = proxiedUrl;
-        videoEl.play().catch(()=>{});
+        videoEl.play().catch(() => {});
       } else {
-        this.showError('المتصفح لا يدعم HLS');
+        this.showError('المتصفح لا يدعم تشغيل HLS');
       }
     }
 
