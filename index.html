@@ -6,7 +6,6 @@
   <title>سكرة ليبيا</title>
   
   <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
-  <!-- تمت إزالة video-js و youtube واعتمادنا على iframe + hls.js فقط -->
   <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
   
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
@@ -93,7 +92,7 @@
     #messages {
       flex: 1; overflow-y: auto; padding: 15px; scroll-behavior: smooth;
       display: flex; flex-direction: column; gap: 4px;
-      overscroll-behavior: contain; /* يمنع التمرير الزائد على الموبايل */
+      overscroll-behavior: contain;
     }
     #messages::-webkit-scrollbar { width: 6px; }
     #messages::-webkit-scrollbar-track { background: transparent; }
@@ -127,6 +126,22 @@
       background: var(--bg-tertiary); padding: 4px 12px; border-radius: 12px; width: fit-content;
       animation: fadeIn 0.5s ease; border: 1px solid var(--border-color);
     }
+
+    /* مؤشر الكتابة */
+    #typingIndicator {
+      padding: 4px 15px; font-size: 12px; color: var(--text-secondary);
+      min-height: 20px; flex-shrink: 0; text-align: right;
+      transition: var(--transition); opacity: 0;
+    }
+    #typingIndicator.active { opacity: 1; }
+    .typing-dots { display: inline-flex; gap: 3px; margin-right: 5px; }
+    .typing-dots span {
+      width: 6px; height: 6px; background: var(--accent-color); border-radius: 50%;
+      animation: typingBounce 1.4s infinite ease-in-out;
+    }
+    .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
+    .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes typingBounce { 0%,80%,100% { transform: scale(0.6); opacity:0.3; } 40% { transform: scale(1); opacity:1; } }
 
     #inputArea {
       display: flex; gap: 10px; padding: 12px 15px; background: var(--bg-secondary);
@@ -177,14 +192,11 @@
     .status-idle { background: var(--warning-color); box-shadow: 0 0 8px rgba(255, 183, 77, 0.5); }
     .status-offline { background: #757575; }
 
-    /* مشغل الفيديو الجديد */
     #pinnedVideoPlayer {
       position: fixed; top: 60px; right: 20px; width: 400px; min-width: 320px; max-width: 90vw;
       background: #000; border-radius: var(--radius-md); overflow: hidden; z-index: 998;
       display: none; flex-direction: column; box-shadow: var(--shadow); border: 1px solid var(--border-color);
-      resize: both; /* التكبير من الزاوية السفلية اليسرى عبر CSS */
-      overflow: auto; /* لتفعيل resize */
-      touch-action: none; /* منع تعارضات اللمس */
+      resize: both; overflow: auto; touch-action: none;
     }
     .video-header {
       background: var(--bg-secondary); padding: 10px 15px; display: flex;
@@ -205,11 +217,7 @@
     }
     .video-error { color: var(--danger-color); font-size: 14px; }
     .video-loading { color: var(--accent-color); }
-    .resize-handle {
-      position: absolute; bottom: 0; left: 0; width: 20px; height: 20px;
-      cursor: nwse-resize; background: linear-gradient(315deg, transparent 50%, var(--accent-color) 50%);
-      z-index: 10; display: none; /* سنعتمد على خاصية resize في CSS بدلاً من السحب اليدوي لتجنب التعارض */
-    }
+    .resize-handle { display: none; }
   </style>
 </head>
 <body>
@@ -236,6 +244,8 @@
 
   <div id="messages"></div>
 
+  <div id="typingIndicator"></div>
+
   <form id="inputArea" autocomplete="off">
     <input type="text" id="messageInput" placeholder="اكتب رسالتك..." maxlength="500" autocomplete="off">
     <button type="submit" id="sendBtn">
@@ -250,13 +260,11 @@
 <div id="modalContainer"></div>
 
 <script>
-  // ======================== الأيقونات ========================
   const icons = {
     close: '<svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>',
     trash: '<svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>',
   };
 
-  // ======================== التطبيق الرئيسي ========================
   class ChatApp {
     constructor() {
       this.loginScreen = document.getElementById('loginScreen');
@@ -271,6 +279,7 @@
       this.pinnedVideoContainer = document.getElementById('pinnedVideoPlayer');
       this.onlineListBtn = document.getElementById('onlineListBtn');
       this.setVideoBtn = document.getElementById('setVideoBtn');
+      this.typingIndicator = document.getElementById('typingIndicator');
       
       document.getElementById('inputArea').addEventListener('submit', (e) => this.sendMessage(e));
 
@@ -279,21 +288,30 @@
       this.messagesRef = null;
       this.onlineRef = null;
       this.pinnedVideoRef = null;
+      this.typingRef = null;
       this.serverTimeOffset = 0;
       this.renderedMessages = new Set();
       this.videoPlayerManager = null;
-
-      // خريطة للعناصر التي تعرض الوقت النسبي (لتحديثها بمؤقت واحد)
-      this.timeElements = new Map(); // key -> element
+      this.timeElements = new Map();
+      this.atBottom = true;
 
       this.initFirebase();
       this.initEventListeners();
 
-      // مؤقت عالمي واحد لتحديث الأزمنة النسبية كل 30 ثانية
-      this.globalTimeInterval = setInterval(() => this.updateAllRelativeTimes(), 30000);
+      // مؤقت عالمي واحد لتحديث الأزمنة الظاهرة فقط
+      setInterval(() => this.updateVisibleTimes(), 60000);
+
+      // مراقبة التمرير لمعرفة ما إذا كان المستخدم في الأسفل
+      this.messagesDiv.addEventListener('scroll', () => {
+        const threshold = 50;
+        this.atBottom = (this.messagesDiv.scrollHeight - this.messagesDiv.scrollTop - this.messagesDiv.clientHeight) < threshold;
+      });
+
+      // مؤشر الكتابة: إرسال حالة الكتابة عند الإدخال
+      this.typingTimeout = null;
+      this.messageInput.addEventListener('input', () => this.handleTyping());
     }
 
-    // ==================== Firebase ====================
     initFirebase() {
       const firebaseConfig = {
         apiKey: "AIzaSyCHk0PYGp96vyfbeC-GyN7Q9e1MqM7rgRo",
@@ -312,7 +330,6 @@
       }
     }
 
-    // ==================== الأحداث ====================
     initEventListeners() {
       this.loginBtn.onclick = () => this.attemptLogin();
       this.usernameInput.onkeypress = (e) => { if (e.key === 'Enter') this.attemptLogin(); };
@@ -329,6 +346,7 @@
       this.messagesRef = this.db.ref("messages");
       this.onlineRef = this.db.ref("online");
       this.pinnedVideoRef = this.db.ref("pinned_video");
+      this.typingRef = this.db.ref("typing");
       this.startChat();
     }
 
@@ -337,21 +355,19 @@
       this.chatContainer.style.display = 'flex';
       setTimeout(() => this.chatContainer.style.opacity = '1', 50);
 
-      // فارق توقيت الخادم
       this.db.ref('.info/serverTimeOffset').on('value', snap => this.serverTimeOffset = snap.val() || 0);
 
-      // تسجيل الدخول والتواجد
+      // التواجد
       this.userRef.set({ lastActive: firebase.database.ServerValue.TIMESTAMP });
       this.userRef.onDisconnect().remove();
-
-      // تحديث النشاط كل 30 ثانية (بدلاً من 60) لاستجابة أفضل
       setInterval(() => this.userRef.update({ lastActive: firebase.database.ServerValue.TIMESTAMP }), 30000);
-
-      // تنظيف المستخدمين غير النشطين كل دقيقة
       setInterval(() => this.cleanInactiveUsers(), 60000);
 
-      // الاستماع للرسائل (آخر 100)
-      this.messagesRef.limitToLast(100).on("child_added", snap => {
+      // مؤشر الكتابة الخاص بي
+      this.typingRef.child(this.username).onDisconnect().remove();
+
+      // ✅ استعلام مرتب حسب timestamp لضمان الترتيب الصحيح
+      this.messagesRef.orderByChild('timestamp').limitToLast(100).on("child_added", snap => {
         if (this.renderedMessages.has(snap.key)) return;
         this.renderedMessages.add(snap.key);
         this.addMessageToUI(snap.key, snap.val());
@@ -361,11 +377,19 @@
         this.renderedMessages.delete(snap.key);
         this.timeElements.delete(snap.key);
         const el = document.getElementById(`msg-${snap.key}`);
-        if (el) el.remove();
+        if (el) {
+          el.style.transition = 'opacity 0.3s, transform 0.3s';
+          el.style.opacity = '0';
+          el.style.transform = 'scale(0.9)';
+          setTimeout(() => el.remove(), 300);
+        }
       });
 
       this.onlineRef.on("value", snap => this.userCountSpan.textContent = snap.numChildren());
       this.pinnedVideoRef.on("value", snap => this.handlePinnedVideo(snap.val()));
+
+      // ✅ الاستماع لمؤشرات الكتابة
+      this.typingRef.on('value', snap => this.handleTypingUpdate(snap.val()));
 
       this.addSystemMessage(`👋 مرحباً ${this.escapeHtml(this.username)}!`);
     }
@@ -374,7 +398,6 @@
       const now = Date.now() + this.serverTimeOffset;
       this.onlineRef.once('value', snap => {
         snap.forEach(child => {
-          // زيادة التسامح إلى 120 ثانية بدلاً من 90
           if (now - (child.val().lastActive || 0) > 120000) {
             child.ref.remove();
           }
@@ -382,7 +405,6 @@
       });
     }
 
-    // ==================== عرض الرسائل ====================
     addMessageToUI(key, { user, text, timestamp }) {
       const div = document.createElement("div");
       div.className = "msg";
@@ -394,11 +416,9 @@
         <span class="msg-time" data-timestamp="${timestamp || ''}"></span>
       `;
       const timeSpan = div.querySelector('.msg-time');
-      this.updateRelativeTime(timestamp, timeSpan);
-
-      // تخزين العنصر للتحديثات الدورية
       if (timestamp) {
-        this.timeElements.set(key, timeSpan);
+        this.updateRelativeTime(timestamp, timeSpan);
+        this.timeElements.set(key, { el: timeSpan, timestamp });
       }
 
       if (isMe) {
@@ -411,7 +431,7 @@
       }
 
       this.messagesDiv.appendChild(div);
-      this.scrollToBottom();
+      if (this.atBottom) this.scrollToBottom();
     }
 
     updateRelativeTime(timestamp, el) {
@@ -425,15 +445,17 @@
       el.textContent = txt;
     }
 
-    // تحديث جميع الأزمنة دفعة واحدة (مؤقت عالمي)
-    updateAllRelativeTimes() {
-      this.timeElements.forEach((el, key) => {
-        const timestamp = parseInt(el.dataset.timestamp);
-        if (!timestamp) return;
-        this.updateRelativeTime(timestamp, el);
-        // إزالة العناصر المحذوفة من DOM
-        if (!document.getElementById(`msg-${key}`)) {
+    updateVisibleTimes() {
+      // تحديث العناصر الظاهرة فقط في viewport
+      this.timeElements.forEach((data, key) => {
+        const el = data.el;
+        if (!el || !document.getElementById(`msg-${key}`)) {
           this.timeElements.delete(key);
+          return;
+        }
+        const rect = el.getBoundingClientRect();
+        if (rect.top >= -50 && rect.bottom <= window.innerHeight + 50) {
+          this.updateRelativeTime(data.timestamp, el);
         }
       });
     }
@@ -443,7 +465,7 @@
       div.className = "sys-msg";
       div.textContent = text;
       this.messagesDiv.appendChild(div);
-      this.scrollToBottom();
+      if (this.atBottom) this.scrollToBottom();
     }
 
     sendMessage(e) {
@@ -452,13 +474,53 @@
       const text = this.messageInput.value.trim();
       if (!text) return;
       
-      // تعطيل الزر مؤقتًا لمنع السبام (1 ثانية)
       this.sendBtn.disabled = true;
       setTimeout(() => { this.sendBtn.disabled = false; }, 1000);
 
-      this.messagesRef.push({ user: this.username, text, timestamp: firebase.database.ServerValue.TIMESTAMP });
+      this.messagesRef.push({
+        user: this.username,
+        text,
+        timestamp: firebase.database.ServerValue.TIMESTAMP
+      });
       this.messageInput.value = "";
       this.userRef.update({ lastActive: firebase.database.ServerValue.TIMESTAMP });
+      this.clearTyping();
+    }
+
+    // ✅ مؤشر الكتابة
+    handleTyping() {
+      if (!this.typingRef) return;
+      const text = this.messageInput.value.trim();
+      if (text.length > 0) {
+        this.typingRef.child(this.username).set(true);
+        clearTimeout(this.typingTimeout);
+        this.typingTimeout = setTimeout(() => this.clearTyping(), 3000);
+      } else {
+        this.clearTyping();
+      }
+    }
+
+    clearTyping() {
+      if (this.typingRef) {
+        this.typingRef.child(this.username).remove();
+      }
+    }
+
+    handleTypingUpdate(data) {
+      if (!data) {
+        this.typingIndicator.classList.remove('active');
+        this.typingIndicator.innerHTML = '';
+        return;
+      }
+      const typers = Object.keys(data).filter(name => name !== this.username);
+      if (typers.length === 0) {
+        this.typingIndicator.classList.remove('active');
+        this.typingIndicator.innerHTML = '';
+      } else {
+        const names = typers.map(n => this.escapeHtml(n)).join(' و ');
+        this.typingIndicator.innerHTML = `${names} <span style="color:var(--accent-color)">يكتب...</span> <span class="typing-dots"><span></span><span></span><span></span></span>`;
+        this.typingIndicator.classList.add('active');
+      }
     }
 
     // ==================== النوافذ المنبثقة ====================
@@ -518,30 +580,18 @@
 
     parseVideoUrl(url) {
       url = url.trim();
-      // YouTube
       const ytMatch = url.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
       if (ytMatch) return { type: 'youtube', id: ytMatch[1] };
-      
-      // Twitter/X
       const twMatch = url.match(/(?:twitter\.com|x\.com)\/\w+\/status\/(\d+)/);
       if (twMatch) return { type: 'twitter', id: twMatch[1] };
-      
-      // HLS واضح
       if (/\.m3u8(\?.*)?$/i.test(url) || url.includes('/hls/') || url.includes('m3u8')) return { type: 'hls', src: url };
-      
-      // MP4 مباشر (بامتداد في نهاية الرابط)
       if (/\.(mp4|webm|ogv|mov)(\?.*)?$/i.test(url)) return { type: 'direct', src: url };
-      
-      // رابط غير معروف: نعتبره HLS كمحاولة (لأن بعض البثوث لا تحمل امتداداً واضحاً)
-      // لكن فقط إذا كان يحتوي على كلمات دالة، وإلا نعتبره غير مدعوم
       if (url.includes('master') || url.includes('playlist') || url.includes('token') || url.includes('live')) {
         return { type: 'hls', src: url };
       }
-      
       return null;
     }
 
-    // ==================== إدارة الفيديو المثبت ====================
     handlePinnedVideo(data) {
       if (this.videoPlayerManager) {
         this.videoPlayerManager.dispose();
@@ -572,7 +622,7 @@
     }
   }
 
-  // ======================== المشغل العالمي الجديد ========================
+  // ======================== المشغل العالمي ========================
   class UniversalPlayer {
     constructor(container, data, onClose) {
       this.container = container;
@@ -605,7 +655,6 @@
         } else if (this.data.type === 'twitter') {
           this.loadTwitter(body);
         } else {
-          // HLS أو مباشر
           this.loadVideo(body, this.data.src);
         }
       } catch (e) {
@@ -615,28 +664,15 @@
     }
 
     loadYouTube(body) {
-      body.innerHTML = `
-        <iframe 
-          src="https://www.youtube.com/embed/${this.data.id}?autoplay=1&mute=1&controls=1&playsinline=1"
-          allow="autoplay; encrypted-media; picture-in-picture"
-          allowfullscreen
-          style="position:absolute;top:0;left:0;width:100%;height:100%;border:0;">
-        </iframe>`;
+      body.innerHTML = `<iframe src="https://www.youtube.com/embed/${this.data.id}?autoplay=1&mute=1&controls=1&playsinline=1" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen style="position:absolute;top:0;left:0;width:100%;height:100%;border:0;"></iframe>`;
     }
 
     loadTwitter(body) {
-      // استخدام twitframe (مجاني، بدون اشتراك)
-      body.innerHTML = `
-        <iframe 
-          src="https://twitframe.com/show?url=https://twitter.com/i/status/${this.data.id}"
-          style="position:absolute;top:0;left:0;width:100%;height:100%;border:0;"
-          allow="autoplay; encrypted-media"
-          allowfullscreen>
-        </iframe>`;
+      body.innerHTML = `<iframe src="https://twitframe.com/show?url=https://twitter.com/i/status/${this.data.id}" style="position:absolute;top:0;left:0;width:100%;height:100%;border:0;" allow="autoplay; encrypted-media" allowfullscreen></iframe>`;
     }
 
     loadVideo(body, url) {
-      body.innerHTML = ''; // إزالة حالة التحميل
+      body.innerHTML = '';
       const video = document.createElement('video');
       video.setAttribute('playsinline', '');
       video.setAttribute('crossorigin', 'anonymous');
@@ -647,13 +683,10 @@
       body.appendChild(video);
       this.videoEl = video;
 
-      // محاولة التشغيل المباشر
       video.src = url;
       video.play().then(() => {
-        // نجح التشغيل المباشر
         this.hideStatus();
       }).catch(err => {
-        // قد يكون خطأ CORS أو أن الرابط HLS يحتاج إلى Hls.js
         if (this.data.type === 'hls' || url.includes('m3u8')) {
           this.tryHLS(video, url, body);
         } else {
@@ -664,10 +697,7 @@
 
     tryHLS(video, url, body) {
       if (Hls.isSupported()) {
-        const hls = new Hls({
-          enableWorker: true,
-          lowLatencyMode: false
-        });
+        const hls = new Hls({ enableWorker: true, lowLatencyMode: false });
         hls.loadSource(url);
         hls.attachMedia(video);
         hls.on(Hls.Events.MANIFEST_PARSED, () => {
@@ -730,12 +760,11 @@
         const dy = point.clientY - startY;
         let newLeft = initialLeft + dx;
         let newTop = initialTop + dy;
-        // حدود النافذة
         newLeft = Math.min(Math.max(newLeft, 10), window.innerWidth - this.container.offsetWidth - 10);
         newTop = Math.min(Math.max(newTop, 10), window.innerHeight - this.container.offsetHeight - 10);
         this.container.style.left = newLeft + 'px';
         this.container.style.top = newTop + 'px';
-        this.container.style.right = 'auto'; // تعطيل الـ right المبدئي
+        this.container.style.right = 'auto';
       };
 
       const onEnd = () => {
@@ -751,15 +780,8 @@
     }
 
     dispose() {
-      if (this.hls) {
-        this.hls.destroy();
-        this.hls = null;
-      }
-      if (this.videoEl) {
-        this.videoEl.pause();
-        this.videoEl.src = '';
-        this.videoEl.load();
-      }
+      if (this.hls) { this.hls.destroy(); this.hls = null; }
+      if (this.videoEl) { this.videoEl.pause(); this.videoEl.src = ''; this.videoEl.load(); }
       this.container.innerHTML = '';
     }
 
@@ -770,10 +792,7 @@
     }
   }
 
-  // ======================== بدء التطبيق ========================
-  document.addEventListener('DOMContentLoaded', () => {
-    window.chatApp = new ChatApp();
-  });
+  document.addEventListener('DOMContentLoaded', () => { window.chatApp = new ChatApp(); });
 </script>
 </body>
-</html>
+  </html>
