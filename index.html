@@ -3,13 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>سكرة ليبيا</title>
+  <title>سكرة ليبيا   </title>
   
   <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
   
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 
   <style>
     :root {
@@ -60,21 +61,32 @@
       background: linear-gradient(135deg, var(--accent-color), #67d8f5);
       -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
     }
+    #loginStatus {
+      color: var(--text-secondary); font-size: 14px; margin-bottom: 15px;
+      min-height: 20px;
+    }
     #usernameInput {
       width: 100%; padding: 14px 20px; margin: 15px 0; border: 1px solid var(--border-color);
       border-radius: var(--radius-lg); font-size: 16px; text-align: center; font-family: inherit;
       background: var(--bg-primary); color: var(--text-primary); transition: var(--transition);
     }
     #usernameInput:focus { border-color: var(--accent-color); outline: none; box-shadow: 0 0 0 2px rgba(77, 168, 218, 0.3); }
+    #usernameInput:disabled { opacity: 0.5; cursor: not-allowed; }
     #loginBtn {
       background: linear-gradient(135deg, var(--accent-color), #67d8f5); color: white; border: none;
       padding: 14px 30px; border-radius: var(--radius-lg); font-size: 18px; cursor: pointer;
       font-family: inherit; font-weight: 700; width: 100%; transition: var(--transition);
     }
-    #loginBtn:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(77, 168, 218, 0.4); }
-    #loginBtn:active { transform: scale(0.98); }
+    #loginBtn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(77, 168, 218, 0.4); }
+    #loginBtn:active:not(:disabled) { transform: scale(0.98); }
+    #loginBtn:disabled { opacity: 0.6; cursor: not-allowed; }
 
-    #chat-container { display: flex; flex-direction: column; height: 100vh; height: 100dvh; opacity: 0; transition: opacity 0.3s ease; }
+    #chat-container { 
+      display: flex; flex-direction: column; height: 100vh; height: 100dvh; 
+      opacity: 0; transition: opacity 0.3s ease; visibility: hidden;
+    }
+    #chat-container.visible { opacity: 1; visibility: visible; }
+
     #topButtons {
       display: flex; gap: 10px; padding: 10px 15px; background: var(--bg-secondary);
       border-bottom: 1px solid var(--border-color); flex-shrink: 0; align-items: center;
@@ -127,7 +139,6 @@
       animation: fadeIn 0.5s ease; border: 1px solid var(--border-color);
     }
 
-    /* مؤشر الكتابة */
     #typingIndicator {
       padding: 4px 15px; font-size: 12px; color: var(--text-secondary);
       min-height: 20px; flex-shrink: 0; text-align: right;
@@ -153,6 +164,7 @@
       color: var(--text-primary); transition: var(--transition);
     }
     #messageInput:focus { border-color: var(--accent-color); outline: none; }
+    #messageInput:disabled { opacity: 0.5; cursor: not-allowed; }
     #sendBtn {
       background: linear-gradient(135deg, var(--accent-color), #67d8f5); color: white; border: none;
       border-radius: var(--radius-lg); padding: 0 20px; cursor: pointer; font-family: inherit;
@@ -218,6 +230,16 @@
     .video-error { color: var(--danger-color); font-size: 14px; }
     .video-loading { color: var(--accent-color); }
     .resize-handle { display: none; }
+
+    #connectionStatus {
+      position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);
+      background: var(--bg-secondary); padding: 8px 16px; border-radius: var(--radius-lg);
+      border: 1px solid var(--border-color); font-size: 12px; z-index: 999;
+      display: none; box-shadow: var(--shadow);
+    }
+    #connectionStatus.visible { display: block; }
+    #connectionStatus.offline { border-color: var(--danger-color); color: var(--danger-color); }
+    #connectionStatus.online { border-color: var(--success-color); color: var(--success-color); }
   </style>
 </head>
 <body>
@@ -225,12 +247,13 @@
 <div id="loginScreen">
   <div id="loginBox">
     <h2>👋 أهلاً بك في سكرة ليبيا</h2>
-    <input type="text" id="usernameInput" placeholder="اكتب اسمك المستعار" maxlength="15" autofocus autocomplete="off">
-    <button id="loginBtn">دخول إلى الدردشة</button>
+    <div id="loginStatus">🔄 جاري الاتصال بالخادم...</div>
+    <input type="text" id="usernameInput" placeholder="اكتب اسمك المستعار" maxlength="15" autofocus autocomplete="off" disabled>
+    <button id="loginBtn" disabled>⏳ جاري التحميل...</button>
   </div>
 </div>
 
-<div id="chat-container" style="display: none;">
+<div id="chat-container">
   <div id="topButtons">
     <button class="btn" id="setVideoBtn">
       <svg viewBox="0 0 24 24"><path d="M17 10.5V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-3.5l4 4V6.5l-4 4Z"/></svg>
@@ -247,8 +270,8 @@
   <div id="typingIndicator"></div>
 
   <form id="inputArea" autocomplete="off">
-    <input type="text" id="messageInput" placeholder="اكتب رسالتك..." maxlength="500" autocomplete="off">
-    <button type="submit" id="sendBtn">
+    <input type="text" id="messageInput" placeholder="اكتب رسالتك..." maxlength="500" autocomplete="off" disabled>
+    <button type="submit" id="sendBtn" disabled>
       <svg viewBox="0 0 24 24"><path d="M2 21l21-9L2 3v7l15 2-15 2v7z"/></svg>
       إرسال
     </button>
@@ -258,6 +281,7 @@
 </div>
 
 <div id="modalContainer"></div>
+<div id="connectionStatus"></div>
 
 <script>
   const icons = {
@@ -267,9 +291,11 @@
 
   class ChatApp {
     constructor() {
+      // DOM elements
       this.loginScreen = document.getElementById('loginScreen');
       this.usernameInput = document.getElementById('usernameInput');
       this.loginBtn = document.getElementById('loginBtn');
+      this.loginStatus = document.getElementById('loginStatus');
       this.chatContainer = document.getElementById('chat-container');
       this.messagesDiv = document.getElementById('messages');
       this.messageInput = document.getElementById('messageInput');
@@ -280,10 +306,11 @@
       this.onlineListBtn = document.getElementById('onlineListBtn');
       this.setVideoBtn = document.getElementById('setVideoBtn');
       this.typingIndicator = document.getElementById('typingIndicator');
+      this.connectionStatus = document.getElementById('connectionStatus');
       
-      document.getElementById('inputArea').addEventListener('submit', (e) => this.sendMessage(e));
-
+      // State
       this.username = '';
+      this.uid = null;
       this.userRef = null;
       this.messagesRef = null;
       this.onlineRef = null;
@@ -294,22 +321,20 @@
       this.videoPlayerManager = null;
       this.timeElements = new Map();
       this.atBottom = true;
+      this.isTyping = false;
+      this.typingTimeout = null;
+      this.timeObserver = null;
+      this.isLoggedIn = false;
+      this.messageListeners = [];
 
+      // Initialize
       this.initFirebase();
       this.initEventListeners();
+      this.initTimeObserver();
+      this.monitorConnection();
 
-      // مؤقت عالمي واحد لتحديث الأزمنة الظاهرة فقط
-      setInterval(() => this.updateVisibleTimes(), 60000);
-
-      // مراقبة التمرير لمعرفة ما إذا كان المستخدم في الأسفل
-      this.messagesDiv.addEventListener('scroll', () => {
-        const threshold = 50;
-        this.atBottom = (this.messagesDiv.scrollHeight - this.messagesDiv.scrollTop - this.messagesDiv.clientHeight) < threshold;
-      });
-
-      // مؤشر الكتابة: إرسال حالة الكتابة عند الإدخال
-      this.typingTimeout = null;
-      this.messageInput.addEventListener('input', () => this.handleTyping());
+      // Start authentication
+      this.initAuth();
     }
 
     initFirebase() {
@@ -322,12 +347,45 @@
         messagingSenderId: "27673374613",
         appId: "1:27673374613:web:86f977ea41e8c0e2b0909c"
       };
+      
       try {
-        firebase.initializeApp(firebaseConfig);
+        if (!firebase.apps.length) {
+          firebase.initializeApp(firebaseConfig);
+        }
         this.db = firebase.database();
+        this.auth = firebase.auth();
       } catch(e) {
-        alert('خطأ في الاتصال بقاعدة البيانات');
+        this.showLoginStatus('❌ خطأ في الاتصال بقاعدة البيانات', 'error');
+        console.error('Firebase init error:', e);
       }
+    }
+
+    initAuth() {
+      this.showLoginStatus('🔄 جاري المصادقة...', 'loading');
+      this.usernameInput.disabled = true;
+      this.loginBtn.disabled = true;
+
+      this.auth.signInAnonymously()
+        .then((userCredential) => {
+          this.uid = userCredential.user.uid;
+          this.showLoginStatus('✅ تم المصادقة بنجاح! أدخل اسمك', 'success');
+          this.usernameInput.disabled = false;
+          this.loginBtn.disabled = false;
+          this.loginBtn.textContent = '🚀 دخول إلى الدردشة';
+          this.usernameInput.focus();
+        })
+        .catch((error) => {
+          console.error('Auth error:', error);
+          this.showLoginStatus('❌ فشل المصادقة: ' + error.message, 'error');
+          this.loginBtn.disabled = true;
+        });
+    }
+
+    showLoginStatus(message, type) {
+      this.loginStatus.textContent = message;
+      this.loginStatus.style.color = type === 'error' ? 'var(--danger-color)' : 
+                                    type === 'success' ? 'var(--success-color)' : 
+                                    'var(--text-secondary)';
     }
 
     initEventListeners() {
@@ -335,98 +393,174 @@
       this.usernameInput.onkeypress = (e) => { if (e.key === 'Enter') this.attemptLogin(); };
       this.onlineListBtn.onclick = () => this.showOnlineUsersModal();
       this.setVideoBtn.onclick = () => this.showSetVideoModal();
+      
+      document.getElementById('inputArea').addEventListener('submit', (e) => this.sendMessage(e));
+      this.messagesDiv.addEventListener('scroll', () => {
+        const threshold = 50;
+        this.atBottom = (this.messagesDiv.scrollHeight - this.messagesDiv.scrollTop - this.messagesDiv.clientHeight) < threshold;
+      });
+
+      // Typing indicator
+      this.messageInput.addEventListener('input', () => this.handleTyping());
+      this.messageInput.addEventListener('blur', () => this.clearTyping());
     }
 
     attemptLogin() {
+      if (this.isLoggedIn || this.loginBtn.disabled) return;
+      
       const name = this.usernameInput.value.trim();
-      if (/[.#$\[\]]/.test(name)) return alert("الرجاء عدم استخدام رموز خاصة");
-      if (name.length < 2) return alert("الاسم قصير جداً");
+      if (/[.#$\[\]]/.test(name)) {
+        this.showLoginStatus('⚠️ الرجاء عدم استخدام رموز خاصة', 'error');
+        return;
+      }
+      if (name.length < 2) {
+        this.showLoginStatus('⚠️ الاسم قصير جداً (أقل من حرفين)', 'error');
+        return;
+      }
+      if (name.length > 15) {
+        this.showLoginStatus('⚠️ الاسم طويل جداً (أكثر من 15 حرف)', 'error');
+        return;
+      }
+
       this.username = name;
-      this.userRef = this.db.ref("online/" + this.username);
+      this.userRef = this.db.ref(`online/${this.uid}`);
       this.messagesRef = this.db.ref("messages");
       this.onlineRef = this.db.ref("online");
       this.pinnedVideoRef = this.db.ref("pinned_video");
       this.typingRef = this.db.ref("typing");
+      
       this.startChat();
     }
 
     startChat() {
+      this.isLoggedIn = true;
       this.loginScreen.style.display = 'none';
-      this.chatContainer.style.display = 'flex';
+      this.chatContainer.classList.add('visible');
       setTimeout(() => this.chatContainer.style.opacity = '1', 50);
 
-      this.db.ref('.info/serverTimeOffset').on('value', snap => this.serverTimeOffset = snap.val() || 0);
+      // Enable inputs
+      this.messageInput.disabled = false;
+      this.sendBtn.disabled = false;
 
-      // التواجد
-      this.userRef.set({ lastActive: firebase.database.ServerValue.TIMESTAMP });
+      // Server time
+      this.db.ref('.info/serverTimeOffset').on('value', snap => {
+        this.serverTimeOffset = snap.val() || 0;
+      });
+
+      // Presence
+      this.userRef.set({ 
+        username: this.username,
+        lastActive: firebase.database.ServerValue.TIMESTAMP,
+        uid: this.uid 
+      });
       this.userRef.onDisconnect().remove();
-      setInterval(() => this.userRef.update({ lastActive: firebase.database.ServerValue.TIMESTAMP }), 30000);
+      
+      // Keep alive
+      this.presenceInterval = setInterval(() => {
+        if (this.isLoggedIn) {
+          this.userRef.update({ 
+            lastActive: firebase.database.ServerValue.TIMESTAMP 
+          });
+        }
+      }, 30000);
+
+      // Clean inactive users
       setInterval(() => this.cleanInactiveUsers(), 60000);
 
-      // مؤشر الكتابة الخاص بي
-      this.typingRef.child(this.username).onDisconnect().remove();
+      // Typing cleanup on disconnect
+      this.typingRef.child(this.uid).onDisconnect().remove();
 
-      // ✅ استعلام مرتب حسب timestamp لضمان الترتيب الصحيح
-      this.messagesRef.orderByChild('timestamp').limitToLast(100).on("child_added", snap => {
-        if (this.renderedMessages.has(snap.key)) return;
-        this.renderedMessages.add(snap.key);
-        this.addMessageToUI(snap.key, snap.val());
+      // Messages
+      this.messageListeners.push(
+        this.messagesRef.orderByChild('timestamp').limitToLast(100).on("child_added", snap => {
+          if (this.renderedMessages.has(snap.key)) return;
+          this.renderedMessages.add(snap.key);
+          this.addMessageToUI(snap.key, snap.val());
+        })
+      );
+
+      this.messageListeners.push(
+        this.messagesRef.on("child_removed", snap => {
+          this.renderedMessages.delete(snap.key);
+          this.timeElements.delete(snap.key);
+          const el = document.getElementById(`msg-${snap.key}`);
+          if (el) {
+            el.style.transition = 'opacity 0.3s, transform 0.3s';
+            el.style.opacity = '0';
+            el.style.transform = 'scale(0.9)';
+            setTimeout(() => el.remove(), 300);
+          }
+        })
+      );
+
+      // Online users
+      this.onlineRef.on("value", snap => {
+        const count = snap.numChildren();
+        this.userCountSpan.textContent = count;
       });
 
-      this.messagesRef.on("child_removed", snap => {
-        this.renderedMessages.delete(snap.key);
-        this.timeElements.delete(snap.key);
-        const el = document.getElementById(`msg-${snap.key}`);
-        if (el) {
-          el.style.transition = 'opacity 0.3s, transform 0.3s';
-          el.style.opacity = '0';
-          el.style.transform = 'scale(0.9)';
-          setTimeout(() => el.remove(), 300);
-        }
+      // Pinned video
+      this.pinnedVideoRef.on("value", snap => {
+        this.handlePinnedVideo(snap.val());
       });
 
-      this.onlineRef.on("value", snap => this.userCountSpan.textContent = snap.numChildren());
-      this.pinnedVideoRef.on("value", snap => this.handlePinnedVideo(snap.val()));
-
-      // ✅ الاستماع لمؤشرات الكتابة
-      this.typingRef.on('value', snap => this.handleTypingUpdate(snap.val()));
+      // Typing indicator
+      this.typingRef.on('value', snap => {
+        this.handleTypingUpdate(snap.val());
+      });
 
       this.addSystemMessage(`👋 مرحباً ${this.escapeHtml(this.username)}!`);
     }
 
     cleanInactiveUsers() {
+      if (!this.isLoggedIn) return;
       const now = Date.now() + this.serverTimeOffset;
       this.onlineRef.once('value', snap => {
         snap.forEach(child => {
-          if (now - (child.val().lastActive || 0) > 120000) {
+          const data = child.val();
+          if (now - (data.lastActive || 0) > 120000) {
             child.ref.remove();
           }
         });
       });
     }
 
-    addMessageToUI(key, { user, text, timestamp }) {
+    addMessageToUI(key, data) {
+      // Sanitize data
+      const user = this.sanitizeData(data.user || 'مجهول');
+      const text = this.sanitizeData(data.text || '');
+      const timestamp = data.timestamp || null;
+      const uid = data.uid || null;
+      
       const div = document.createElement("div");
       div.className = "msg";
       div.id = `msg-${key}`;
-      const isMe = user === this.username;
+      
+      const isMe = uid === this.uid;
       div.innerHTML = `
-        <span class="user-badge">${this.escapeHtml(user)}</span>
-        <span class="msg-text">${this.escapeHtml(text)}</span>
+        <span class="user-badge">${user}</span>
+        <span class="msg-text">${text}</span>
         <span class="msg-time" data-timestamp="${timestamp || ''}"></span>
       `;
+      
       const timeSpan = div.querySelector('.msg-time');
       if (timestamp) {
         this.updateRelativeTime(timestamp, timeSpan);
         this.timeElements.set(key, { el: timeSpan, timestamp });
+        this.timeObserver.observe(timeSpan);
       }
 
+      // Delete button - only for messages from this user
       if (isMe) {
         const del = document.createElement("button");
         del.className = "delete-btn";
         del.innerHTML = icons.trash;
         del.title = "حذف";
-        del.onclick = () => { if(confirm("حذف الرسالة؟")) this.messagesRef.child(key).remove(); };
+        del.onclick = () => {
+          if(confirm("حذف الرسالة؟")) {
+            this.messagesRef.child(key).remove();
+          }
+        };
         div.appendChild(del);
       }
 
@@ -445,19 +579,18 @@
       el.textContent = txt;
     }
 
-    updateVisibleTimes() {
-      // تحديث العناصر الظاهرة فقط في viewport
-      this.timeElements.forEach((data, key) => {
-        const el = data.el;
-        if (!el || !document.getElementById(`msg-${key}`)) {
-          this.timeElements.delete(key);
-          return;
-        }
-        const rect = el.getBoundingClientRect();
-        if (rect.top >= -50 && rect.bottom <= window.innerHeight + 50) {
-          this.updateRelativeTime(data.timestamp, el);
-        }
-      });
+    initTimeObserver() {
+      this.timeObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            const key = entry.target.dataset.msgKey;
+            if (key && this.timeElements.has(key)) {
+              const data = this.timeElements.get(key);
+              this.updateRelativeTime(data.timestamp, data.el);
+            }
+          }
+        });
+      }, { threshold: 0.1 });
     }
 
     addSystemMessage(text) {
@@ -470,7 +603,8 @@
 
     sendMessage(e) {
       e.preventDefault();
-      if (this.sendBtn.disabled) return;
+      if (this.sendBtn.disabled || !this.isLoggedIn) return;
+      
       const text = this.messageInput.value.trim();
       if (!text) return;
       
@@ -479,30 +613,35 @@
 
       this.messagesRef.push({
         user: this.username,
-        text,
-        timestamp: firebase.database.ServerValue.TIMESTAMP
+        text: text,
+        timestamp: firebase.database.ServerValue.TIMESTAMP,
+        uid: this.uid
       });
+      
       this.messageInput.value = "";
-      this.userRef.update({ lastActive: firebase.database.ServerValue.TIMESTAMP });
       this.clearTyping();
+      this.isTyping = false;
+      this.userRef.update({ lastActive: firebase.database.ServerValue.TIMESTAMP });
     }
 
-    // ✅ مؤشر الكتابة
     handleTyping() {
-      if (!this.typingRef) return;
+      if (!this.typingRef || !this.isLoggedIn) return;
+      
       const text = this.messageInput.value.trim();
-      if (text.length > 0) {
-        this.typingRef.child(this.username).set(true);
+      if (text.length > 0 && !this.isTyping) {
+        this.isTyping = true;
+        this.typingRef.child(this.uid).set(this.username);
         clearTimeout(this.typingTimeout);
         this.typingTimeout = setTimeout(() => this.clearTyping(), 3000);
-      } else {
+      } else if (text.length === 0) {
         this.clearTyping();
       }
     }
 
     clearTyping() {
-      if (this.typingRef) {
-        this.typingRef.child(this.username).remove();
+      if (this.typingRef && this.isTyping) {
+        this.typingRef.child(this.uid).remove();
+        this.isTyping = false;
       }
     }
 
@@ -512,18 +651,48 @@
         this.typingIndicator.innerHTML = '';
         return;
       }
-      const typers = Object.keys(data).filter(name => name !== this.username);
+      
+      const typers = Object.keys(data).filter(key => key !== this.uid);
       if (typers.length === 0) {
         this.typingIndicator.classList.remove('active');
         this.typingIndicator.innerHTML = '';
       } else {
-        const names = typers.map(n => this.escapeHtml(n)).join(' و ');
-        this.typingIndicator.innerHTML = `${names} <span style="color:var(--accent-color)">يكتب...</span> <span class="typing-dots"><span></span><span></span><span></span></span>`;
+        const names = typers.map(key => this.escapeHtml(data[key])).filter(n => n);
+        let message = '';
+        if (names.length === 1) {
+          message = `${names[0]} <span style="color:var(--accent-color)">يكتب...</span>`;
+        } else if (names.length === 2) {
+          message = `${names[0]} و ${names[1]} <span style="color:var(--accent-color)">يكتبان...</span>`;
+        } else {
+          message = `${names.length} أشخاص <span style="color:var(--accent-color)">يكتبون...</span>`;
+        }
+        this.typingIndicator.innerHTML = `${message} <span class="typing-dots"><span></span><span></span><span></span></span>`;
         this.typingIndicator.classList.add('active');
       }
     }
 
-    // ==================== النوافذ المنبثقة ====================
+    monitorConnection() {
+      const connectedRef = this.db.ref('.info/connected');
+      connectedRef.on('value', (snap) => {
+        const isConnected = snap.val() === true;
+        this.connectionStatus.textContent = isConnected ? '🟢 متصل' : '🔴 غير متصل';
+        this.connectionStatus.className = 'visible ' + (isConnected ? 'online' : 'offline');
+        
+        if (isConnected) {
+          setTimeout(() => {
+            this.connectionStatus.classList.remove('visible');
+          }, 3000);
+        }
+        
+        if (isConnected && this.isLoggedIn) {
+          this.addSystemMessage('🟢 تم استعادة الاتصال بالخادم');
+        } else if (!isConnected) {
+          this.addSystemMessage('🔴 انقطع الاتصال... جاري المحاولة');
+        }
+      });
+    }
+
+    // ==================== Modal Functions ====================
     showModal(title, content) {
       const overlay = document.createElement('div');
       overlay.className = 'modal-overlay';
@@ -542,12 +711,13 @@
         const now = Date.now() + this.serverTimeOffset;
         const arr = Object.entries(users).sort((a,b) => (b[1].lastActive||0) - (a[1].lastActive||0));
         let list = '';
-        arr.forEach(([name, data]) => {
+        arr.forEach(([key, data]) => {
+          const name = this.sanitizeData(data.username || 'مجهول');
           const diff = now - (data.lastActive||0);
           let cls = 'status-online', txt = 'متصل';
           if (diff > 120000) { cls = 'status-offline'; txt = 'غير متصل'; }
           else if (diff > 60000) { cls = 'status-idle'; txt = 'خامل'; }
-          list += `<div class="user-item"><span class="status-dot ${cls}"></span><span>${this.escapeHtml(name)}</span><span style="margin-right:auto;font-size:12px;color:var(--text-secondary)">${txt}</span></div>`;
+          list += `<div class="user-item"><span class="status-dot ${cls}"></span><span>${name}</span><span style="margin-right:auto;font-size:12px;color:var(--text-secondary)">${txt}</span></div>`;
         });
         this.showModal('👥 المتصلون الآن', `<div id="usersList">${list || '<p>لا يوجد متصلون</p>'}</div>`);
       });
@@ -568,11 +738,12 @@
         const data = this.parseVideoUrl(url);
         if (data) {
           data.setBy = this.username;
+          data.uid = this.uid;
           this.pinnedVideoRef.set(data);
           overlay.remove();
-          this.addSystemMessage(`🎬 ${this.username} ثبت فيديو`);
+          this.addSystemMessage(`🎬 ${this.escapeHtml(this.username)} ثبت فيديو`);
         } else {
-          alert("الرابط غير مدعوم");
+          alert("الرابط غير مدعوم. جرب: YouTube, Twitter, HLS, أو MP4 مباشر");
         }
       };
       inp.onkeypress = e => { if (e.key === 'Enter') btn.click(); };
@@ -603,9 +774,16 @@
         return;
       }
       this.pinnedVideoContainer.style.display = 'flex';
-      this.videoPlayerManager = new UniversalPlayer(this.pinnedVideoContainer, data, () => {
-        this.pinnedVideoRef.remove();
-        this.addSystemMessage('🗑️ تم إزالة الفيديو');
+      this.videoPlayerManager = new UniversalPlayer(this.pinnedVideoContainer, data, this.uid, () => {
+        // Only allow removal if same user or if no one is watching
+        if (data.uid === this.uid) {
+          this.pinnedVideoRef.remove();
+          this.addSystemMessage('🗑️ تم إزالة الفيديو');
+        } else {
+          // Just hide locally
+          this.pinnedVideoContainer.style.display = 'none';
+          this.addSystemMessage('👀 تم إخفاء الفيديو عنك فقط');
+        }
       });
     }
 
@@ -615,18 +793,51 @@
       });
     }
 
+    sanitizeData(data) {
+      if (typeof data === 'string') {
+        return this.escapeHtml(data);
+      }
+      if (typeof data === 'object' && data !== null) {
+        const sanitized = {};
+        for (let key in data) {
+          sanitized[key] = this.sanitizeData(data[key]);
+        }
+        return sanitized;
+      }
+      return data;
+    }
+
     escapeHtml(text) {
       const d = document.createElement('div');
       d.textContent = text;
       return d.innerHTML;
     }
+
+    dispose() {
+      this.isLoggedIn = false;
+      this.messageListeners.forEach(listener => listener.off());
+      this.messageListeners = [];
+      if (this.presenceInterval) {
+        clearInterval(this.presenceInterval);
+      }
+      if (this.typingTimeout) {
+        clearTimeout(this.typingTimeout);
+      }
+      if (this.timeObserver) {
+        this.timeObserver.disconnect();
+      }
+      if (this.userRef) {
+        this.userRef.remove();
+      }
+    }
   }
 
-  // ======================== المشغل العالمي ========================
+  // ======================== Universal Player ========================
   class UniversalPlayer {
-    constructor(container, data, onClose) {
+    constructor(container, data, currentUid, onClose) {
       this.container = container;
       this.data = data;
+      this.currentUid = currentUid;
       this.onClose = onClose;
       this.videoEl = null;
       this.hls = null;
@@ -635,20 +846,26 @@
     }
 
     buildUI() {
+      const isOwner = this.data.uid === this.currentUid;
       this.container.innerHTML = `
         <div class="video-header">
           <span>🎬 ${this.escapeHtml(this.data.setBy || '')}</span>
-          <button class="close-video-btn">${icons.close}</button>
+          ${isOwner ? `<button class="close-video-btn">${icons.close}</button>` : ''}
         </div>
         <div class="video-body" id="videoBody">
           <div class="video-status video-loading">⏳ جاري التحميل...</div>
         </div>`;
-      this.container.querySelector('.close-video-btn').onclick = () => this.onClose();
+      
+      if (isOwner) {
+        this.container.querySelector('.close-video-btn').onclick = () => this.onClose();
+      }
       this.makeDraggable();
     }
 
     async init() {
       const body = document.getElementById('videoBody');
+      if (!body) return;
+      
       try {
         if (this.data.type === 'youtube') {
           this.loadYouTube(body);
@@ -658,13 +875,13 @@
           this.loadVideo(body, this.data.src);
         }
       } catch (e) {
-        console.error(e);
+        console.error('Video load error:', e);
         this.showError(body, 'فشل تحميل المشغل');
       }
     }
 
     loadYouTube(body) {
-      body.innerHTML = `<iframe src="https://www.youtube.com/embed/${this.data.id}?autoplay=1&mute=1&controls=1&playsinline=1" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen style="position:absolute;top:0;left:0;width:100%;height:100%;border:0;"></iframe>`;
+      body.innerHTML = `<iframe src="https://www.youtube.com/embed/${this.data.id}?autoplay=1&mute=1&controls=1&playsinline=1&enablejsapi=1" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen style="position:absolute;top:0;left:0;width:100%;height:100%;border:0;"></iframe>`;
     }
 
     loadTwitter(body) {
@@ -690,14 +907,21 @@
         if (this.data.type === 'hls' || url.includes('m3u8')) {
           this.tryHLS(video, url, body);
         } else {
-          this.showError(body, 'لا يمكن تشغيل هذا الفيديو. تأكد من أن الرابط يدعم التشغيل المباشر (CORS) أو جرب رابطاً آخر.');
+          this.showError(body, 'لا يمكن تشغيل هذا الفيديو. تأكد من أن الرابط يدعم التشغيل المباشر أو جرب رابطاً آخر.');
         }
       });
     }
 
     tryHLS(video, url, body) {
       if (Hls.isSupported()) {
-        const hls = new Hls({ enableWorker: true, lowLatencyMode: false });
+        const hls = new Hls({ 
+          enableWorker: true, 
+          lowLatencyMode: true,
+          xhrSetup: (xhr, url) => {
+            // Add CORS support
+            xhr.withCredentials = false;
+          }
+        });
         hls.loadSource(url);
         hls.attachMedia(video);
         hls.on(Hls.Events.MANIFEST_PARSED, () => {
@@ -707,7 +931,7 @@
         hls.on(Hls.Events.ERROR, (event, data) => {
           if (data.fatal) {
             if (data.type === Hls.ErrorTypes.NETWORK_ERROR) {
-              this.showError(body, 'تعذر الاتصال بالبث. قد يكون الرابط لا يسمح بالوصول (CORS) أو معطلاً.');
+              this.showError(body, 'تعذر الاتصال بالبث. قد يكون الرابط لا يسمح بالوصول أو معطلاً.');
             } else if (data.type === Hls.ErrorTypes.MEDIA_ERROR) {
               hls.recoverMediaError();
             } else {
@@ -737,6 +961,7 @@
     makeDraggable() {
       const hdr = this.container.querySelector('.video-header');
       if (!hdr) return;
+      
       let isDragging = false, startX, startY, initialLeft, initialTop;
 
       const onStart = (e) => {
@@ -744,12 +969,14 @@
         const point = e.touches ? e.touches[0] : e;
         startX = point.clientX;
         startY = point.clientY;
-        initialLeft = this.container.offsetLeft;
-        initialTop = this.container.offsetTop;
+        const rect = this.container.getBoundingClientRect();
+        initialLeft = rect.left;
+        initialTop = rect.top;
         document.addEventListener('mousemove', onMove);
         document.addEventListener('touchmove', onMove, { passive: false });
         document.addEventListener('mouseup', onEnd);
         document.addEventListener('touchend', onEnd);
+        e.preventDefault();
       };
 
       const onMove = (e) => {
@@ -760,8 +987,10 @@
         const dy = point.clientY - startY;
         let newLeft = initialLeft + dx;
         let newTop = initialTop + dy;
-        newLeft = Math.min(Math.max(newLeft, 10), window.innerWidth - this.container.offsetWidth - 10);
-        newTop = Math.min(Math.max(newTop, 10), window.innerHeight - this.container.offsetHeight - 10);
+        const maxX = window.innerWidth - this.container.offsetWidth - 10;
+        const maxY = window.innerHeight - this.container.offsetHeight - 10;
+        newLeft = Math.min(Math.max(newLeft, 10), maxX);
+        newTop = Math.min(Math.max(newTop, 10), maxY);
         this.container.style.left = newLeft + 'px';
         this.container.style.top = newTop + 'px';
         this.container.style.right = 'auto';
@@ -780,8 +1009,15 @@
     }
 
     dispose() {
-      if (this.hls) { this.hls.destroy(); this.hls = null; }
-      if (this.videoEl) { this.videoEl.pause(); this.videoEl.src = ''; this.videoEl.load(); }
+      if (this.hls) { 
+        this.hls.destroy(); 
+        this.hls = null; 
+      }
+      if (this.videoEl) { 
+        this.videoEl.pause(); 
+        this.videoEl.src = ''; 
+        this.videoEl.load(); 
+      }
       this.container.innerHTML = '';
     }
 
@@ -792,7 +1028,10 @@
     }
   }
 
-  document.addEventListener('DOMContentLoaded', () => { window.chatApp = new ChatApp(); });
+  // Initialize
+  document.addEventListener('DOMContentLoaded', () => { 
+    window.chatApp = new ChatApp(); 
+  });
 </script>
 </body>
-</html>
+                              </html>
