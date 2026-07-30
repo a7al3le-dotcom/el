@@ -44,7 +44,32 @@
       flex-direction: column;
       user-select: none;
       -webkit-tap-highlight-color: transparent;
-      -webkit-user-select: none;
+    }
+
+    /* Toast Notifications */
+    #toastContainer {
+      position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+      z-index: 10001; display: flex; flex-direction: column; gap: 8px;
+      pointer-events: none; width: 90%; max-width: 400px;
+    }
+    .toast-notification {
+      background: var(--bg-secondary); color: var(--text-primary);
+      padding: 12px 20px; border-radius: var(--radius-md); text-align: center;
+      font-size: 14px; font-weight: 500; border: 1px solid var(--border-color);
+      box-shadow: var(--shadow); pointer-events: auto;
+      animation: slideDown 0.3s ease, fadeOut 0.3s ease 2.7s forwards;
+      backdrop-filter: blur(10px);
+    }
+    .toast-notification.success { border-color: var(--success-color); color: var(--success-color); }
+    .toast-notification.error { border-color: var(--danger-color); color: var(--danger-color); }
+    .toast-notification.info { border-color: var(--accent-color); color: var(--accent-color); }
+    @keyframes slideDown {
+      from { opacity: 0; transform: translateY(-20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes fadeOut {
+      from { opacity: 1; }
+      to { opacity: 0; transform: translateY(-10px); }
     }
 
     #loginScreen {
@@ -128,7 +153,9 @@
     .message-wrapper {
       position: relative; margin: 4px 0; transition: all 0.3s ease;
       animation: fadeInUp 0.3s ease;
+      display: flex; align-items: center; gap: 8px;
     }
+    .message-wrapper:hover { background: rgba(255,255,255,0.02); border-radius: var(--radius-sm); }
     @keyframes fadeInUp {
       from { opacity: 0; transform: translateY(10px); }
       to { opacity: 1; transform: translateY(0); }
@@ -137,9 +164,8 @@
     .msg {
       display: flex; align-items: baseline; gap: 8px; padding: 8px 12px;
       border-radius: var(--radius-sm); transition: all 0.2s ease;
-      background: transparent; position: relative;
+      background: transparent; flex: 1; min-width: 0;
     }
-    .msg:hover { background: rgba(255,255,255,0.03); }
 
     .user-badge {
       font-weight: 700; color: var(--accent-color); background: rgba(77, 168, 218, 0.15);
@@ -155,23 +181,17 @@
       background: var(--bg-tertiary); padding: 2px 8px; border-radius: 10px;
     }
 
-    .msg-actions {
-      display: flex; gap: 4px; opacity: 0; transition: all 0.2s ease;
-      position: absolute; left: 8px; top: 50%; transform: translateY(-50%);
+    .delete-btn {
+      background: none; border: none; color: var(--text-secondary); cursor: pointer;
+      padding: 6px; border-radius: 50%; display: flex; align-items: center; 
+      opacity: 0; transition: var(--transition); flex-shrink: 0;
     }
-    .message-wrapper:hover .msg-actions { opacity: 1; }
-
-    .action-btn {
-      background: var(--bg-tertiary); border: 1px solid var(--border-color); 
-      color: var(--text-secondary); cursor: pointer; padding: 6px; 
-      border-radius: 50%; display: flex; align-items: center; justify-content: center;
-      transition: var(--transition); width: 32px; height: 32px;
+    .message-wrapper:hover .delete-btn { opacity: 0.7; }
+    .delete-btn:hover { 
+      color: var(--danger-color); background: rgba(229, 115, 115, 0.2); 
+      opacity: 1 !important; transform: scale(1.1);
     }
-    .action-btn:hover { 
-      background: rgba(229, 115, 115, 0.2); color: var(--danger-color); 
-      border-color: var(--danger-color); transform: scale(1.1);
-    }
-    .action-btn svg { width: 16px; height: 16px; }
+    .delete-btn svg { width: 18px; height: 18px; }
 
     .time-divider {
       display: flex; align-items: center; gap: 10px; margin: 16px 0;
@@ -347,12 +367,12 @@
     .video-error { color: var(--danger-color); font-size: 14px; }
     .video-loading { color: var(--accent-color); }
     .video-minimize-bar {
-      display: none; padding: 6px; text-align: center; color: var(--text-secondary);
+      display: none; padding: 10px; text-align: center; color: var(--text-secondary);
       font-size: 12px; background: var(--bg-secondary); 
       border-top: 1px solid var(--border-color); cursor: pointer;
-      transition: var(--transition);
+      transition: var(--transition); align-items: center; justify-content: center; gap: 5px;
     }
-    .video-minimize-bar:hover { background: var(--bg-tertiary); }
+    .video-minimize-bar:hover { background: var(--bg-tertiary); color: var(--accent-color); }
 
     #connectionStatus {
       position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);
@@ -388,10 +408,13 @@
       #topButtons .btn { padding: 6px 12px; }
       .msg { padding: 6px 8px; gap: 6px; }
       .user-badge { font-size: 12px; padding: 2px 8px; }
+      .delete-btn { opacity: 0.5; }
     }
   </style>
 </head>
 <body>
+
+<div id="toastContainer"></div>
 
 <div id="loginScreen">
   <div id="loginBox">
@@ -438,7 +461,7 @@
 <script>
   const icons = {
     close: '<svg viewBox="0 0 24 24" width="20" height="20"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" fill="currentColor"/></svg>',
-    trash: '<svg viewBox="0 0 24 24" width="16" height="16"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z" fill="currentColor"/></svg>',
+    trash: '<svg viewBox="0 0 24 24" width="18" height="18"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z" fill="currentColor"/></svg>',
     minimize: '<svg viewBox="0 0 24 24" width="20" height="20"><path d="M19 13H5v-2h14v2z" fill="currentColor"/></svg>',
     maximize: '<svg viewBox="0 0 24 24" width="20" height="20"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" fill="currentColor"/></svg>',
   };
@@ -462,6 +485,7 @@
       this.typingIndicator = document.getElementById('typingIndicator');
       this.connectionStatus = document.getElementById('connectionStatus');
       this.restoreVideoBtn = document.getElementById('restoreVideoBtn');
+      this.toastContainer = document.getElementById('toastContainer');
       
       // State
       this.username = '';
@@ -472,7 +496,7 @@
       this.pinnedVideoRef = null;
       this.typingRef = null;
       this.serverTimeOffset = 0;
-      this.renderedMessages = new Map(); // Changed to Map for better tracking
+      this.renderedMessages = new Map();
       this.videoPlayerManager = null;
       this.atBottom = true;
       this.isTyping = false;
@@ -480,7 +504,6 @@
       this.isLoggedIn = false;
       this.messageListeners = [];
       this.isVideoMinimized = false;
-      this.lastTimeDivider = null;
       this.timeUpdateInterval = null;
       this.deletedMessages = new Set();
 
@@ -491,7 +514,7 @@
       this.monitorConnection();
       this.initAuth();
 
-      // Restore video button
+      // Restore video button - تأكد من عمله
       this.restoreVideoBtn.onclick = () => this.restoreMinimizedVideo();
     }
 
@@ -513,7 +536,7 @@
         this.db = firebase.database();
         this.auth = firebase.auth();
       } catch(e) {
-        this.showLoginStatus('❌ خطأ في الاتصال بقاعدة البيانات', 'error');
+        this.showToast('❌ خطأ في الاتصال بقاعدة البيانات', 'error');
         console.error('Firebase init error:', e);
       }
     }
@@ -546,6 +569,20 @@
                                     'var(--text-secondary)';
     }
 
+    showToast(message, type = 'info') {
+      const toast = document.createElement('div');
+      toast.className = `toast-notification ${type}`;
+      toast.textContent = message;
+      this.toastContainer.appendChild(toast);
+      
+      // إزالة الإشعار بعد 3 ثواني
+      setTimeout(() => {
+        if (toast.parentNode) {
+          toast.remove();
+        }
+      }, 3000);
+    }
+
     initEventListeners() {
       this.loginBtn.onclick = () => this.attemptLogin();
       this.usernameInput.onkeypress = (e) => { if (e.key === 'Enter') this.attemptLogin(); };
@@ -559,7 +596,6 @@
         this.atBottom = (this.messagesDiv.scrollHeight - this.messagesDiv.scrollTop - this.messagesDiv.clientHeight) < threshold;
       });
 
-      // Typing indicator with debounce
       this.messageInput.addEventListener('input', this.debounce(() => this.handleTyping(), 300));
       this.messageInput.addEventListener('blur', () => this.clearTyping());
     }
@@ -577,19 +613,18 @@
       
       const name = this.usernameInput.value.trim();
       if (/[.#$\[\]]/.test(name)) {
-        this.showLoginStatus('⚠️ الرجاء عدم استخدام رموز خاصة', 'error');
+        this.showToast('⚠️ الرجاء عدم استخدام رموز خاصة', 'error');
         return;
       }
       if (name.length < 2) {
-        this.showLoginStatus('⚠️ الاسم قصير جداً (أقل من حرفين)', 'error');
+        this.showToast('⚠️ الاسم قصير جداً (أقل من حرفين)', 'error');
         return;
       }
       if (name.length > 15) {
-        this.showLoginStatus('⚠️ الاسم طويل جداً (أكثر من 15 حرف)', 'error');
+        this.showToast('⚠️ الاسم طويل جداً (أكثر من 15 حرف)', 'error');
         return;
       }
 
-      // Clean up previous session if exists
       if (this.isLoggedIn) {
         this.dispose();
       }
@@ -610,17 +645,14 @@
       this.chatContainer.classList.add('visible');
       setTimeout(() => this.chatContainer.style.opacity = '1', 50);
 
-      // Enable inputs
       this.messageInput.disabled = false;
       this.sendBtn.disabled = false;
       this.messageInput.focus();
 
-      // Server time
       this.db.ref('.info/serverTimeOffset').on('value', snap => {
         this.serverTimeOffset = snap.val() || 0;
       });
 
-      // Presence
       this.userRef.set({ 
         username: this.username,
         lastActive: firebase.database.ServerValue.TIMESTAMP,
@@ -628,7 +660,6 @@
       });
       this.userRef.onDisconnect().remove();
       
-      // Keep alive
       this.presenceInterval = setInterval(() => {
         if (this.isLoggedIn) {
           this.userRef.update({ 
@@ -637,20 +668,16 @@
         }
       }, 30000);
 
-      // Clean inactive users
       this.cleanupInterval = setInterval(() => this.cleanInactiveUsers(), 60000);
 
-      // Typing cleanup on disconnect
       this.typingRef.child(this.uid).onDisconnect().remove();
 
-      // Messages - improved handling
       this.messageListeners.push(
         this.messagesRef.orderByChild('timestamp').limitToLast(200).on("child_added", snap => {
           const key = snap.key;
           if (this.renderedMessages.has(key)) return;
           
           const data = snap.val();
-          // Check if message was deleted
           if (data.deleted) {
             this.showDeletedMessage(key);
             return;
@@ -683,23 +710,20 @@
         })
       );
 
-      // Online users
       this.onlineRef.on("value", snap => {
         const count = snap.numChildren();
         this.userCountSpan.textContent = count;
       });
 
-      // Pinned video
       this.pinnedVideoRef.on("value", snap => {
         this.handlePinnedVideo(snap.val());
       });
 
-      // Typing indicator
       this.typingRef.on('value', snap => {
         this.handleTypingUpdate(snap.val());
       });
 
-      this.addSystemMessage(`👋 مرحباً ${this.escapeHtml(this.username)}!`);
+      this.showToast(`👋 مرحباً ${this.escapeHtml(this.username)}!`, 'success');
     }
 
     cleanInactiveUsers() {
@@ -731,17 +755,14 @@
       const msgDiv = document.createElement("div");
       msgDiv.className = "msg";
       
-      // User badge
       const badge = document.createElement("span");
       badge.className = "user-badge";
       badge.textContent = user;
       
-      // Message text
       const textSpan = document.createElement("span");
       textSpan.className = "msg-text";
       textSpan.textContent = text;
       
-      // Time element
       const timeSpan = document.createElement("span");
       timeSpan.className = "msg-time";
       timeSpan.dataset.timestamp = timestamp || '';
@@ -753,26 +774,21 @@
       msgDiv.appendChild(badge);
       msgDiv.appendChild(textSpan);
       msgDiv.appendChild(timeSpan);
+      wrapper.appendChild(msgDiv);
       
-      // Delete button for own messages
+      // زر الحذف - يظهر فقط لصاحب الرسالة
       if (uid === this.uid) {
-        const actionsDiv = document.createElement("div");
-        actionsDiv.className = "msg-actions";
-        
         const deleteBtn = document.createElement("button");
-        deleteBtn.className = "action-btn";
+        deleteBtn.className = "delete-btn";
         deleteBtn.innerHTML = icons.trash;
         deleteBtn.title = "حذف الرسالة";
         deleteBtn.onclick = (e) => {
           e.stopPropagation();
           this.confirmDeleteMessage(key);
         };
-        
-        actionsDiv.appendChild(deleteBtn);
-        wrapper.appendChild(actionsDiv);
+        wrapper.appendChild(deleteBtn);
       }
       
-      wrapper.appendChild(msgDiv);
       this.messagesDiv.appendChild(wrapper);
       
       if (this.atBottom) this.scrollToBottom();
@@ -809,16 +825,14 @@
     }
 
     deleteMessage(key) {
-      // Mark as deleted instead of completely removing
       this.messagesRef.child(key).update({
         deleted: true,
         deletedAt: firebase.database.ServerValue.TIMESTAMP,
         deletedBy: this.username
       }).then(() => {
-        this.addSystemMessage('🗑️ تم حذف الرسالة');
+        this.showToast('🗑️ تم حذف الرسالة', 'info');
       }).catch(err => {
         console.error('Delete error:', err);
-        // Fallback to complete removal if update fails
         this.messagesRef.child(key).remove();
       });
     }
@@ -854,7 +868,6 @@
       wrapper.id = `deleted-${key}`;
       wrapper.textContent = '🗑️ تم حذف هذه الرسالة';
       
-      // Find insertion point based on timestamp
       const deletedData = this.renderedMessages.get(key);
       if (deletedData) {
         const timestamp = deletedData.timestamp || 0;
@@ -925,11 +938,10 @@
             this.updateTimeDisplay(el, timestamp);
           }
         });
-      }, 30000); // Update every 30 seconds
+      }, 30000);
     }
 
     updateTimeDividers() {
-      // Remove existing dividers
       document.querySelectorAll('.time-divider').forEach(d => d.remove());
       
       const wrappers = [...document.querySelectorAll('.message-wrapper')];
@@ -972,14 +984,6 @@
           this.messagesDiv.insertBefore(divider, wrapper);
         }
       });
-    }
-
-    addSystemMessage(text) {
-      const div = document.createElement("div");
-      div.className = "sys-msg";
-      div.textContent = text;
-      this.messagesDiv.appendChild(div);
-      if (this.atBottom) this.scrollToBottom();
     }
 
     sendMessage(e) {
@@ -1068,7 +1072,6 @@
       });
     }
 
-    // ==================== Modal Functions ====================
     showModal(title, content) {
       const overlay = document.createElement('div');
       overlay.className = 'modal-overlay';
@@ -1123,7 +1126,7 @@
           data.uid = this.uid;
           this.pinnedVideoRef.set(data);
           overlay.remove();
-          this.addSystemMessage(`🎬 ${this.escapeHtml(this.username)} ثبت فيديو`);
+          this.showToast(`🎬 ${this.escapeHtml(this.username)} ثبت فيديو`, 'info');
         } else {
           alert("الرابط غير مدعوم. جرب: YouTube, Twitter, HLS, أو MP4 مباشر");
         }
@@ -1133,15 +1136,30 @@
 
     parseVideoUrl(url) {
       url = url.trim();
+      // YouTube
       const ytMatch = url.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
       if (ytMatch) return { type: 'youtube', id: ytMatch[1] };
+      
+      // Twitter/X
       const twMatch = url.match(/(?:twitter\.com|x\.com)\/\w+\/status\/(\d+)/);
       if (twMatch) return { type: 'twitter', id: twMatch[1] };
-      if (/\.m3u8(\?.*)?$/i.test(url) || url.includes('/hls/') || url.includes('m3u8')) return { type: 'hls', src: url };
-      if (/\.(mp4|webm|ogv|mov)(\?.*)?$/i.test(url)) return { type: 'direct', src: url };
-      if (url.includes('master') || url.includes('playlist') || url.includes('token') || url.includes('live')) {
+      
+      // HLS streams
+      if (/\.m3u8(\?.*)?$/i.test(url) || url.includes('/hls/') || url.includes('m3u8') || 
+          url.includes('master') || url.includes('playlist') || url.includes('token') || url.includes('live')) {
         return { type: 'hls', src: url };
       }
+      
+      // Direct video files
+      if (/\.(mp4|webm|ogv|mov|mkv|avi)(\?.*)?$/i.test(url)) {
+        return { type: 'direct', src: url };
+      }
+      
+      // If URL contains video-related keywords, try as HLS
+      if (url.includes('video') || url.includes('stream') || url.includes('media')) {
+        return { type: 'hls', src: url };
+      }
+      
       return null;
     }
 
@@ -1169,7 +1187,7 @@
         (action) => {
           if (action === 'close' && data.uid === this.uid) {
             this.pinnedVideoRef.remove();
-            this.addSystemMessage('🗑️ تم إزالة الفيديو');
+            this.showToast('🗑️ تم إزالة الفيديو', 'info');
             this.restoreVideoBtn.style.display = 'none';
           } else if (action === 'minimize') {
             this.minimizeVideo();
@@ -1184,7 +1202,7 @@
       this.isVideoMinimized = true;
       this.pinnedVideoContainer.classList.add('minimized');
       this.restoreVideoBtn.style.display = 'flex';
-      this.addSystemMessage('📹 تم تصغير الفيديو');
+      this.showToast('📹 تم تصغير الفيديو - اضغط على الزر للعرض', 'info');
     }
 
     restoreVideo() {
@@ -1220,13 +1238,11 @@
     dispose() {
       this.isLoggedIn = false;
       
-      // Remove Firebase listeners
       this.messageListeners.forEach(listener => {
         if (typeof listener === 'function') listener();
       });
       this.messageListeners = [];
       
-      // Clear intervals
       if (this.presenceInterval) {
         clearInterval(this.presenceInterval);
         this.presenceInterval = null;
@@ -1244,23 +1260,19 @@
         this.timeUpdateInterval = null;
       }
       
-      // Remove user presence
       if (this.userRef) {
         this.userRef.remove();
         this.userRef = null;
       }
       
-      // Clear typing indicator
       if (this.typingRef) {
         this.typingRef.child(this.uid).remove();
       }
       
-      // Clear UI
       this.renderedMessages.clear();
       this.deletedMessages.clear();
       this.messagesDiv.innerHTML = '';
       
-      // Reset video
       if (this.videoPlayerManager) {
         this.videoPlayerManager.dispose();
         this.videoPlayerManager = null;
@@ -1300,14 +1312,14 @@
           <div class="video-status video-loading">⏳ جاري التحميل...</div>
         </div>
         <div class="video-minimize-bar" id="minimizeBar">
-          ⬆ اضغط للتكبير
+          ⬆ اضغط للتكبير ${icons.maximize}
         </div>
       `;
 
       const minimizeBtn = this.container.querySelector('.minimize-btn');
       minimizeBtn.onclick = () => {
         this.toggleMinimize();
-        this.onAction('minimize');
+        this.onAction(this.isMinimized ? 'minimize' : 'restore');
       };
 
       const closeBtn = this.container.querySelector('.close-btn');
@@ -1332,17 +1344,22 @@
       this.isMinimized = !this.isMinimized;
       const body = this.container.querySelector('.video-body');
       const bar = this.container.querySelector('#minimizeBar');
+      const minBtn = this.container.querySelector('.minimize-btn');
       
       if (this.isMinimized) {
         body.classList.add('hidden');
-        bar.style.display = 'block';
+        bar.style.display = 'flex';
         this.container.style.minHeight = '45px';
         this.container.style.height = '45px';
+        if (minBtn) minBtn.innerHTML = icons.maximize;
+        if (minBtn) minBtn.title = 'تكبير';
       } else {
         body.classList.remove('hidden');
         bar.style.display = 'none';
         this.container.style.minHeight = '';
         this.container.style.height = '';
+        if (minBtn) minBtn.innerHTML = icons.minimize;
+        if (minBtn) minBtn.title = 'تصغير';
         this.restoreFromMinimize();
       }
     }
@@ -1389,67 +1406,131 @@
       video.setAttribute('playsinline', '');
       video.setAttribute('crossorigin', 'anonymous');
       video.controls = true;
+      video.autoplay = true;
+      video.muted = false;
       video.style.width = '100%';
       video.style.height = '100%';
       video.style.background = '#000';
       body.appendChild(video);
       this.videoEl = video;
 
-      video.src = url;
-      video.play().then(() => {
-        this.hideStatus();
-      }).catch(err => {
-        if (this.data.type === 'hls' || url.includes('m3u8')) {
+      // Show loading status
+      const loadingDiv = document.createElement('div');
+      loadingDiv.className = 'video-status video-loading';
+      loadingDiv.textContent = '⏳ جاري تحميل الفيديو...';
+      body.appendChild(loadingDiv);
+
+      // Try HLS first if it looks like an HLS stream
+      if (this.data.type === 'hls' || url.includes('m3u8') || url.includes('master') || url.includes('playlist')) {
+        this.tryHLS(video, url, body);
+      } else {
+        // Try direct playback
+        video.src = url;
+        video.load();
+        
+        video.addEventListener('loadedmetadata', () => {
+          if (loadingDiv.parentNode) loadingDiv.remove();
+          video.play().catch(err => {
+            console.log('Direct playback failed, trying HLS:', err);
+            this.tryHLS(video, url, body);
+          });
+        });
+        
+        video.addEventListener('error', (e) => {
+          console.log('Video error, trying HLS:', e);
+          if (loadingDiv.parentNode) loadingDiv.remove();
           this.tryHLS(video, url, body);
-        } else {
-          this.showError(body, 'لا يمكن تشغيل هذا الفيديو. تأكد من أن الرابط يدعم التشغيل المباشر أو جرب رابطاً آخر.');
-        }
-      });
+        });
+        
+        // Timeout - if video doesn't load in 10 seconds, try HLS
+        setTimeout(() => {
+          if (video.readyState < 2 && loadingDiv.parentNode) {
+            console.log('Timeout, trying HLS');
+            this.tryHLS(video, url, body);
+          }
+        }, 10000);
+      }
     }
 
     tryHLS(video, url, body) {
+      // Remove loading indicator
+      const loadingDiv = body.querySelector('.video-loading');
+      if (loadingDiv) loadingDiv.remove();
+      
       if (Hls.isSupported()) {
+        if (this.hls) {
+          this.hls.destroy();
+        }
+        
         const hls = new Hls({ 
           enableWorker: true, 
           lowLatencyMode: true,
+          maxBufferLength: 30,
           xhrSetup: (xhr, url) => {
             xhr.withCredentials = false;
           }
         });
+        
         hls.loadSource(url);
         hls.attachMedia(video);
+        
         hls.on(Hls.Events.MANIFEST_PARSED, () => {
           this.hideStatus();
-          video.play().catch(() => {});
+          video.play().catch(err => {
+            console.log('HLS play failed:', err);
+            // Try muted autoplay
+            video.muted = true;
+            video.play().catch(() => {});
+          });
         });
+        
         hls.on(Hls.Events.ERROR, (event, data) => {
           if (data.fatal) {
-            if (data.type === Hls.ErrorTypes.NETWORK_ERROR) {
-              this.showError(body, 'تعذر الاتصال بالبث. قد يكون الرابط لا يسمح بالوصول أو معطلاً.');
-            } else if (data.type === Hls.ErrorTypes.MEDIA_ERROR) {
-              hls.recoverMediaError();
-            } else {
-              this.showError(body, 'فشل تشغيل البث');
-              hls.destroy();
+            switch(data.type) {
+              case Hls.ErrorTypes.NETWORK_ERROR:
+                console.error('HLS network error, retrying...');
+                hls.startLoad();
+                break;
+              case Hls.ErrorTypes.MEDIA_ERROR:
+                console.error('HLS media error, recovering...');
+                hls.recoverMediaError();
+                break;
+              default:
+                console.error('HLS fatal error:', data);
+                this.showError(body, 'فشل تشغيل البث. تأكد من صحة الرابط.');
+                hls.destroy();
+                break;
             }
           }
         });
+        
         this.hls = hls;
       } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+        // Native HLS support (Safari)
         video.src = url;
-        video.play().catch(() => {});
+        video.addEventListener('loadedmetadata', () => {
+          this.hideStatus();
+          video.play().catch(() => {});
+        });
+        video.addEventListener('error', () => {
+          this.showError(body, 'فشل تشغيل البث في هذا المتصفح');
+        });
       } else {
-        this.showError(body, 'متصفحك لا يدعم تشغيل هذا النوع من البث');
+        this.showError(body, 'متصفحك لا يدعم تشغيل هذا النوع من البث. جرب استخدام متصفح آخر.');
       }
     }
 
     hideStatus() {
-      const status = this.container.querySelector('.video-status');
-      if (status) status.style.display = 'none';
+      const status = this.container.querySelectorAll('.video-status');
+      status.forEach(s => s.remove());
     }
 
     showError(body, msg) {
-      body.innerHTML = `<div class="video-status video-error"><div style="font-size:24px;">⚠️</div><div>${msg}</div></div>`;
+      body.innerHTML = '';
+      const errorDiv = document.createElement('div');
+      errorDiv.className = 'video-status video-error';
+      errorDiv.innerHTML = `<div style="font-size:24px;">⚠️</div><div>${msg}</div>`;
+      body.appendChild(errorDiv);
     }
 
     makeDraggable() {
@@ -1531,4 +1612,4 @@
   });
 </script>
 </body>
-  </html>
+</html>
