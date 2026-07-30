@@ -44,17 +44,23 @@
       flex-direction: column;
       user-select: none;
       -webkit-tap-highlight-color: transparent;
+      -webkit-user-select: none;
     }
 
     #loginScreen {
       position: fixed; inset: 0; background: rgba(10, 10, 10, 0.97);
       display: flex; justify-content: center; align-items: center; z-index: 10000;
-      backdrop-filter: blur(5px);
+      backdrop-filter: blur(10px);
     }
     #loginBox {
       background: var(--bg-secondary); padding: 2.5rem; border-radius: var(--radius-md);
       text-align: center; width: 90%; max-width: 380px; box-shadow: var(--shadow);
       border: 1px solid var(--border-color);
+      animation: slideUp 0.5s ease;
+    }
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
     }
     #loginBox h2 {
       margin-bottom: 1.5rem; font-weight: 700; font-size: 1.8rem;
@@ -63,7 +69,7 @@
     }
     #loginStatus {
       color: var(--text-secondary); font-size: 14px; margin-bottom: 15px;
-      min-height: 20px;
+      min-height: 20px; transition: var(--transition);
     }
     #usernameInput {
       width: 100%; padding: 14px 20px; margin: 15px 0; border: 1px solid var(--border-color);
@@ -90,56 +96,142 @@
     #topButtons {
       display: flex; gap: 10px; padding: 10px 15px; background: var(--bg-secondary);
       border-bottom: 1px solid var(--border-color); flex-shrink: 0; align-items: center;
-      flex-wrap: wrap;
+      flex-wrap: wrap; backdrop-filter: blur(10px);
     }
     .btn {
       background: var(--bg-tertiary); border: 1px solid var(--border-color); border-radius: var(--radius-lg);
       padding: 8px 16px; cursor: pointer; font-size: 15px; display: flex; align-items: center; gap: 6px;
       color: var(--text-primary); transition: var(--transition); font-family: inherit; font-weight: 500;
-      white-space: nowrap;
+      white-space: nowrap; position: relative; overflow: hidden;
     }
-    .btn:hover { background: #3a3a3a; border-color: var(--accent-color); }
-    .btn svg { width: 20px; height: 20px; fill: currentColor; }
+    .btn::after {
+      content: ''; position: absolute; inset: 0; background: rgba(255,255,255,0.1);
+      transform: scaleX(0); transition: transform 0.3s ease;
+    }
+    .btn:hover::after { transform: scaleX(1); }
+    .btn:hover { border-color: var(--accent-color); }
+    .btn svg { width: 20px; height: 20px; fill: currentColor; position: relative; z-index: 1; }
+    .btn span { position: relative; z-index: 1; }
     .btn-primary { background: var(--accent-color); border-color: var(--accent-color); }
     .btn-primary:hover { background: var(--accent-hover); }
 
     #messages {
       flex: 1; overflow-y: auto; padding: 15px; scroll-behavior: smooth;
-      display: flex; flex-direction: column; gap: 4px;
-      overscroll-behavior: contain;
+      display: flex; flex-direction: column; gap: 2px;
+      overscroll-behavior: contain; -webkit-overflow-scrolling: touch;
+      scrollbar-width: thin; scrollbar-color: #444 transparent;
     }
     #messages::-webkit-scrollbar { width: 6px; }
     #messages::-webkit-scrollbar-track { background: transparent; }
     #messages::-webkit-scrollbar-thumb { background: #444; border-radius: 3px; }
 
+    .message-wrapper {
+      position: relative; margin: 4px 0; transition: all 0.3s ease;
+      animation: fadeInUp 0.3s ease;
+    }
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
     .msg {
-      display: flex; align-items: baseline; gap: 8px; padding: 6px 10px;
-      border-radius: var(--radius-sm); animation: fadeIn 0.3s ease; transition: background 0.2s;
+      display: flex; align-items: baseline; gap: 8px; padding: 8px 12px;
+      border-radius: var(--radius-sm); transition: all 0.2s ease;
+      background: transparent; position: relative;
     }
     .msg:hover { background: rgba(255,255,255,0.03); }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 
     .user-badge {
       font-weight: 700; color: var(--accent-color); background: rgba(77, 168, 218, 0.15);
-      padding: 2px 8px; border-radius: 12px; font-size: 13px; white-space: nowrap; flex-shrink: 0;
-      border: 1px solid rgba(77, 168, 218, 0.3);
+      padding: 3px 10px; border-radius: 16px; font-size: 13px; white-space: nowrap; flex-shrink: 0;
+      border: 1px solid rgba(77, 168, 218, 0.3); letter-spacing: 0.5px;
     }
-    .msg-text { flex: 1; word-break: break-word; line-height: 1.5; }
-    .msg-time { font-size: 11px; color: var(--text-secondary); white-space: nowrap; flex-shrink: 0; }
+    .msg-text { 
+      flex: 1; word-break: break-word; line-height: 1.6; min-width: 0;
+    }
+    .msg-time { 
+      font-size: 11px; color: var(--text-secondary); white-space: nowrap; 
+      flex-shrink: 0; opacity: 0.8; transition: all 0.3s ease;
+      background: var(--bg-tertiary); padding: 2px 8px; border-radius: 10px;
+    }
 
-    .delete-btn {
-      background: none; border: none; color: var(--text-secondary); cursor: pointer;
-      padding: 4px; border-radius: 50%; display: flex; align-items: center; opacity: 0; transition: var(--transition);
+    .msg-actions {
+      display: flex; gap: 4px; opacity: 0; transition: all 0.2s ease;
+      position: absolute; left: 8px; top: 50%; transform: translateY(-50%);
     }
-    .msg:hover .delete-btn { opacity: 0.7; }
-    .delete-btn:hover { color: var(--danger-color); background: rgba(229, 115, 115, 0.2); opacity: 1 !important; }
-    .delete-btn svg { width: 16px; height: 16px; }
+    .message-wrapper:hover .msg-actions { opacity: 1; }
+
+    .action-btn {
+      background: var(--bg-tertiary); border: 1px solid var(--border-color); 
+      color: var(--text-secondary); cursor: pointer; padding: 6px; 
+      border-radius: 50%; display: flex; align-items: center; justify-content: center;
+      transition: var(--transition); width: 32px; height: 32px;
+    }
+    .action-btn:hover { 
+      background: rgba(229, 115, 115, 0.2); color: var(--danger-color); 
+      border-color: var(--danger-color); transform: scale(1.1);
+    }
+    .action-btn svg { width: 16px; height: 16px; }
+
+    .time-divider {
+      display: flex; align-items: center; gap: 10px; margin: 16px 0;
+      opacity: 0.7;
+    }
+    .time-divider::before, .time-divider::after {
+      content: ''; flex: 1; height: 1px; background: var(--border-color);
+    }
+    .time-divider span {
+      font-size: 12px; color: var(--text-secondary); white-space: nowrap;
+      background: var(--bg-primary); padding: 4px 12px; border-radius: 12px;
+      border: 1px solid var(--border-color);
+    }
 
     .sys-msg {
-      text-align: center; color: var(--text-secondary); font-size: 12px; margin: 8px auto;
-      background: var(--bg-tertiary); padding: 4px 12px; border-radius: 12px; width: fit-content;
+      text-align: center; color: var(--text-secondary); font-size: 12px; 
+      margin: 12px auto; background: var(--bg-tertiary); padding: 6px 16px; 
+      border-radius: 16px; width: fit-content; max-width: 90%;
       animation: fadeIn 0.5s ease; border: 1px solid var(--border-color);
     }
+
+    .deleted-msg {
+      text-align: center; color: var(--danger-color); font-size: 12px;
+      margin: 8px auto; font-style: italic; opacity: 0.7;
+      animation: fadeIn 0.3s ease;
+    }
+
+    .delete-confirm-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 10001;
+      display: flex; justify-content: center; align-items: center;
+      backdrop-filter: blur(3px); animation: fadeIn 0.2s ease;
+    }
+    .delete-confirm-box {
+      background: var(--bg-secondary); padding: 20px; border-radius: var(--radius-md);
+      border: 1px solid var(--border-color); text-align: center;
+      box-shadow: var(--shadow); animation: scaleIn 0.2s ease;
+    }
+    @keyframes scaleIn {
+      from { transform: scale(0.9); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    .delete-confirm-buttons {
+      display: flex; gap: 10px; margin-top: 15px; justify-content: center;
+    }
+    .delete-confirm-buttons button {
+      padding: 10px 20px; border-radius: var(--radius-sm); border: none;
+      cursor: pointer; font-family: inherit; font-weight: 600; transition: var(--transition);
+    }
+    .confirm-delete-btn {
+      background: var(--danger-color); color: white;
+    }
+    .confirm-delete-btn:hover { background: #ef5350; transform: scale(1.05); }
+    .cancel-delete-btn {
+      background: var(--bg-tertiary); color: var(--text-primary);
+    }
+    .cancel-delete-btn:hover { background: #444; }
 
     #typingIndicator {
       padding: 4px 15px; font-size: 12px; color: var(--text-secondary);
@@ -154,7 +246,10 @@
     }
     .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
     .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
-    @keyframes typingBounce { 0%,80%,100% { transform: scale(0.6); opacity:0.3; } 40% { transform: scale(1); opacity:1; } }
+    @keyframes typingBounce { 
+      0%,80%,100% { transform: scale(0.6); opacity:0.3; } 
+      40% { transform: scale(1); opacity:1; } 
+    }
 
     #inputArea {
       display: flex; gap: 10px; padding: 12px 15px; background: var(--bg-secondary);
@@ -178,29 +273,36 @@
 
     .modal-overlay {
       position: fixed; inset: 0; background: rgba(0,0,0,0.75); z-index: 999;
-      display: flex; justify-content: center; align-items: center; backdrop-filter: blur(2px);
+      display: flex; justify-content: center; align-items: center; backdrop-filter: blur(5px);
+      animation: fadeIn 0.2s ease;
     }
     .modal-box {
-      background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: var(--radius-md);
-      padding: 20px; width: 90%; max-width: 400px; box-shadow: var(--shadow); animation: scaleIn 0.2s ease;
+      background: var(--bg-secondary); border: 1px solid var(--border-color); 
+      border-radius: var(--radius-md); padding: 20px; width: 90%; 
+      max-width: 400px; box-shadow: var(--shadow); animation: scaleIn 0.2s ease;
     }
-    @keyframes scaleIn { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-    .modal-box h4 { margin-bottom: 15px; font-size: 18px; text-align: center; color: var(--accent-color); }
+    .modal-box h4 { 
+      margin-bottom: 15px; font-size: 18px; text-align: center; 
+      color: var(--accent-color); font-weight: 700;
+    }
     .modal-box input {
       width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid var(--border-color);
       border-radius: var(--radius-sm); background: var(--bg-primary); color: var(--text-primary);
-      font-family: inherit; text-align: center;
+      font-family: inherit; text-align: center; font-size: 16px;
     }
     .modal-box button {
       width: 100%; padding: 12px; background: var(--accent-color); color: white; border: none;
-      border-radius: var(--radius-sm); cursor: pointer; font-family: inherit; font-weight: 700; transition: var(--transition);
+      border-radius: var(--radius-sm); cursor: pointer; font-family: inherit; 
+      font-weight: 700; transition: var(--transition); font-size: 16px;
     }
-    .modal-box button:hover { background: var(--accent-hover); }
+    .modal-box button:hover { background: var(--accent-hover); transform: translateY(-1px); }
     #usersList { max-height: 250px; overflow-y: auto; }
     .user-item {
-      display: flex; align-items: center; gap: 10px; padding: 10px 8px;
+      display: flex; align-items: center; gap: 10px; padding: 12px 8px;
       border-bottom: 1px solid var(--border-color); font-size: 15px;
+      transition: var(--transition);
     }
+    .user-item:hover { background: rgba(255,255,255,0.05); }
     .status-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
     .status-online { background: var(--success-color); box-shadow: 0 0 8px rgba(129, 199, 132, 0.5); }
     .status-idle { background: var(--warning-color); box-shadow: 0 0 8px rgba(255, 183, 77, 0.5); }
@@ -209,36 +311,29 @@
     #pinnedVideoPlayer {
       position: fixed; top: 60px; right: 20px; width: 400px; min-width: 320px; max-width: 90vw;
       background: #000; border-radius: var(--radius-md); overflow: hidden; z-index: 998;
-      display: none; flex-direction: column; box-shadow: var(--shadow); border: 1px solid var(--border-color);
-      resize: both; overflow: auto; touch-action: none;
-      transition: all 0.3s ease;
+      display: none; flex-direction: column; box-shadow: var(--shadow); 
+      border: 1px solid var(--border-color); resize: both; min-height: 200px;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
     #pinnedVideoPlayer.minimized {
-      height: 45px !important;
-      min-height: 45px !important;
+      height: 45px !important; min-height: 45px !important; resize: none;
     }
     .video-header {
       background: var(--bg-secondary); padding: 8px 15px; display: flex;
-      justify-content: space-between; align-items: center; cursor: move; font-weight: 500;
-      border-bottom: 1px solid var(--border-color); touch-action: none;
-      min-height: 40px;
-      gap: 10px;
+      justify-content: space-between; align-items: center; cursor: move; 
+      font-weight: 500; border-bottom: 1px solid var(--border-color);
+      min-height: 40px; gap: 10px; touch-action: none;
     }
-    .video-header-actions {
-      display: flex; gap: 8px; align-items: center;
-    }
+    .video-header-actions { display: flex; gap: 8px; align-items: center; }
     .video-control-btn {
       background: none; border: none; color: var(--text-secondary); cursor: pointer;
       padding: 4px 6px; border-radius: 50%; display: flex; align-items: center;
       transition: var(--transition); font-size: 18px;
     }
     .video-control-btn:hover { 
-      color: var(--accent-color); 
-      background: rgba(255,255,255,0.1); 
+      color: var(--accent-color); background: rgba(255,255,255,0.1); 
     }
-    .video-control-btn.danger:hover { 
-      color: var(--danger-color); 
-    }
+    .video-control-btn.danger:hover { color: var(--danger-color); }
     .video-body { 
       position: relative; width: 100%; background: #000; flex:1; min-height: 200px;
       transition: all 0.3s ease;
@@ -246,8 +341,8 @@
     .video-body.hidden { display: none; }
     .video-status {
       position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-      color: white; text-align: center; z-index: 5; padding: 15px; background: rgba(0,0,0,0.8);
-      border-radius: var(--radius-sm);
+      color: white; text-align: center; z-index: 5; padding: 15px; 
+      background: rgba(0,0,0,0.8); border-radius: var(--radius-sm);
     }
     .video-error { color: var(--danger-color); font-size: 14px; }
     .video-loading { color: var(--accent-color); }
@@ -263,7 +358,7 @@
       position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);
       background: var(--bg-secondary); padding: 8px 16px; border-radius: var(--radius-lg);
       border: 1px solid var(--border-color); font-size: 12px; z-index: 999;
-      display: none; box-shadow: var(--shadow);
+      display: none; box-shadow: var(--shadow); pointer-events: none;
     }
     #connectionStatus.visible { display: block; }
     #connectionStatus.offline { border-color: var(--danger-color); color: var(--danger-color); }
@@ -275,13 +370,24 @@
       border: none; border-radius: var(--radius-lg); padding: 10px 18px;
       font-family: inherit; font-weight: 700; cursor: pointer;
       box-shadow: var(--shadow); transition: var(--transition);
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0% { box-shadow: 0 0 0 0 rgba(77, 168, 218, 0.4); }
+      70% { box-shadow: 0 0 0 10px rgba(77, 168, 218, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(77, 168, 218, 0); }
     }
     #restoreVideoBtn:hover { transform: scale(1.05); background: var(--accent-hover); }
 
     @media (max-width: 600px) {
-      #pinnedVideoPlayer { width: 95vw; right: 2.5vw; top: 10px; min-width: unset; }
+      #pinnedVideoPlayer { 
+        width: 95vw; right: 2.5vw; top: 10px; min-width: unset; 
+        max-height: 60vh;
+      }
       #topButtons .btn span { font-size: 13px; }
       #topButtons .btn { padding: 6px 12px; }
+      .msg { padding: 6px 8px; gap: 6px; }
+      .user-badge { font-size: 12px; padding: 2px 8px; }
     }
   </style>
 </head>
@@ -332,7 +438,7 @@
 <script>
   const icons = {
     close: '<svg viewBox="0 0 24 24" width="20" height="20"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" fill="currentColor"/></svg>',
-    trash: '<svg viewBox="0 0 24 24" width="18" height="18"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z" fill="currentColor"/></svg>',
+    trash: '<svg viewBox="0 0 24 24" width="16" height="16"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z" fill="currentColor"/></svg>',
     minimize: '<svg viewBox="0 0 24 24" width="20" height="20"><path d="M19 13H5v-2h14v2z" fill="currentColor"/></svg>',
     maximize: '<svg viewBox="0 0 24 24" width="20" height="20"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" fill="currentColor"/></svg>',
   };
@@ -366,24 +472,23 @@
       this.pinnedVideoRef = null;
       this.typingRef = null;
       this.serverTimeOffset = 0;
-      this.renderedMessages = new Set();
+      this.renderedMessages = new Map(); // Changed to Map for better tracking
       this.videoPlayerManager = null;
-      this.timeElements = new Map();
       this.atBottom = true;
       this.isTyping = false;
       this.typingTimeout = null;
-      this.timeObserver = null;
       this.isLoggedIn = false;
       this.messageListeners = [];
       this.isVideoMinimized = false;
+      this.lastTimeDivider = null;
+      this.timeUpdateInterval = null;
+      this.deletedMessages = new Set();
 
       // Initialize
       this.initFirebase();
       this.initEventListeners();
-      this.initTimeObserver();
+      this.startTimeUpdater();
       this.monitorConnection();
-
-      // Start authentication
       this.initAuth();
 
       // Restore video button
@@ -448,14 +553,23 @@
       this.setVideoBtn.onclick = () => this.showSetVideoModal();
       
       document.getElementById('inputArea').addEventListener('submit', (e) => this.sendMessage(e));
+      
       this.messagesDiv.addEventListener('scroll', () => {
         const threshold = 50;
         this.atBottom = (this.messagesDiv.scrollHeight - this.messagesDiv.scrollTop - this.messagesDiv.clientHeight) < threshold;
       });
 
-      // Typing indicator
-      this.messageInput.addEventListener('input', () => this.handleTyping());
+      // Typing indicator with debounce
+      this.messageInput.addEventListener('input', this.debounce(() => this.handleTyping(), 300));
       this.messageInput.addEventListener('blur', () => this.clearTyping());
+    }
+
+    debounce(func, wait) {
+      let timeout;
+      return (...args) => {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => func.apply(this, args), wait);
+      };
     }
 
     attemptLogin() {
@@ -473,6 +587,11 @@
       if (name.length > 15) {
         this.showLoginStatus('⚠️ الاسم طويل جداً (أكثر من 15 حرف)', 'error');
         return;
+      }
+
+      // Clean up previous session if exists
+      if (this.isLoggedIn) {
+        this.dispose();
       }
 
       this.username = name;
@@ -494,13 +613,14 @@
       // Enable inputs
       this.messageInput.disabled = false;
       this.sendBtn.disabled = false;
+      this.messageInput.focus();
 
       // Server time
       this.db.ref('.info/serverTimeOffset').on('value', snap => {
         this.serverTimeOffset = snap.val() || 0;
       });
 
-      // Presence - store username immediately
+      // Presence
       this.userRef.set({ 
         username: this.username,
         lastActive: firebase.database.ServerValue.TIMESTAMP,
@@ -518,31 +638,48 @@
       }, 30000);
 
       // Clean inactive users
-      setInterval(() => this.cleanInactiveUsers(), 60000);
+      this.cleanupInterval = setInterval(() => this.cleanInactiveUsers(), 60000);
 
       // Typing cleanup on disconnect
       this.typingRef.child(this.uid).onDisconnect().remove();
 
-      // Messages
+      // Messages - improved handling
       this.messageListeners.push(
-        this.messagesRef.orderByChild('timestamp').limitToLast(100).on("child_added", snap => {
-          if (this.renderedMessages.has(snap.key)) return;
-          this.renderedMessages.add(snap.key);
-          this.addMessageToUI(snap.key, snap.val());
+        this.messagesRef.orderByChild('timestamp').limitToLast(200).on("child_added", snap => {
+          const key = snap.key;
+          if (this.renderedMessages.has(key)) return;
+          
+          const data = snap.val();
+          // Check if message was deleted
+          if (data.deleted) {
+            this.showDeletedMessage(key);
+            return;
+          }
+          
+          this.renderedMessages.set(key, data);
+          this.addMessageToUI(key, data);
+          this.updateTimeDividers();
+        })
+      );
+
+      this.messageListeners.push(
+        this.messagesRef.on("child_changed", snap => {
+          const key = snap.key;
+          const data = snap.val();
+          
+          if (data.deleted) {
+            this.removeMessageFromUI(key);
+            this.showDeletedMessage(key);
+            this.renderedMessages.delete(key);
+          }
         })
       );
 
       this.messageListeners.push(
         this.messagesRef.on("child_removed", snap => {
-          this.renderedMessages.delete(snap.key);
-          this.timeElements.delete(snap.key);
-          const el = document.getElementById(`msg-${snap.key}`);
-          if (el) {
-            el.style.transition = 'opacity 0.3s, transform 0.3s';
-            el.style.opacity = '0';
-            el.style.transform = 'scale(0.9)';
-            setTimeout(() => el.remove(), 300);
-          }
+          const key = snap.key;
+          this.removeMessageFromUI(key);
+          this.renderedMessages.delete(key);
         })
       );
 
@@ -579,71 +716,262 @@
     }
 
     addMessageToUI(key, data) {
-      // Sanitize data
-      const user = this.sanitizeData(data.user || 'مجهول');
-      const text = this.sanitizeData(data.text || '');
+      if (!data || data.deleted) return;
+      
+      const user = this.sanitizeString(data.user || 'مجهول');
+      const text = this.sanitizeString(data.text || '');
       const timestamp = data.timestamp || null;
       const uid = data.uid || null;
       
-      const div = document.createElement("div");
-      div.className = "msg";
-      div.id = `msg-${key}`;
+      const wrapper = document.createElement("div");
+      wrapper.className = "message-wrapper";
+      wrapper.id = `msg-wrapper-${key}`;
+      wrapper.dataset.timestamp = timestamp || '0';
       
-      const isMe = uid === this.uid;
-      div.innerHTML = `
-        <span class="user-badge">${user}</span>
-        <span class="msg-text">${text}</span>
-        <span class="msg-time" data-timestamp="${timestamp || ''}"></span>
-      `;
+      const msgDiv = document.createElement("div");
+      msgDiv.className = "msg";
       
-      const timeSpan = div.querySelector('.msg-time');
+      // User badge
+      const badge = document.createElement("span");
+      badge.className = "user-badge";
+      badge.textContent = user;
+      
+      // Message text
+      const textSpan = document.createElement("span");
+      textSpan.className = "msg-text";
+      textSpan.textContent = text;
+      
+      // Time element
+      const timeSpan = document.createElement("span");
+      timeSpan.className = "msg-time";
+      timeSpan.dataset.timestamp = timestamp || '';
+      timeSpan.dataset.msgKey = key;
       if (timestamp) {
-        this.updateRelativeTime(timestamp, timeSpan);
-        this.timeElements.set(key, { el: timeSpan, timestamp });
-        this.timeObserver.observe(timeSpan);
+        this.updateTimeDisplay(timeSpan, timestamp);
       }
-
-      // Delete button - only for messages from this user
-      if (isMe) {
-        const del = document.createElement("button");
-        del.className = "delete-btn";
-        del.innerHTML = icons.trash;
-        del.title = "حذف";
-        del.onclick = () => {
-          if(confirm("حذف الرسالة؟")) {
-            this.messagesRef.child(key).remove();
-          }
+      
+      msgDiv.appendChild(badge);
+      msgDiv.appendChild(textSpan);
+      msgDiv.appendChild(timeSpan);
+      
+      // Delete button for own messages
+      if (uid === this.uid) {
+        const actionsDiv = document.createElement("div");
+        actionsDiv.className = "msg-actions";
+        
+        const deleteBtn = document.createElement("button");
+        deleteBtn.className = "action-btn";
+        deleteBtn.innerHTML = icons.trash;
+        deleteBtn.title = "حذف الرسالة";
+        deleteBtn.onclick = (e) => {
+          e.stopPropagation();
+          this.confirmDeleteMessage(key);
         };
-        div.appendChild(del);
+        
+        actionsDiv.appendChild(deleteBtn);
+        wrapper.appendChild(actionsDiv);
       }
-
-      this.messagesDiv.appendChild(div);
+      
+      wrapper.appendChild(msgDiv);
+      this.messagesDiv.appendChild(wrapper);
+      
       if (this.atBottom) this.scrollToBottom();
     }
 
-    updateRelativeTime(timestamp, el) {
-      if (!timestamp || !el) return;
-      const diff = Math.max(0, Math.floor((Date.now() + this.serverTimeOffset - timestamp) / 1000));
-      let txt = "الآن";
-      if (diff < 60) txt = `${diff} ث`;
-      else if (diff < 3600) txt = `منذ ${Math.floor(diff/60)} د`;
-      else if (diff < 86400) txt = `منذ ${Math.floor(diff/3600)} س`;
-      else txt = `منذ ${Math.floor(diff/86400)} ي`;
-      el.textContent = txt;
+    confirmDeleteMessage(key) {
+      const overlay = document.createElement('div');
+      overlay.className = 'delete-confirm-overlay';
+      
+      const box = document.createElement('div');
+      box.className = 'delete-confirm-box';
+      box.innerHTML = `
+        <h4 style="color: var(--text-primary); margin-bottom: 10px;">🗑️ حذف الرسالة</h4>
+        <p style="color: var(--text-secondary);">هل أنت متأكد من حذف هذه الرسالة؟</p>
+        <p style="color: var(--danger-color); font-size: 12px; margin-top: 5px;">سيتم حذفها للجميع ولا يمكن التراجع</p>
+        <div class="delete-confirm-buttons">
+          <button class="cancel-delete-btn">إلغاء</button>
+          <button class="confirm-delete-btn">حذف</button>
+        </div>
+      `;
+      
+      overlay.appendChild(box);
+      document.body.appendChild(overlay);
+      
+      box.querySelector('.cancel-delete-btn').onclick = () => overlay.remove();
+      box.querySelector('.confirm-delete-btn').onclick = () => {
+        this.deleteMessage(key);
+        overlay.remove();
+      };
+      
+      overlay.onclick = (e) => {
+        if (e.target === overlay) overlay.remove();
+      };
     }
 
-    initTimeObserver() {
-      this.timeObserver = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-          if (entry.isIntersecting) {
-            const key = entry.target.dataset.msgKey;
-            if (key && this.timeElements.has(key)) {
-              const data = this.timeElements.get(key);
-              this.updateRelativeTime(data.timestamp, data.el);
-            }
+    deleteMessage(key) {
+      // Mark as deleted instead of completely removing
+      this.messagesRef.child(key).update({
+        deleted: true,
+        deletedAt: firebase.database.ServerValue.TIMESTAMP,
+        deletedBy: this.username
+      }).then(() => {
+        this.addSystemMessage('🗑️ تم حذف الرسالة');
+      }).catch(err => {
+        console.error('Delete error:', err);
+        // Fallback to complete removal if update fails
+        this.messagesRef.child(key).remove();
+      });
+    }
+
+    removeMessageFromUI(key) {
+      const wrapper = document.getElementById(`msg-wrapper-${key}`);
+      if (wrapper) {
+        wrapper.style.transition = 'all 0.3s ease';
+        wrapper.style.opacity = '0';
+        wrapper.style.transform = 'scale(0.95)';
+        wrapper.style.maxHeight = wrapper.offsetHeight + 'px';
+        
+        setTimeout(() => {
+          wrapper.style.maxHeight = '0';
+          wrapper.style.margin = '0';
+          wrapper.style.padding = '0';
+          wrapper.style.overflow = 'hidden';
+        }, 150);
+        
+        setTimeout(() => {
+          wrapper.remove();
+          this.updateTimeDividers();
+        }, 450);
+      }
+    }
+
+    showDeletedMessage(key) {
+      if (this.deletedMessages.has(key)) return;
+      this.deletedMessages.add(key);
+      
+      const wrapper = document.createElement("div");
+      wrapper.className = "deleted-msg";
+      wrapper.id = `deleted-${key}`;
+      wrapper.textContent = '🗑️ تم حذف هذه الرسالة';
+      
+      // Find insertion point based on timestamp
+      const deletedData = this.renderedMessages.get(key);
+      if (deletedData) {
+        const timestamp = deletedData.timestamp || 0;
+        let inserted = false;
+        
+        const children = [...this.messagesDiv.children];
+        for (let child of children) {
+          const childTimestamp = parseInt(child.dataset?.timestamp || '0');
+          if (childTimestamp > timestamp) {
+            this.messagesDiv.insertBefore(wrapper, child);
+            inserted = true;
+            break;
+          }
+        }
+        
+        if (!inserted) {
+          this.messagesDiv.appendChild(wrapper);
+        }
+      }
+      
+      setTimeout(() => {
+        wrapper.style.opacity = '1';
+      }, 100);
+    }
+
+    updateTimeDisplay(el, timestamp) {
+      if (!timestamp) {
+        el.textContent = '';
+        return;
+      }
+      
+      const now = Date.now() + this.serverTimeOffset;
+      const diff = Math.max(0, Math.floor((now - timestamp) / 1000));
+      const date = new Date(timestamp);
+      
+      let timeStr;
+      if (diff < 60) {
+        timeStr = 'الآن';
+      } else if (diff < 3600) {
+        timeStr = `منذ ${Math.floor(diff / 60)} دقيقة`;
+      } else if (diff < 86400) {
+        timeStr = `منذ ${Math.floor(diff / 3600)} ساعة`;
+      } else if (diff < 604800) {
+        timeStr = `منذ ${Math.floor(diff / 86400)} يوم`;
+      } else {
+        timeStr = date.toLocaleDateString('ar-LY', { 
+          year: 'numeric', 
+          month: 'short', 
+          day: 'numeric' 
+        });
+      }
+      
+      el.textContent = timeStr;
+      el.title = date.toLocaleString('ar-LY', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    }
+
+    startTimeUpdater() {
+      this.timeUpdateInterval = setInterval(() => {
+        document.querySelectorAll('.msg-time').forEach(el => {
+          const timestamp = parseInt(el.dataset.timestamp);
+          if (timestamp) {
+            this.updateTimeDisplay(el, timestamp);
           }
         });
-      }, { threshold: 0.1 });
+      }, 30000); // Update every 30 seconds
+    }
+
+    updateTimeDividers() {
+      // Remove existing dividers
+      document.querySelectorAll('.time-divider').forEach(d => d.remove());
+      
+      const wrappers = [...document.querySelectorAll('.message-wrapper')];
+      if (wrappers.length === 0) return;
+      
+      let lastDate = null;
+      
+      wrappers.forEach(wrapper => {
+        const timestamp = parseInt(wrapper.dataset.timestamp || '0');
+        if (!timestamp) return;
+        
+        const date = new Date(timestamp);
+        const dateStr = date.toDateString();
+        
+        if (dateStr !== lastDate) {
+          lastDate = dateStr;
+          
+          const divider = document.createElement('div');
+          divider.className = 'time-divider';
+          
+          const today = new Date();
+          const yesterday = new Date(today);
+          yesterday.setDate(yesterday.getDate() - 1);
+          
+          let dateLabel;
+          if (dateStr === today.toDateString()) {
+            dateLabel = 'اليوم';
+          } else if (dateStr === yesterday.toDateString()) {
+            dateLabel = 'الأمس';
+          } else {
+            dateLabel = date.toLocaleDateString('ar-LY', {
+              weekday: 'long',
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric'
+            });
+          }
+          
+          divider.innerHTML = `<span>${dateLabel}</span>`;
+          this.messagesDiv.insertBefore(divider, wrapper);
+        }
+      });
     }
 
     addSystemMessage(text) {
@@ -668,7 +996,8 @@
         user: this.username,
         text: text,
         timestamp: firebase.database.ServerValue.TIMESTAMP,
-        uid: this.uid
+        uid: this.uid,
+        deleted: false
       });
       
       this.messageInput.value = "";
@@ -736,12 +1065,6 @@
             this.connectionStatus.classList.remove('visible');
           }, 3000);
         }
-        
-        if (isConnected && this.isLoggedIn) {
-          this.addSystemMessage('🟢 تم استعادة الاتصال بالخادم');
-        } else if (!isConnected) {
-          this.addSystemMessage('🔴 انقطع الاتصال... جاري المحاولة');
-        }
       });
     }
 
@@ -765,12 +1088,18 @@
         const arr = Object.entries(users).sort((a,b) => (b[1].lastActive||0) - (a[1].lastActive||0));
         let list = '';
         arr.forEach(([key, data]) => {
-          const name = this.sanitizeData(data.username || 'مجهول');
+          const name = this.sanitizeString(data.username || 'مجهول');
           const diff = now - (data.lastActive||0);
-          let cls = 'status-online', txt = 'متصل';
+          let cls = 'status-online', txt = 'متصل الآن';
           if (diff > 120000) { cls = 'status-offline'; txt = 'غير متصل'; }
           else if (diff > 60000) { cls = 'status-idle'; txt = 'خامل'; }
-          list += `<div class="user-item"><span class="status-dot ${cls}"></span><span>${name}</span><span style="margin-right:auto;font-size:12px;color:var(--text-secondary)">${txt}</span></div>`;
+          const isYou = key === this.uid ? ' (أنت)' : '';
+          list += `
+            <div class="user-item">
+              <span class="status-dot ${cls}"></span>
+              <span>${name}${isYou}</span>
+              <span style="margin-right:auto;font-size:12px;color:var(--text-secondary)">${txt}</span>
+            </div>`;
         });
         this.showModal('👥 المتصلون الآن', `<div id="usersList">${list || '<p>لا يوجد متصلون</p>'}</div>`);
       });
@@ -839,12 +1168,10 @@
         this.uid,
         (action) => {
           if (action === 'close' && data.uid === this.uid) {
-            // Only owner can delete
             this.pinnedVideoRef.remove();
             this.addSystemMessage('🗑️ تم إزالة الفيديو');
             this.restoreVideoBtn.style.display = 'none';
           } else if (action === 'minimize') {
-            // Minimize for everyone
             this.minimizeVideo();
           } else if (action === 'restore') {
             this.restoreVideo();
@@ -879,42 +1206,67 @@
       });
     }
 
-    sanitizeData(data) {
-      if (typeof data === 'string') {
-        return this.escapeHtml(data);
-      }
-      if (typeof data === 'object' && data !== null) {
-        const sanitized = {};
-        for (let key in data) {
-          sanitized[key] = this.sanitizeData(data[key]);
-        }
-        return sanitized;
-      }
-      return data;
+    sanitizeString(str) {
+      if (typeof str !== 'string') return '';
+      const div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
     }
 
     escapeHtml(text) {
-      const d = document.createElement('div');
-      d.textContent = text;
-      return d.innerHTML;
+      return this.sanitizeString(text);
     }
 
     dispose() {
       this.isLoggedIn = false;
-      this.messageListeners.forEach(listener => listener.off());
+      
+      // Remove Firebase listeners
+      this.messageListeners.forEach(listener => {
+        if (typeof listener === 'function') listener();
+      });
       this.messageListeners = [];
+      
+      // Clear intervals
       if (this.presenceInterval) {
         clearInterval(this.presenceInterval);
+        this.presenceInterval = null;
+      }
+      if (this.cleanupInterval) {
+        clearInterval(this.cleanupInterval);
+        this.cleanupInterval = null;
       }
       if (this.typingTimeout) {
         clearTimeout(this.typingTimeout);
+        this.typingTimeout = null;
       }
-      if (this.timeObserver) {
-        this.timeObserver.disconnect();
+      if (this.timeUpdateInterval) {
+        clearInterval(this.timeUpdateInterval);
+        this.timeUpdateInterval = null;
       }
+      
+      // Remove user presence
       if (this.userRef) {
         this.userRef.remove();
+        this.userRef = null;
       }
+      
+      // Clear typing indicator
+      if (this.typingRef) {
+        this.typingRef.child(this.uid).remove();
+      }
+      
+      // Clear UI
+      this.renderedMessages.clear();
+      this.deletedMessages.clear();
+      this.messagesDiv.innerHTML = '';
+      
+      // Reset video
+      if (this.videoPlayerManager) {
+        this.videoPlayerManager.dispose();
+        this.videoPlayerManager = null;
+      }
+      this.pinnedVideoContainer.innerHTML = '';
+      this.pinnedVideoContainer.style.display = 'none';
     }
   }
 
@@ -952,7 +1304,6 @@
         </div>
       `;
 
-      // ✅ Event listeners for buttons
       const minimizeBtn = this.container.querySelector('.minimize-btn');
       minimizeBtn.onclick = () => {
         this.toggleMinimize();
@@ -992,7 +1343,6 @@
         bar.style.display = 'none';
         this.container.style.minHeight = '';
         this.container.style.height = '';
-        // Restore video
         this.restoreFromMinimize();
       }
     }
@@ -1109,7 +1459,6 @@
       let isDragging = false, startX, startY, initialLeft, initialTop;
 
       const onStart = (e) => {
-        // Don't drag if clicking on buttons
         if (e.target.closest('button')) return;
         isDragging = true;
         const point = e.touches ? e.touches[0] : e;
@@ -1118,6 +1467,7 @@
         const rect = this.container.getBoundingClientRect();
         initialLeft = rect.left;
         initialTop = rect.top;
+        this.container.style.transition = 'none';
         document.addEventListener('mousemove', onMove);
         document.addEventListener('touchmove', onMove, { passive: false });
         document.addEventListener('mouseup', onEnd);
@@ -1144,6 +1494,7 @@
 
       const onEnd = () => {
         isDragging = false;
+        this.container.style.transition = 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
         document.removeEventListener('mousemove', onMove);
         document.removeEventListener('touchmove', onMove);
         document.removeEventListener('mouseup', onEnd);
@@ -1174,10 +1525,10 @@
     }
   }
 
-  // Initialize
+  // Initialize app
   document.addEventListener('DOMContentLoaded', () => { 
     window.chatApp = new ChatApp(); 
   });
 </script>
 </body>
-</html>
+  </html>
