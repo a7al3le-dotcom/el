@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>سكرة ليبيا</title>
+  <title>سكرة ليبيا - النسخة المطورة</title>
   
   <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
@@ -46,46 +46,15 @@
       -webkit-tap-highlight-color: transparent;
     }
 
-    /* Toast Notifications */
-    #toastContainer {
-      position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
-      z-index: 10001; display: flex; flex-direction: column; gap: 8px;
-      pointer-events: none; width: 90%; max-width: 400px;
-    }
-    .toast-notification {
-      background: var(--bg-secondary); color: var(--text-primary);
-      padding: 12px 20px; border-radius: var(--radius-md); text-align: center;
-      font-size: 14px; font-weight: 500; border: 1px solid var(--border-color);
-      box-shadow: var(--shadow); pointer-events: auto;
-      animation: slideDown 0.3s ease, fadeOut 0.3s ease 2.7s forwards;
-      backdrop-filter: blur(10px);
-    }
-    .toast-notification.success { border-color: var(--success-color); color: var(--success-color); }
-    .toast-notification.error { border-color: var(--danger-color); color: var(--danger-color); }
-    .toast-notification.info { border-color: var(--accent-color); color: var(--accent-color); }
-    @keyframes slideDown {
-      from { opacity: 0; transform: translateY(-20px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-    @keyframes fadeOut {
-      from { opacity: 1; }
-      to { opacity: 0; transform: translateY(-10px); }
-    }
-
     #loginScreen {
       position: fixed; inset: 0; background: rgba(10, 10, 10, 0.97);
       display: flex; justify-content: center; align-items: center; z-index: 10000;
-      backdrop-filter: blur(10px);
+      backdrop-filter: blur(5px);
     }
     #loginBox {
       background: var(--bg-secondary); padding: 2.5rem; border-radius: var(--radius-md);
       text-align: center; width: 90%; max-width: 380px; box-shadow: var(--shadow);
       border: 1px solid var(--border-color);
-      animation: slideUp 0.5s ease;
-    }
-    @keyframes slideUp {
-      from { opacity: 0; transform: translateY(20px); }
-      to { opacity: 1; transform: translateY(0); }
     }
     #loginBox h2 {
       margin-bottom: 1.5rem; font-weight: 700; font-size: 1.8rem;
@@ -94,7 +63,7 @@
     }
     #loginStatus {
       color: var(--text-secondary); font-size: 14px; margin-bottom: 15px;
-      min-height: 20px; transition: var(--transition);
+      min-height: 20px;
     }
     #usernameInput {
       width: 100%; padding: 14px 20px; margin: 15px 0; border: 1px solid var(--border-color);
@@ -121,137 +90,56 @@
     #topButtons {
       display: flex; gap: 10px; padding: 10px 15px; background: var(--bg-secondary);
       border-bottom: 1px solid var(--border-color); flex-shrink: 0; align-items: center;
-      flex-wrap: wrap; backdrop-filter: blur(10px);
+      flex-wrap: wrap;
     }
     .btn {
       background: var(--bg-tertiary); border: 1px solid var(--border-color); border-radius: var(--radius-lg);
       padding: 8px 16px; cursor: pointer; font-size: 15px; display: flex; align-items: center; gap: 6px;
       color: var(--text-primary); transition: var(--transition); font-family: inherit; font-weight: 500;
-      white-space: nowrap; position: relative; overflow: hidden;
+      white-space: nowrap;
     }
-    .btn::after {
-      content: ''; position: absolute; inset: 0; background: rgba(255,255,255,0.1);
-      transform: scaleX(0); transition: transform 0.3s ease;
-    }
-    .btn:hover::after { transform: scaleX(1); }
-    .btn:hover { border-color: var(--accent-color); }
-    .btn svg { width: 20px; height: 20px; fill: currentColor; position: relative; z-index: 1; }
-    .btn span { position: relative; z-index: 1; }
+    .btn:hover { background: #3a3a3a; border-color: var(--accent-color); }
+    .btn svg { width: 20px; height: 20px; fill: currentColor; }
     .btn-primary { background: var(--accent-color); border-color: var(--accent-color); }
     .btn-primary:hover { background: var(--accent-hover); }
 
     #messages {
       flex: 1; overflow-y: auto; padding: 15px; scroll-behavior: smooth;
-      display: flex; flex-direction: column; gap: 2px;
-      overscroll-behavior: contain; -webkit-overflow-scrolling: touch;
-      scrollbar-width: thin; scrollbar-color: #444 transparent;
+      display: flex; flex-direction: column; gap: 4px;
+      overscroll-behavior: contain;
     }
     #messages::-webkit-scrollbar { width: 6px; }
     #messages::-webkit-scrollbar-track { background: transparent; }
     #messages::-webkit-scrollbar-thumb { background: #444; border-radius: 3px; }
 
-    .message-wrapper {
-      position: relative; margin: 4px 0; transition: all 0.3s ease;
-      animation: fadeInUp 0.3s ease;
-      display: flex; align-items: center; gap: 8px;
-    }
-    .message-wrapper:hover { background: rgba(255,255,255,0.02); border-radius: var(--radius-sm); }
-    @keyframes fadeInUp {
-      from { opacity: 0; transform: translateY(10px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
     .msg {
-      display: flex; align-items: baseline; gap: 8px; padding: 8px 12px;
-      border-radius: var(--radius-sm); transition: all 0.2s ease;
-      background: transparent; flex: 1; min-width: 0;
+      display: flex; align-items: baseline; gap: 8px; padding: 6px 10px;
+      border-radius: var(--radius-sm); animation: fadeIn 0.3s ease; transition: background 0.2s;
     }
+    .msg:hover { background: rgba(255,255,255,0.03); }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 
     .user-badge {
       font-weight: 700; color: var(--accent-color); background: rgba(77, 168, 218, 0.15);
-      padding: 3px 10px; border-radius: 16px; font-size: 13px; white-space: nowrap; flex-shrink: 0;
-      border: 1px solid rgba(77, 168, 218, 0.3); letter-spacing: 0.5px;
+      padding: 2px 8px; border-radius: 12px; font-size: 13px; white-space: nowrap; flex-shrink: 0;
+      border: 1px solid rgba(77, 168, 218, 0.3);
     }
-    .msg-text { 
-      flex: 1; word-break: break-word; line-height: 1.6; min-width: 0;
-    }
-    .msg-time { 
-      font-size: 11px; color: var(--text-secondary); white-space: nowrap; 
-      flex-shrink: 0; opacity: 0.8; transition: all 0.3s ease;
-      background: var(--bg-tertiary); padding: 2px 8px; border-radius: 10px;
-    }
+    .msg-text { flex: 1; word-break: break-word; line-height: 1.5; }
+    .msg-time { font-size: 11px; color: var(--text-secondary); white-space: nowrap; flex-shrink: 0; }
 
     .delete-btn {
       background: none; border: none; color: var(--text-secondary); cursor: pointer;
-      padding: 6px; border-radius: 50%; display: flex; align-items: center; 
-      opacity: 0; transition: var(--transition); flex-shrink: 0;
+      padding: 4px; border-radius: 50%; display: flex; align-items: center; opacity: 0; transition: var(--transition);
     }
-    .message-wrapper:hover .delete-btn { opacity: 0.7; }
-    .delete-btn:hover { 
-      color: var(--danger-color); background: rgba(229, 115, 115, 0.2); 
-      opacity: 1 !important; transform: scale(1.1);
-    }
-    .delete-btn svg { width: 18px; height: 18px; }
-
-    .time-divider {
-      display: flex; align-items: center; gap: 10px; margin: 16px 0;
-      opacity: 0.7;
-    }
-    .time-divider::before, .time-divider::after {
-      content: ''; flex: 1; height: 1px; background: var(--border-color);
-    }
-    .time-divider span {
-      font-size: 12px; color: var(--text-secondary); white-space: nowrap;
-      background: var(--bg-primary); padding: 4px 12px; border-radius: 12px;
-      border: 1px solid var(--border-color);
-    }
+    .msg:hover .delete-btn { opacity: 0.7; }
+    .delete-btn:hover { color: var(--danger-color); background: rgba(229, 115, 115, 0.2); opacity: 1 !important; }
+    .delete-btn svg { width: 16px; height: 16px; }
 
     .sys-msg {
-      text-align: center; color: var(--text-secondary); font-size: 12px; 
-      margin: 12px auto; background: var(--bg-tertiary); padding: 6px 16px; 
-      border-radius: 16px; width: fit-content; max-width: 90%;
+      text-align: center; color: var(--text-secondary); font-size: 12px; margin: 8px auto;
+      background: var(--bg-tertiary); padding: 4px 12px; border-radius: 12px; width: fit-content;
       animation: fadeIn 0.5s ease; border: 1px solid var(--border-color);
     }
-
-    .deleted-msg {
-      text-align: center; color: var(--danger-color); font-size: 12px;
-      margin: 8px auto; font-style: italic; opacity: 0.7;
-      animation: fadeIn 0.3s ease;
-    }
-
-    .delete-confirm-overlay {
-      position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 10001;
-      display: flex; justify-content: center; align-items: center;
-      backdrop-filter: blur(3px); animation: fadeIn 0.2s ease;
-    }
-    .delete-confirm-box {
-      background: var(--bg-secondary); padding: 20px; border-radius: var(--radius-md);
-      border: 1px solid var(--border-color); text-align: center;
-      box-shadow: var(--shadow); animation: scaleIn 0.2s ease;
-    }
-    @keyframes scaleIn {
-      from { transform: scale(0.9); opacity: 0; }
-      to { transform: scale(1); opacity: 1; }
-    }
-    @keyframes fadeIn {
-      from { opacity: 0; }
-      to { opacity: 1; }
-    }
-    .delete-confirm-buttons {
-      display: flex; gap: 10px; margin-top: 15px; justify-content: center;
-    }
-    .delete-confirm-buttons button {
-      padding: 10px 20px; border-radius: var(--radius-sm); border: none;
-      cursor: pointer; font-family: inherit; font-weight: 600; transition: var(--transition);
-    }
-    .confirm-delete-btn {
-      background: var(--danger-color); color: white;
-    }
-    .confirm-delete-btn:hover { background: #ef5350; transform: scale(1.05); }
-    .cancel-delete-btn {
-      background: var(--bg-tertiary); color: var(--text-primary);
-    }
-    .cancel-delete-btn:hover { background: #444; }
 
     #typingIndicator {
       padding: 4px 15px; font-size: 12px; color: var(--text-secondary);
@@ -266,10 +154,7 @@
     }
     .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
     .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
-    @keyframes typingBounce { 
-      0%,80%,100% { transform: scale(0.6); opacity:0.3; } 
-      40% { transform: scale(1); opacity:1; } 
-    }
+    @keyframes typingBounce { 0%,80%,100% { transform: scale(0.6); opacity:0.3; } 40% { transform: scale(1); opacity:1; } }
 
     #inputArea {
       display: flex; gap: 10px; padding: 12px 15px; background: var(--bg-secondary);
@@ -293,36 +178,29 @@
 
     .modal-overlay {
       position: fixed; inset: 0; background: rgba(0,0,0,0.75); z-index: 999;
-      display: flex; justify-content: center; align-items: center; backdrop-filter: blur(5px);
-      animation: fadeIn 0.2s ease;
+      display: flex; justify-content: center; align-items: center; backdrop-filter: blur(2px);
     }
     .modal-box {
-      background: var(--bg-secondary); border: 1px solid var(--border-color); 
-      border-radius: var(--radius-md); padding: 20px; width: 90%; 
-      max-width: 400px; box-shadow: var(--shadow); animation: scaleIn 0.2s ease;
+      background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: var(--radius-md);
+      padding: 20px; width: 90%; max-width: 400px; box-shadow: var(--shadow); animation: scaleIn 0.2s ease;
     }
-    .modal-box h4 { 
-      margin-bottom: 15px; font-size: 18px; text-align: center; 
-      color: var(--accent-color); font-weight: 700;
-    }
+    @keyframes scaleIn { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+    .modal-box h4 { margin-bottom: 15px; font-size: 18px; text-align: center; color: var(--accent-color); }
     .modal-box input {
       width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid var(--border-color);
       border-radius: var(--radius-sm); background: var(--bg-primary); color: var(--text-primary);
-      font-family: inherit; text-align: center; font-size: 16px;
+      font-family: inherit; text-align: center;
     }
     .modal-box button {
       width: 100%; padding: 12px; background: var(--accent-color); color: white; border: none;
-      border-radius: var(--radius-sm); cursor: pointer; font-family: inherit; 
-      font-weight: 700; transition: var(--transition); font-size: 16px;
+      border-radius: var(--radius-sm); cursor: pointer; font-family: inherit; font-weight: 700; transition: var(--transition);
     }
-    .modal-box button:hover { background: var(--accent-hover); transform: translateY(-1px); }
+    .modal-box button:hover { background: var(--accent-hover); }
     #usersList { max-height: 250px; overflow-y: auto; }
     .user-item {
-      display: flex; align-items: center; gap: 10px; padding: 12px 8px;
+      display: flex; align-items: center; gap: 10px; padding: 10px 8px;
       border-bottom: 1px solid var(--border-color); font-size: 15px;
-      transition: var(--transition);
     }
-    .user-item:hover { background: rgba(255,255,255,0.05); }
     .status-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
     .status-online { background: var(--success-color); box-shadow: 0 0 8px rgba(129, 199, 132, 0.5); }
     .status-idle { background: var(--warning-color); box-shadow: 0 0 8px rgba(255, 183, 77, 0.5); }
@@ -331,29 +209,36 @@
     #pinnedVideoPlayer {
       position: fixed; top: 60px; right: 20px; width: 400px; min-width: 320px; max-width: 90vw;
       background: #000; border-radius: var(--radius-md); overflow: hidden; z-index: 998;
-      display: none; flex-direction: column; box-shadow: var(--shadow); 
-      border: 1px solid var(--border-color); resize: both; min-height: 200px;
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      display: none; flex-direction: column; box-shadow: var(--shadow); border: 1px solid var(--border-color);
+      resize: both; overflow: auto; touch-action: none;
+      transition: all 0.3s ease;
     }
     #pinnedVideoPlayer.minimized {
-      height: 45px !important; min-height: 45px !important; resize: none;
+      height: 45px !important;
+      min-height: 45px !important;
     }
     .video-header {
       background: var(--bg-secondary); padding: 8px 15px; display: flex;
-      justify-content: space-between; align-items: center; cursor: move; 
-      font-weight: 500; border-bottom: 1px solid var(--border-color);
-      min-height: 40px; gap: 10px; touch-action: none;
+      justify-content: space-between; align-items: center; cursor: move; font-weight: 500;
+      border-bottom: 1px solid var(--border-color); touch-action: none;
+      min-height: 40px;
+      gap: 10px;
     }
-    .video-header-actions { display: flex; gap: 8px; align-items: center; }
+    .video-header-actions {
+      display: flex; gap: 8px; align-items: center;
+    }
     .video-control-btn {
       background: none; border: none; color: var(--text-secondary); cursor: pointer;
       padding: 4px 6px; border-radius: 50%; display: flex; align-items: center;
       transition: var(--transition); font-size: 18px;
     }
     .video-control-btn:hover { 
-      color: var(--accent-color); background: rgba(255,255,255,0.1); 
+      color: var(--accent-color); 
+      background: rgba(255,255,255,0.1); 
     }
-    .video-control-btn.danger:hover { color: var(--danger-color); }
+    .video-control-btn.danger:hover { 
+      color: var(--danger-color); 
+    }
     .video-body { 
       position: relative; width: 100%; background: #000; flex:1; min-height: 200px;
       transition: all 0.3s ease;
@@ -361,24 +246,24 @@
     .video-body.hidden { display: none; }
     .video-status {
       position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-      color: white; text-align: center; z-index: 5; padding: 15px; 
-      background: rgba(0,0,0,0.8); border-radius: var(--radius-sm);
+      color: white; text-align: center; z-index: 5; padding: 15px; background: rgba(0,0,0,0.8);
+      border-radius: var(--radius-sm);
     }
     .video-error { color: var(--danger-color); font-size: 14px; }
     .video-loading { color: var(--accent-color); }
     .video-minimize-bar {
-      display: none; padding: 10px; text-align: center; color: var(--text-secondary);
+      display: none; padding: 6px; text-align: center; color: var(--text-secondary);
       font-size: 12px; background: var(--bg-secondary); 
       border-top: 1px solid var(--border-color); cursor: pointer;
-      transition: var(--transition); align-items: center; justify-content: center; gap: 5px;
+      transition: var(--transition);
     }
-    .video-minimize-bar:hover { background: var(--bg-tertiary); color: var(--accent-color); }
+    .video-minimize-bar:hover { background: var(--bg-tertiary); }
 
     #connectionStatus {
       position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);
       background: var(--bg-secondary); padding: 8px 16px; border-radius: var(--radius-lg);
       border: 1px solid var(--border-color); font-size: 12px; z-index: 999;
-      display: none; box-shadow: var(--shadow); pointer-events: none;
+      display: none; box-shadow: var(--shadow);
     }
     #connectionStatus.visible { display: block; }
     #connectionStatus.offline { border-color: var(--danger-color); color: var(--danger-color); }
@@ -390,31 +275,20 @@
       border: none; border-radius: var(--radius-lg); padding: 10px 18px;
       font-family: inherit; font-weight: 700; cursor: pointer;
       box-shadow: var(--shadow); transition: var(--transition);
-      animation: pulse 2s infinite;
-    }
-    @keyframes pulse {
-      0% { box-shadow: 0 0 0 0 rgba(77, 168, 218, 0.4); }
-      70% { box-shadow: 0 0 0 10px rgba(77, 168, 218, 0); }
-      100% { box-shadow: 0 0 0 0 rgba(77, 168, 218, 0); }
     }
     #restoreVideoBtn:hover { transform: scale(1.05); background: var(--accent-hover); }
 
+    /* RTL fixes for video controls */
+    [dir="rtl"] .video-control-btn svg { transform: scaleX(-1); }
+
     @media (max-width: 600px) {
-      #pinnedVideoPlayer { 
-        width: 95vw; right: 2.5vw; top: 10px; min-width: unset; 
-        max-height: 60vh;
-      }
+      #pinnedVideoPlayer { width: 95vw; right: 2.5vw; top: 10px; min-width: unset; }
       #topButtons .btn span { font-size: 13px; }
       #topButtons .btn { padding: 6px 12px; }
-      .msg { padding: 6px 8px; gap: 6px; }
-      .user-badge { font-size: 12px; padding: 2px 8px; }
-      .delete-btn { opacity: 0.5; }
     }
   </style>
 </head>
 <body>
-
-<div id="toastContainer"></div>
 
 <div id="loginScreen">
   <div id="loginBox">
@@ -427,15 +301,15 @@
 
 <div id="chat-container">
   <div id="topButtons">
-    <button class="btn" id="setVideoBtn">
+    <button class="btn" id="setVideoBtn" aria-label="تثبيت فيديو جديد" role="button">
       <svg viewBox="0 0 24 24"><path d="M17 10.5V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-3.5l4 4V6.5l-4 4Z"/></svg>
       <span>فيديو</span>
     </button>
-    <button class="btn" id="onlineListBtn">
+    <button class="btn" id="onlineListBtn" aria-label="عرض المتصلين" role="button">
       <svg viewBox="0 0 24 24"><circle cx="12" cy="6" r="4"/><path d="M12 14c-6 0-8 3-8 5v1h16v-1c0-2-2-5-8-5Z"/></svg>
       <span id="userCount">0</span>
     </button>
-    <button class="btn" id="restoreVideoBtn" style="display:none;">
+    <button class="btn" id="restoreVideoBtn" style="display:none;" aria-label="استعادة الفيديو المصغر" role="button">
       🎬 عرض الفيديو
     </button>
   </div>
@@ -485,7 +359,6 @@
       this.typingIndicator = document.getElementById('typingIndicator');
       this.connectionStatus = document.getElementById('connectionStatus');
       this.restoreVideoBtn = document.getElementById('restoreVideoBtn');
-      this.toastContainer = document.getElementById('toastContainer');
       
       // State
       this.username = '';
@@ -496,25 +369,39 @@
       this.pinnedVideoRef = null;
       this.typingRef = null;
       this.serverTimeOffset = 0;
-      this.renderedMessages = new Map();
+      this.renderedMessages = new Set();
       this.videoPlayerManager = null;
+      this.timeElements = new Map();
       this.atBottom = true;
       this.isTyping = false;
       this.typingTimeout = null;
+      this.timeObserver = null;
       this.isLoggedIn = false;
       this.messageListeners = [];
       this.isVideoMinimized = false;
-      this.timeUpdateInterval = null;
-      this.deletedMessages = new Set();
+      this.isFirstConnect = true;
+      this.presenceInterval = null;
+      this.cleanupInterval = null;
+      this.connectedRef = null;
+      this.serverTimeRef = null;
+      this.onlineUsersListener = null;
+      this.typingListener = null;
+
+      // Constants
+      this.INACTIVE_THRESHOLD = 120000; // 2 minutes
+      this.IDLE_THRESHOLD = 60000; // 1 minute
+      this.TYPING_TIMEOUT = 3000; // 3 seconds
 
       // Initialize
       this.initFirebase();
       this.initEventListeners();
-      this.startTimeUpdater();
+      this.initTimeObserver();
       this.monitorConnection();
+
+      // Start authentication
       this.initAuth();
 
-      // Restore video button - تأكد من عمله
+      // Restore video button
       this.restoreVideoBtn.onclick = () => this.restoreMinimizedVideo();
     }
 
@@ -536,7 +423,7 @@
         this.db = firebase.database();
         this.auth = firebase.auth();
       } catch(e) {
-        this.showToast('❌ خطأ في الاتصال بقاعدة البيانات', 'error');
+        this.showLoginStatus('❌ خطأ في الاتصال بقاعدة البيانات', 'error');
         console.error('Firebase init error:', e);
       }
     }
@@ -569,20 +456,6 @@
                                     'var(--text-secondary)';
     }
 
-    showToast(message, type = 'info') {
-      const toast = document.createElement('div');
-      toast.className = `toast-notification ${type}`;
-      toast.textContent = message;
-      this.toastContainer.appendChild(toast);
-      
-      // إزالة الإشعار بعد 3 ثواني
-      setTimeout(() => {
-        if (toast.parentNode) {
-          toast.remove();
-        }
-      }, 3000);
-    }
-
     initEventListeners() {
       this.loginBtn.onclick = () => this.attemptLogin();
       this.usernameInput.onkeypress = (e) => { if (e.key === 'Enter') this.attemptLogin(); };
@@ -590,43 +463,33 @@
       this.setVideoBtn.onclick = () => this.showSetVideoModal();
       
       document.getElementById('inputArea').addEventListener('submit', (e) => this.sendMessage(e));
-      
       this.messagesDiv.addEventListener('scroll', () => {
         const threshold = 50;
         this.atBottom = (this.messagesDiv.scrollHeight - this.messagesDiv.scrollTop - this.messagesDiv.clientHeight) < threshold;
       });
 
-      this.messageInput.addEventListener('input', this.debounce(() => this.handleTyping(), 300));
+      // Typing indicator
+      this.messageInput.addEventListener('input', () => this.handleTyping());
       this.messageInput.addEventListener('blur', () => this.clearTyping());
-    }
-
-    debounce(func, wait) {
-      let timeout;
-      return (...args) => {
-        clearTimeout(timeout);
-        timeout = setTimeout(() => func.apply(this, args), wait);
-      };
     }
 
     attemptLogin() {
       if (this.isLoggedIn || this.loginBtn.disabled) return;
       
       const name = this.usernameInput.value.trim();
-      if (/[.#$\[\]]/.test(name)) {
-        this.showToast('⚠️ الرجاء عدم استخدام رموز خاصة', 'error');
+      
+      // ✅ FIX: Added / to forbidden characters
+      if (/[.#$\[\]\/]/.test(name)) {
+        this.showLoginStatus('⚠️ الرجاء عدم استخدام رموز خاصة: . # $ [ ] /', 'error');
         return;
       }
       if (name.length < 2) {
-        this.showToast('⚠️ الاسم قصير جداً (أقل من حرفين)', 'error');
+        this.showLoginStatus('⚠️ الاسم قصير جداً (أقل من حرفين)', 'error');
         return;
       }
       if (name.length > 15) {
-        this.showToast('⚠️ الاسم طويل جداً (أكثر من 15 حرف)', 'error');
+        this.showLoginStatus('⚠️ الاسم طويل جداً (أكثر من 15 حرف)', 'error');
         return;
-      }
-
-      if (this.isLoggedIn) {
-        this.dispose();
       }
 
       this.username = name;
@@ -645,14 +508,17 @@
       this.chatContainer.classList.add('visible');
       setTimeout(() => this.chatContainer.style.opacity = '1', 50);
 
+      // Enable inputs
       this.messageInput.disabled = false;
       this.sendBtn.disabled = false;
-      this.messageInput.focus();
 
-      this.db.ref('.info/serverTimeOffset').on('value', snap => {
+      // ✅ FIX: Store server time offset reference for cleanup
+      this.serverTimeRef = this.db.ref('.info/serverTimeOffset');
+      this.serverTimeRef.on('value', snap => {
         this.serverTimeOffset = snap.val() || 0;
       });
 
+      // Presence - store username immediately
       this.userRef.set({ 
         username: this.username,
         lastActive: firebase.database.ServerValue.TIMESTAMP,
@@ -660,6 +526,7 @@
       });
       this.userRef.onDisconnect().remove();
       
+      // Keep alive
       this.presenceInterval = setInterval(() => {
         if (this.isLoggedIn) {
           this.userRef.update({ 
@@ -668,62 +535,53 @@
         }
       }, 30000);
 
+      // Clean inactive users
       this.cleanupInterval = setInterval(() => this.cleanInactiveUsers(), 60000);
 
+      // Typing cleanup on disconnect
       this.typingRef.child(this.uid).onDisconnect().remove();
 
+      // Messages
+      const messagesListener = this.messagesRef.orderByChild('timestamp').limitToLast(100);
       this.messageListeners.push(
-        this.messagesRef.orderByChild('timestamp').limitToLast(200).on("child_added", snap => {
-          const key = snap.key;
-          if (this.renderedMessages.has(key)) return;
-          
-          const data = snap.val();
-          if (data.deleted) {
-            this.showDeletedMessage(key);
-            return;
-          }
-          
-          this.renderedMessages.set(key, data);
-          this.addMessageToUI(key, data);
-          this.updateTimeDividers();
-        })
-      );
-
-      this.messageListeners.push(
-        this.messagesRef.on("child_changed", snap => {
-          const key = snap.key;
-          const data = snap.val();
-          
-          if (data.deleted) {
-            this.removeMessageFromUI(key);
-            this.showDeletedMessage(key);
-            this.renderedMessages.delete(key);
-          }
+        messagesListener.on("child_added", snap => {
+          if (this.renderedMessages.has(snap.key)) return;
+          this.renderedMessages.add(snap.key);
+          this.addMessageToUI(snap.key, snap.val());
         })
       );
 
       this.messageListeners.push(
         this.messagesRef.on("child_removed", snap => {
-          const key = snap.key;
-          this.removeMessageFromUI(key);
-          this.renderedMessages.delete(key);
+          this.renderedMessages.delete(snap.key);
+          this.timeElements.delete(snap.key);
+          const el = document.getElementById(`msg-${snap.key}`);
+          if (el) {
+            el.style.transition = 'opacity 0.3s, transform 0.3s';
+            el.style.opacity = '0';
+            el.style.transform = 'scale(0.9)';
+            setTimeout(() => el.remove(), 300);
+          }
         })
       );
 
-      this.onlineRef.on("value", snap => {
+      // ✅ FIX: Store online users listener reference for cleanup
+      this.onlineUsersListener = this.onlineRef.on("value", snap => {
         const count = snap.numChildren();
         this.userCountSpan.textContent = count;
       });
 
+      // Pinned video
       this.pinnedVideoRef.on("value", snap => {
         this.handlePinnedVideo(snap.val());
       });
 
-      this.typingRef.on('value', snap => {
+      // ✅ FIX: Store typing listener reference for cleanup
+      this.typingListener = this.typingRef.on('value', snap => {
         this.handleTypingUpdate(snap.val());
       });
 
-      this.showToast(`👋 مرحباً ${this.escapeHtml(this.username)}!`, 'success');
+      this.addSystemMessage(`👋 مرحباً ${this.escapeHtml(this.username)}!`);
     }
 
     cleanInactiveUsers() {
@@ -731,8 +589,11 @@
       const now = Date.now() + this.serverTimeOffset;
       this.onlineRef.once('value', snap => {
         snap.forEach(child => {
+          // ✅ FIX: Don't delete current user
+          if (child.key === this.uid) return;
+          
           const data = child.val();
-          if (now - (data.lastActive || 0) > 120000) {
+          if (now - (data.lastActive || 0) > this.INACTIVE_THRESHOLD) {
             child.ref.remove();
           }
         });
@@ -740,250 +601,85 @@
     }
 
     addMessageToUI(key, data) {
-      if (!data || data.deleted) return;
-      
-      const user = this.sanitizeString(data.user || 'مجهول');
-      const text = this.sanitizeString(data.text || '');
+      // Sanitize data
+      const user = this.escapeHtml(data.user || 'مجهول');
+      const text = this.escapeHtml(data.text || '');
       const timestamp = data.timestamp || null;
       const uid = data.uid || null;
       
-      const wrapper = document.createElement("div");
-      wrapper.className = "message-wrapper";
-      wrapper.id = `msg-wrapper-${key}`;
-      wrapper.dataset.timestamp = timestamp || '0';
+      const div = document.createElement("div");
+      div.className = "msg";
+      div.id = `msg-${key}`;
       
-      const msgDiv = document.createElement("div");
-      msgDiv.className = "msg";
+      const isMe = uid === this.uid;
+      div.innerHTML = `
+        <span class="user-badge">${user}</span>
+        <span class="msg-text">${text}</span>
+        <span class="msg-time" data-timestamp="${timestamp || ''}"></span>
+      `;
       
-      const badge = document.createElement("span");
-      badge.className = "user-badge";
-      badge.textContent = user;
+      const timeSpan = div.querySelector('.msg-time');
       
-      const textSpan = document.createElement("span");
-      textSpan.className = "msg-text";
-      textSpan.textContent = text;
-      
-      const timeSpan = document.createElement("span");
-      timeSpan.className = "msg-time";
-      timeSpan.dataset.timestamp = timestamp || '';
-      timeSpan.dataset.msgKey = key;
+      // ✅ FIX: Set data-msg-key for IntersectionObserver
       if (timestamp) {
-        this.updateTimeDisplay(timeSpan, timestamp);
+        timeSpan.dataset.msgKey = key;
+        this.updateRelativeTime(timestamp, timeSpan);
+        this.timeElements.set(key, { el: timeSpan, timestamp });
+        if (this.timeObserver) {
+          this.timeObserver.observe(timeSpan);
+        }
       }
-      
-      msgDiv.appendChild(badge);
-      msgDiv.appendChild(textSpan);
-      msgDiv.appendChild(timeSpan);
-      wrapper.appendChild(msgDiv);
-      
-      // زر الحذف - يظهر فقط لصاحب الرسالة
-      if (uid === this.uid) {
-        const deleteBtn = document.createElement("button");
-        deleteBtn.className = "delete-btn";
-        deleteBtn.innerHTML = icons.trash;
-        deleteBtn.title = "حذف الرسالة";
-        deleteBtn.onclick = (e) => {
-          e.stopPropagation();
-          this.confirmDeleteMessage(key);
+
+      // Delete button - only for messages from this user
+      if (isMe) {
+        const del = document.createElement("button");
+        del.className = "delete-btn";
+        del.innerHTML = icons.trash;
+        del.title = "حذف";
+        del.setAttribute('aria-label', 'حذف الرسالة');
+        del.onclick = () => {
+          this.showConfirmModal('حذف الرسالة؟', () => {
+            this.messagesRef.child(key).remove();
+          });
         };
-        wrapper.appendChild(deleteBtn);
+        div.appendChild(del);
       }
-      
-      this.messagesDiv.appendChild(wrapper);
-      
+
+      this.messagesDiv.appendChild(div);
       if (this.atBottom) this.scrollToBottom();
     }
 
-    confirmDeleteMessage(key) {
-      const overlay = document.createElement('div');
-      overlay.className = 'delete-confirm-overlay';
-      
-      const box = document.createElement('div');
-      box.className = 'delete-confirm-box';
-      box.innerHTML = `
-        <h4 style="color: var(--text-primary); margin-bottom: 10px;">🗑️ حذف الرسالة</h4>
-        <p style="color: var(--text-secondary);">هل أنت متأكد من حذف هذه الرسالة؟</p>
-        <p style="color: var(--danger-color); font-size: 12px; margin-top: 5px;">سيتم حذفها للجميع ولا يمكن التراجع</p>
-        <div class="delete-confirm-buttons">
-          <button class="cancel-delete-btn">إلغاء</button>
-          <button class="confirm-delete-btn">حذف</button>
-        </div>
-      `;
-      
-      overlay.appendChild(box);
-      document.body.appendChild(overlay);
-      
-      box.querySelector('.cancel-delete-btn').onclick = () => overlay.remove();
-      box.querySelector('.confirm-delete-btn').onclick = () => {
-        this.deleteMessage(key);
-        overlay.remove();
-      };
-      
-      overlay.onclick = (e) => {
-        if (e.target === overlay) overlay.remove();
-      };
+    updateRelativeTime(timestamp, el) {
+      if (!timestamp || !el) return;
+      const diff = Math.max(0, Math.floor((Date.now() + this.serverTimeOffset - timestamp) / 1000));
+      let txt = "الآن";
+      if (diff < 60) txt = `${diff} ث`;
+      else if (diff < 3600) txt = `منذ ${Math.floor(diff/60)} د`;
+      else if (diff < 86400) txt = `منذ ${Math.floor(diff/3600)} س`;
+      else txt = `منذ ${Math.floor(diff/86400)} ي`;
+      el.textContent = txt;
     }
 
-    deleteMessage(key) {
-      this.messagesRef.child(key).update({
-        deleted: true,
-        deletedAt: firebase.database.ServerValue.TIMESTAMP,
-        deletedBy: this.username
-      }).then(() => {
-        this.showToast('🗑️ تم حذف الرسالة', 'info');
-      }).catch(err => {
-        console.error('Delete error:', err);
-        this.messagesRef.child(key).remove();
-      });
-    }
-
-    removeMessageFromUI(key) {
-      const wrapper = document.getElementById(`msg-wrapper-${key}`);
-      if (wrapper) {
-        wrapper.style.transition = 'all 0.3s ease';
-        wrapper.style.opacity = '0';
-        wrapper.style.transform = 'scale(0.95)';
-        wrapper.style.maxHeight = wrapper.offsetHeight + 'px';
-        
-        setTimeout(() => {
-          wrapper.style.maxHeight = '0';
-          wrapper.style.margin = '0';
-          wrapper.style.padding = '0';
-          wrapper.style.overflow = 'hidden';
-        }, 150);
-        
-        setTimeout(() => {
-          wrapper.remove();
-          this.updateTimeDividers();
-        }, 450);
-      }
-    }
-
-    showDeletedMessage(key) {
-      if (this.deletedMessages.has(key)) return;
-      this.deletedMessages.add(key);
-      
-      const wrapper = document.createElement("div");
-      wrapper.className = "deleted-msg";
-      wrapper.id = `deleted-${key}`;
-      wrapper.textContent = '🗑️ تم حذف هذه الرسالة';
-      
-      const deletedData = this.renderedMessages.get(key);
-      if (deletedData) {
-        const timestamp = deletedData.timestamp || 0;
-        let inserted = false;
-        
-        const children = [...this.messagesDiv.children];
-        for (let child of children) {
-          const childTimestamp = parseInt(child.dataset?.timestamp || '0');
-          if (childTimestamp > timestamp) {
-            this.messagesDiv.insertBefore(wrapper, child);
-            inserted = true;
-            break;
-          }
-        }
-        
-        if (!inserted) {
-          this.messagesDiv.appendChild(wrapper);
-        }
-      }
-      
-      setTimeout(() => {
-        wrapper.style.opacity = '1';
-      }, 100);
-    }
-
-    updateTimeDisplay(el, timestamp) {
-      if (!timestamp) {
-        el.textContent = '';
-        return;
-      }
-      
-      const now = Date.now() + this.serverTimeOffset;
-      const diff = Math.max(0, Math.floor((now - timestamp) / 1000));
-      const date = new Date(timestamp);
-      
-      let timeStr;
-      if (diff < 60) {
-        timeStr = 'الآن';
-      } else if (diff < 3600) {
-        timeStr = `منذ ${Math.floor(diff / 60)} دقيقة`;
-      } else if (diff < 86400) {
-        timeStr = `منذ ${Math.floor(diff / 3600)} ساعة`;
-      } else if (diff < 604800) {
-        timeStr = `منذ ${Math.floor(diff / 86400)} يوم`;
-      } else {
-        timeStr = date.toLocaleDateString('ar-LY', { 
-          year: 'numeric', 
-          month: 'short', 
-          day: 'numeric' 
-        });
-      }
-      
-      el.textContent = timeStr;
-      el.title = date.toLocaleString('ar-LY', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-      });
-    }
-
-    startTimeUpdater() {
-      this.timeUpdateInterval = setInterval(() => {
-        document.querySelectorAll('.msg-time').forEach(el => {
-          const timestamp = parseInt(el.dataset.timestamp);
-          if (timestamp) {
-            this.updateTimeDisplay(el, timestamp);
+    initTimeObserver() {
+      this.timeObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            const key = entry.target.dataset.msgKey;
+            if (key && this.timeElements.has(key)) {
+              const data = this.timeElements.get(key);
+              this.updateRelativeTime(data.timestamp, data.el);
+            }
           }
         });
-      }, 30000);
+      }, { threshold: 0.1 });
     }
 
-    updateTimeDividers() {
-      document.querySelectorAll('.time-divider').forEach(d => d.remove());
-      
-      const wrappers = [...document.querySelectorAll('.message-wrapper')];
-      if (wrappers.length === 0) return;
-      
-      let lastDate = null;
-      
-      wrappers.forEach(wrapper => {
-        const timestamp = parseInt(wrapper.dataset.timestamp || '0');
-        if (!timestamp) return;
-        
-        const date = new Date(timestamp);
-        const dateStr = date.toDateString();
-        
-        if (dateStr !== lastDate) {
-          lastDate = dateStr;
-          
-          const divider = document.createElement('div');
-          divider.className = 'time-divider';
-          
-          const today = new Date();
-          const yesterday = new Date(today);
-          yesterday.setDate(yesterday.getDate() - 1);
-          
-          let dateLabel;
-          if (dateStr === today.toDateString()) {
-            dateLabel = 'اليوم';
-          } else if (dateStr === yesterday.toDateString()) {
-            dateLabel = 'الأمس';
-          } else {
-            dateLabel = date.toLocaleDateString('ar-LY', {
-              weekday: 'long',
-              year: 'numeric',
-              month: 'long',
-              day: 'numeric'
-            });
-          }
-          
-          divider.innerHTML = `<span>${dateLabel}</span>`;
-          this.messagesDiv.insertBefore(divider, wrapper);
-        }
-      });
+    addSystemMessage(text) {
+      const div = document.createElement("div");
+      div.className = "sys-msg";
+      div.textContent = text;
+      this.messagesDiv.appendChild(div);
+      if (this.atBottom) this.scrollToBottom();
     }
 
     sendMessage(e) {
@@ -993,6 +689,12 @@
       const text = this.messageInput.value.trim();
       if (!text) return;
       
+      // ✅ FIX: Extra validation for length
+      if (text.length > 500) {
+        this.addSystemMessage('⚠️ الرسالة طويلة جداً (الحد 500 حرف)');
+        return;
+      }
+      
       this.sendBtn.disabled = true;
       setTimeout(() => { this.sendBtn.disabled = false; }, 1000);
 
@@ -1000,8 +702,11 @@
         user: this.username,
         text: text,
         timestamp: firebase.database.ServerValue.TIMESTAMP,
-        uid: this.uid,
-        deleted: false
+        uid: this.uid
+      }).catch(err => {
+        console.error('Send message error:', err);
+        this.addSystemMessage('❌ فشل إرسال الرسالة');
+        this.sendBtn.disabled = false;
       });
       
       this.messageInput.value = "";
@@ -1018,7 +723,7 @@
         this.isTyping = true;
         this.typingRef.child(this.uid).set(this.username);
         clearTimeout(this.typingTimeout);
-        this.typingTimeout = setTimeout(() => this.clearTyping(), 3000);
+        this.typingTimeout = setTimeout(() => this.clearTyping(), this.TYPING_TIMEOUT);
       } else if (text.length === 0) {
         this.clearTyping();
       }
@@ -1058,8 +763,12 @@
     }
 
     monitorConnection() {
-      const connectedRef = this.db.ref('.info/connected');
-      connectedRef.on('value', (snap) => {
+      this.connectedRef = this.db.ref('.info/connected');
+      
+      // ✅ FIX: Reset first connect flag when page loads
+      this.isFirstConnect = true;
+      
+      this.connectedRef.on('value', (snap) => {
         const isConnected = snap.val() === true;
         this.connectionStatus.textContent = isConnected ? '🟢 متصل' : '🔴 غير متصل';
         this.connectionStatus.className = 'visible ' + (isConnected ? 'online' : 'offline');
@@ -1068,10 +777,19 @@
           setTimeout(() => {
             this.connectionStatus.classList.remove('visible');
           }, 3000);
+          
+          // ✅ FIX: Don't show "restored" on first connection
+          if (!this.isFirstConnect && this.isLoggedIn) {
+            this.addSystemMessage('🟢 تم استعادة الاتصال بالخادم');
+          }
+          this.isFirstConnect = false;
+        } else if (!isConnected) {
+          this.addSystemMessage('🔴 انقطع الاتصال... جاري المحاولة');
         }
       });
     }
 
+    // ==================== Modal Functions ====================
     showModal(title, content) {
       const overlay = document.createElement('div');
       overlay.className = 'modal-overlay';
@@ -1079,33 +797,101 @@
       box.className = 'modal-box';
       box.innerHTML = `<h4>${title}</h4>${content}`;
       overlay.appendChild(box);
-      overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
+      overlay.onclick = (e) => { if (e.target === overlay) this.closeModal(overlay); };
       this.modalContainer.appendChild(overlay);
+      
+      // ✅ FIX: Focus management
+      const firstInput = box.querySelector('input, button');
+      if (firstInput) setTimeout(() => firstInput.focus(), 100);
+      
+      // ✅ FIX: Keyboard navigation - Escape to close
+      const handleKeydown = (e) => {
+        if (e.key === 'Escape') {
+          this.closeModal(overlay);
+          document.removeEventListener('keydown', handleKeydown);
+        }
+      };
+      document.addEventListener('keydown', handleKeydown);
+      overlay._keydownHandler = handleKeydown;
+      
       return { overlay, box };
     }
 
+    closeModal(overlay) {
+      if (overlay._keydownHandler) {
+        document.removeEventListener('keydown', overlay._keydownHandler);
+      }
+      overlay.remove();
+    }
+
+    showConfirmModal(message, onConfirm) {
+      const content = `
+        <p style="text-align:center;margin-bottom:20px;font-size:16px;">${message}</p>
+        <div style="display:flex;gap:10px;">
+          <button id="confirmYes" style="flex:1;background:var(--danger-color);">نعم</button>
+          <button id="confirmNo" style="flex:1;background:var(--bg-tertiary);">إلغاء</button>
+        </div>
+      `;
+      const { overlay, box } = this.showModal('تأكيد', content);
+      
+      box.querySelector('#confirmYes').onclick = () => {
+        this.closeModal(overlay);
+        onConfirm();
+      };
+      box.querySelector('#confirmNo').onclick = () => {
+        this.closeModal(overlay);
+      };
+    }
+
     showOnlineUsersModal() {
-      this.onlineRef.once("value", snap => {
+      // ✅ FIX: Use real-time listener for online users
+      const { overlay } = this.showModal('👥 المتصلون الآن', '<div id="usersList"><p style="text-align:center;color:var(--text-secondary);">جاري التحميل...</p></div>');
+      
+      const usersList = overlay.querySelector('#usersList');
+      const listener = this.onlineRef.on('value', snap => {
         const users = snap.val() || {};
         const now = Date.now() + this.serverTimeOffset;
         const arr = Object.entries(users).sort((a,b) => (b[1].lastActive||0) - (a[1].lastActive||0));
         let list = '';
         arr.forEach(([key, data]) => {
-          const name = this.sanitizeString(data.username || 'مجهول');
+          const name = this.escapeHtml(data.username || 'مجهول');
           const diff = now - (data.lastActive||0);
-          let cls = 'status-online', txt = 'متصل الآن';
-          if (diff > 120000) { cls = 'status-offline'; txt = 'غير متصل'; }
-          else if (diff > 60000) { cls = 'status-idle'; txt = 'خامل'; }
-          const isYou = key === this.uid ? ' (أنت)' : '';
-          list += `
-            <div class="user-item">
-              <span class="status-dot ${cls}"></span>
-              <span>${name}${isYou}</span>
-              <span style="margin-right:auto;font-size:12px;color:var(--text-secondary)">${txt}</span>
-            </div>`;
+          let cls = 'status-online', txt = 'متصل';
+          if (diff > this.INACTIVE_THRESHOLD) { cls = 'status-offline'; txt = 'غير متصل'; }
+          else if (diff > this.IDLE_THRESHOLD) { cls = 'status-idle'; txt = 'خامل'; }
+          list += `<div class="user-item"><span class="status-dot ${cls}"></span><span>${name}</span><span style="margin-right:auto;font-size:12px;color:var(--text-secondary)">${txt}</span></div>`;
         });
-        this.showModal('👥 المتصلون الآن', `<div id="usersList">${list || '<p>لا يوجد متصلون</p>'}</div>`);
+        usersList.innerHTML = list || '<p style="text-align:center;color:var(--text-secondary);">لا يوجد متصلون</p>';
       });
+      
+      // Clean up listener when modal closes
+      const originalClose = this.closeModal.bind(this);
+      this.closeModal = (modal) => {
+        if (modal === overlay) {
+          this.onlineRef.off('value', listener);
+        }
+        originalClose(modal);
+      };
+      
+      // Restore closeModal after
+      overlay._closeModal = () => {
+        this.onlineRef.off('value', listener);
+        originalClose(overlay);
+      };
+      
+      // Override close for this modal
+      const cleanupListener = () => {
+        this.onlineRef.off('value', listener);
+      };
+      overlay._cleanup = cleanupListener;
+      
+      // When overlay is clicked to close
+      overlay.onclick = (e) => {
+        if (e.target === overlay) {
+          cleanupListener();
+          this.closeModal(overlay);
+        }
+      };
     }
 
     showSetVideoModal() {
@@ -1117,25 +903,54 @@
       const { overlay, box } = this.showModal('📺 تثبيت فيديو', content);
       const btn = box.querySelector('#submitVideoBtn');
       const inp = box.querySelector('#videoUrlInput');
+      
       btn.onclick = () => {
         const url = inp.value.trim();
-        if (!url) return alert("أدخل رابطاً");
-        const data = this.parseVideoUrl(url);
-        if (data) {
-          data.setBy = this.username;
-          data.uid = this.uid;
-          this.pinnedVideoRef.set(data);
-          overlay.remove();
-          this.showToast(`🎬 ${this.escapeHtml(this.username)} ثبت فيديو`, 'info');
-        } else {
-          alert("الرابط غير مدعوم. جرب: YouTube, Twitter, HLS, أو MP4 مباشر");
+        if (!url) {
+          this.showToast('⚠️ أدخل رابطاً');
+          return;
         }
+        this.validateAndSetVideo(url, overlay);
       };
+      
       inp.onkeypress = e => { if (e.key === 'Enter') btn.click(); };
     }
 
-    parseVideoUrl(url) {
+    async validateAndSetVideo(url, overlay) {
+      const data = await this.parseVideoUrl(url);
+      if (data) {
+        data.setBy = this.username;
+        data.uid = this.uid;
+        this.pinnedVideoRef.set(data);
+        this.closeModal(overlay);
+        this.addSystemMessage(`🎬 ${this.escapeHtml(this.username)} ثبت فيديو`);
+      } else {
+        this.showToast('⚠️ الرابط غير مدعوم. جرب: YouTube, Twitter, HLS, أو MP4 مباشر');
+      }
+    }
+
+    showToast(message) {
+      const toast = document.createElement('div');
+      toast.style.cssText = `
+        position: fixed; bottom: 120px; left: 50%; transform: translateX(-50%);
+        background: var(--bg-secondary); color: var(--text-primary);
+        padding: 12px 24px; border-radius: var(--radius-lg);
+        border: 1px solid var(--border-color); z-index: 10000;
+        font-family: 'Tajawal', sans-serif; font-size: 14px;
+        box-shadow: var(--shadow); animation: fadeIn 0.3s ease;
+      `;
+      toast.textContent = message;
+      document.body.appendChild(toast);
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transition = 'opacity 0.3s';
+        setTimeout(() => toast.remove(), 300);
+      }, 3000);
+    }
+
+    async parseVideoUrl(url) {
       url = url.trim();
+      
       // YouTube
       const ytMatch = url.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
       if (ytMatch) return { type: 'youtube', id: ytMatch[1] };
@@ -1144,23 +959,42 @@
       const twMatch = url.match(/(?:twitter\.com|x\.com)\/\w+\/status\/(\d+)/);
       if (twMatch) return { type: 'twitter', id: twMatch[1] };
       
-      // HLS streams
-      if (/\.m3u8(\?.*)?$/i.test(url) || url.includes('/hls/') || url.includes('m3u8') || 
-          url.includes('master') || url.includes('playlist') || url.includes('token') || url.includes('live')) {
-        return { type: 'hls', src: url };
-      }
-      
       // Direct video files
-      if (/\.(mp4|webm|ogv|mov|mkv|avi)(\?.*)?$/i.test(url)) {
-        return { type: 'direct', src: url };
+      if (/\.(mp4|webm|ogv|mov)(\?.*)?$/i.test(url)) return { type: 'direct', src: url };
+      
+      // ✅ FIX: Validate HLS before accepting
+      if (url.includes('.m3u8') || url.includes('/hls/') || url.includes('m3u8')) {
+        const isValid = await this.validateHLS(url);
+        if (isValid) return { type: 'hls', src: url };
       }
       
-      // If URL contains video-related keywords, try as HLS
-      if (url.includes('video') || url.includes('stream') || url.includes('media')) {
-        return { type: 'hls', src: url };
+      // ✅ FIX: More specific HLS detection with validation
+      if (url.includes('master') || url.includes('playlist') || url.includes('live') || url.includes('token')) {
+        const isValid = await this.validateHLS(url);
+        if (isValid) return { type: 'hls', src: url };
       }
       
       return null;
+    }
+
+    async validateHLS(url) {
+      try {
+        const r = await fetch(url, { method: 'HEAD' });
+        const ct = r.headers.get('content-type') || '';
+        return ct.includes('mpegurl') || 
+               ct.includes('application/vnd.apple.mpegurl') ||
+               ct.includes('octet-stream') ||
+               ct.includes('vnd.apple.mpegurl');
+      } catch {
+        // If HEAD fails, try GET with small range
+        try {
+          const r = await fetch(url, { headers: { 'Range': 'bytes=0-1024' } });
+          const text = await r.text();
+          return text.includes('#EXTM3U') || text.includes('#EXT-X');
+        } catch {
+          return false;
+        }
+      }
     }
 
     handlePinnedVideo(data) {
@@ -1170,25 +1004,31 @@
       }
       this.pinnedVideoContainer.innerHTML = '';
       this.isVideoMinimized = false;
-      this.restoreVideoBtn.style.display = 'none';
       
+      // ✅ FIX: Only show restore button if there's a video
       if (!data) {
         this.pinnedVideoContainer.style.display = 'none';
+        this.restoreVideoBtn.style.display = 'none';
         return;
       }
       
       this.pinnedVideoContainer.style.display = 'flex';
       this.pinnedVideoContainer.classList.remove('minimized');
       
+      // ✅ FIX: Don't show restore button for everyone, only when minimized
+      this.restoreVideoBtn.style.display = 'none';
+      
       this.videoPlayerManager = new UniversalPlayer(
         this.pinnedVideoContainer, 
         data, 
         this.uid,
-        (action) => {
+        (action, payload) => {
           if (action === 'close' && data.uid === this.uid) {
-            this.pinnedVideoRef.remove();
-            this.showToast('🗑️ تم إزالة الفيديو', 'info');
-            this.restoreVideoBtn.style.display = 'none';
+            this.showConfirmModal('🗑️ حذف الفيديو للجميع؟', () => {
+              this.pinnedVideoRef.remove();
+              this.addSystemMessage('🗑️ تم إزالة الفيديو');
+              this.restoreVideoBtn.style.display = 'none';
+            });
           } else if (action === 'minimize') {
             this.minimizeVideo();
           } else if (action === 'restore') {
@@ -1202,7 +1042,7 @@
       this.isVideoMinimized = true;
       this.pinnedVideoContainer.classList.add('minimized');
       this.restoreVideoBtn.style.display = 'flex';
-      this.showToast('📹 تم تصغير الفيديو - اضغط على الزر للعرض', 'info');
+      this.addSystemMessage('📹 تم تصغير الفيديو');
     }
 
     restoreVideo() {
@@ -1224,25 +1064,25 @@
       });
     }
 
-    sanitizeString(str) {
-      if (typeof str !== 'string') return '';
-      const div = document.createElement('div');
-      div.textContent = str;
-      return div.innerHTML;
-    }
-
     escapeHtml(text) {
-      return this.sanitizeString(text);
+      if (!text) return '';
+      const d = document.createElement('div');
+      d.textContent = text;
+      return d.innerHTML;
     }
 
     dispose() {
       this.isLoggedIn = false;
       
+      // Clean up message listeners
       this.messageListeners.forEach(listener => {
-        if (typeof listener === 'function') listener();
+        if (listener && typeof listener.off === 'function') {
+          listener.off();
+        }
       });
       this.messageListeners = [];
       
+      // Clean up intervals
       if (this.presenceInterval) {
         clearInterval(this.presenceInterval);
         this.presenceInterval = null;
@@ -1255,9 +1095,39 @@
         clearTimeout(this.typingTimeout);
         this.typingTimeout = null;
       }
-      if (this.timeUpdateInterval) {
-        clearInterval(this.timeUpdateInterval);
-        this.timeUpdateInterval = null;
+      
+      // ✅ FIX: Clean up all listeners
+      if (this.timeObserver) {
+        this.timeObserver.disconnect();
+        this.timeObserver = null;
+      }
+      
+      if (this.serverTimeRef) {
+        this.serverTimeRef.off();
+        this.serverTimeRef = null;
+      }
+      
+      if (this.connectedRef) {
+        this.connectedRef.off();
+        this.connectedRef = null;
+      }
+      
+      if (this.typingRef) {
+        this.typingRef.off();
+        if (this.uid) {
+          this.typingRef.child(this.uid).remove();
+        }
+        this.typingRef = null;
+      }
+      
+      if (this.onlineRef && this.onlineUsersListener) {
+        this.onlineRef.off('value', this.onlineUsersListener);
+        this.onlineUsersListener = null;
+      }
+      
+      if (this.pinnedVideoRef) {
+        this.pinnedVideoRef.off();
+        this.pinnedVideoRef = null;
       }
       
       if (this.userRef) {
@@ -1265,20 +1135,17 @@
         this.userRef = null;
       }
       
-      if (this.typingRef) {
-        this.typingRef.child(this.uid).remove();
-      }
-      
-      this.renderedMessages.clear();
-      this.deletedMessages.clear();
-      this.messagesDiv.innerHTML = '';
-      
+      // Clean up video player
       if (this.videoPlayerManager) {
         this.videoPlayerManager.dispose();
         this.videoPlayerManager = null;
       }
-      this.pinnedVideoContainer.innerHTML = '';
-      this.pinnedVideoContainer.style.display = 'none';
+      
+      // Clear data
+      this.renderedMessages.clear();
+      this.timeElements.clear();
+      
+      console.log('ChatApp disposed successfully');
     }
   }
 
@@ -1302,32 +1169,31 @@
         <div class="video-header">
           <span style="font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">🎬 ${this.escapeHtml(this.data.setBy || '')}</span>
           <div class="video-header-actions">
-            <button class="video-control-btn minimize-btn" title="تصغير">
+            <button class="video-control-btn minimize-btn" title="تصغير" aria-label="تصغير الفيديو">
               ${icons.minimize}
             </button>
-            ${isOwner ? `<button class="video-control-btn danger close-btn" title="حذف الفيديو للجميع">${icons.close}</button>` : ''}
+            ${isOwner ? `<button class="video-control-btn danger close-btn" title="حذف الفيديو للجميع" aria-label="حذف الفيديو">${icons.close}</button>` : ''}
           </div>
         </div>
         <div class="video-body" id="videoBody">
           <div class="video-status video-loading">⏳ جاري التحميل...</div>
         </div>
         <div class="video-minimize-bar" id="minimizeBar">
-          ⬆ اضغط للتكبير ${icons.maximize}
+          ⬆ اضغط للتكبير
         </div>
       `;
 
+      // Event listeners for buttons
       const minimizeBtn = this.container.querySelector('.minimize-btn');
       minimizeBtn.onclick = () => {
         this.toggleMinimize();
-        this.onAction(this.isMinimized ? 'minimize' : 'restore');
+        this.onAction('minimize');
       };
 
       const closeBtn = this.container.querySelector('.close-btn');
       if (closeBtn) {
         closeBtn.onclick = () => {
-          if (confirm('هل أنت متأكد من حذف الفيديو للجميع؟')) {
-            this.onAction('close');
-          }
+          this.onAction('close');
         };
       }
 
@@ -1344,22 +1210,17 @@
       this.isMinimized = !this.isMinimized;
       const body = this.container.querySelector('.video-body');
       const bar = this.container.querySelector('#minimizeBar');
-      const minBtn = this.container.querySelector('.minimize-btn');
       
       if (this.isMinimized) {
         body.classList.add('hidden');
-        bar.style.display = 'flex';
+        bar.style.display = 'block';
         this.container.style.minHeight = '45px';
         this.container.style.height = '45px';
-        if (minBtn) minBtn.innerHTML = icons.maximize;
-        if (minBtn) minBtn.title = 'تكبير';
       } else {
         body.classList.remove('hidden');
         bar.style.display = 'none';
         this.container.style.minHeight = '';
         this.container.style.height = '';
-        if (minBtn) minBtn.innerHTML = icons.minimize;
-        if (minBtn) minBtn.title = 'تصغير';
         this.restoreFromMinimize();
       }
     }
@@ -1384,7 +1245,7 @@
         } else if (this.data.type === 'twitter') {
           this.loadTwitter(body);
         } else {
-          this.loadVideo(body, this.data.src);
+          await this.loadVideo(body, this.data.src);
         }
       } catch (e) {
         console.error('Video load error:', e);
@@ -1400,137 +1261,85 @@
       body.innerHTML = `<iframe src="https://twitframe.com/show?url=https://twitter.com/i/status/${this.data.id}" style="position:absolute;top:0;left:0;width:100%;height:100%;border:0;" allow="autoplay; encrypted-media" allowfullscreen></iframe>`;
     }
 
-    loadVideo(body, url) {
+    async loadVideo(body, url) {
       body.innerHTML = '';
       const video = document.createElement('video');
       video.setAttribute('playsinline', '');
       video.setAttribute('crossorigin', 'anonymous');
       video.controls = true;
-      video.autoplay = true;
-      video.muted = false;
       video.style.width = '100%';
       video.style.height = '100%';
       video.style.background = '#000';
       body.appendChild(video);
       this.videoEl = video;
 
-      // Show loading status
-      const loadingDiv = document.createElement('div');
-      loadingDiv.className = 'video-status video-loading';
-      loadingDiv.textContent = '⏳ جاري تحميل الفيديو...';
-      body.appendChild(loadingDiv);
-
-      // Try HLS first if it looks like an HLS stream
-      if (this.data.type === 'hls' || url.includes('m3u8') || url.includes('master') || url.includes('playlist')) {
-        this.tryHLS(video, url, body);
-      } else {
-        // Try direct playback
-        video.src = url;
-        video.load();
-        
-        video.addEventListener('loadedmetadata', () => {
-          if (loadingDiv.parentNode) loadingDiv.remove();
-          video.play().catch(err => {
-            console.log('Direct playback failed, trying HLS:', err);
-            this.tryHLS(video, url, body);
-          });
-        });
-        
-        video.addEventListener('error', (e) => {
-          console.log('Video error, trying HLS:', e);
-          if (loadingDiv.parentNode) loadingDiv.remove();
+      try {
+        await video.play();
+        this.hideStatus();
+      } catch (err) {
+        if (this.data.type === 'hls' || url.includes('m3u8')) {
           this.tryHLS(video, url, body);
-        });
-        
-        // Timeout - if video doesn't load in 10 seconds, try HLS
-        setTimeout(() => {
-          if (video.readyState < 2 && loadingDiv.parentNode) {
-            console.log('Timeout, trying HLS');
-            this.tryHLS(video, url, body);
-          }
-        }, 10000);
+        } else {
+          this.showError(body, 'لا يمكن تشغيل هذا الفيديو. تأكد من أن الرابط يدعم التشغيل المباشر أو جرب رابطاً آخر.');
+        }
       }
     }
 
     tryHLS(video, url, body) {
-      // Remove loading indicator
-      const loadingDiv = body.querySelector('.video-loading');
-      if (loadingDiv) loadingDiv.remove();
-      
       if (Hls.isSupported()) {
-        if (this.hls) {
-          this.hls.destroy();
-        }
-        
+        // ✅ FIX: Enable lowLatencyMode only for live streams
+        let isLive = false;
         const hls = new Hls({ 
-          enableWorker: true, 
-          lowLatencyMode: true,
-          maxBufferLength: 30,
-          xhrSetup: (xhr, url) => {
-            xhr.withCredentials = false;
-          }
+          enableWorker: true,
+          lowLatencyMode: false, // Start with false, will be enabled if live
         });
         
         hls.loadSource(url);
         hls.attachMedia(video);
         
-        hls.on(Hls.Events.MANIFEST_PARSED, () => {
+        hls.on(Hls.Events.MANIFEST_PARSED, (event, data) => {
+          // ✅ FIX: Enable lowLatencyMode only for live streams
+          if (data && data.details && data.details.live) {
+            hls.config.lowLatencyMode = true;
+          }
           this.hideStatus();
-          video.play().catch(err => {
-            console.log('HLS play failed:', err);
-            // Try muted autoplay
-            video.muted = true;
-            video.play().catch(() => {});
-          });
+          video.play().catch(() => {});
         });
         
         hls.on(Hls.Events.ERROR, (event, data) => {
           if (data.fatal) {
-            switch(data.type) {
-              case Hls.ErrorTypes.NETWORK_ERROR:
-                console.error('HLS network error, retrying...');
-                hls.startLoad();
-                break;
-              case Hls.ErrorTypes.MEDIA_ERROR:
-                console.error('HLS media error, recovering...');
+            if (data.type === Hls.ErrorTypes.NETWORK_ERROR) {
+              this.showError(body, 'تعذر الاتصال بالبث. قد يكون الرابط لا يسمح بالوصول أو معطلاً.');
+            } else if (data.type === Hls.ErrorTypes.MEDIA_ERROR) {
+              // ✅ FIX: Check if recovery succeeded
+              try {
                 hls.recoverMediaError();
-                break;
-              default:
-                console.error('HLS fatal error:', data);
-                this.showError(body, 'فشل تشغيل البث. تأكد من صحة الرابط.');
-                hls.destroy();
-                break;
+              } catch (e) {
+                this.showError(body, 'فشل استرداد البث');
+              }
+            } else {
+              this.showError(body, 'فشل تشغيل البث');
+              hls.destroy();
             }
           }
         });
         
         this.hls = hls;
       } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-        // Native HLS support (Safari)
         video.src = url;
-        video.addEventListener('loadedmetadata', () => {
-          this.hideStatus();
-          video.play().catch(() => {});
-        });
-        video.addEventListener('error', () => {
-          this.showError(body, 'فشل تشغيل البث في هذا المتصفح');
-        });
+        video.play().catch(() => {});
       } else {
-        this.showError(body, 'متصفحك لا يدعم تشغيل هذا النوع من البث. جرب استخدام متصفح آخر.');
+        this.showError(body, 'متصفحك لا يدعم تشغيل هذا النوع من البث');
       }
     }
 
     hideStatus() {
-      const status = this.container.querySelectorAll('.video-status');
-      status.forEach(s => s.remove());
+      const status = this.container.querySelector('.video-status');
+      if (status) status.style.display = 'none';
     }
 
     showError(body, msg) {
-      body.innerHTML = '';
-      const errorDiv = document.createElement('div');
-      errorDiv.className = 'video-status video-error';
-      errorDiv.innerHTML = `<div style="font-size:24px;">⚠️</div><div>${msg}</div>`;
-      body.appendChild(errorDiv);
+      body.innerHTML = `<div class="video-status video-error"><div style="font-size:24px;">⚠️</div><div>${msg}</div></div>`;
     }
 
     makeDraggable() {
@@ -1548,7 +1357,6 @@
         const rect = this.container.getBoundingClientRect();
         initialLeft = rect.left;
         initialTop = rect.top;
-        this.container.style.transition = 'none';
         document.addEventListener('mousemove', onMove);
         document.addEventListener('touchmove', onMove, { passive: false });
         document.addEventListener('mouseup', onEnd);
@@ -1575,7 +1383,6 @@
 
       const onEnd = () => {
         isDragging = false;
-        this.container.style.transition = 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
         document.removeEventListener('mousemove', onMove);
         document.removeEventListener('touchmove', onMove);
         document.removeEventListener('mouseup', onEnd);
@@ -1588,28 +1395,34 @@
 
     dispose() {
       if (this.hls) { 
-        this.hls.destroy(); 
+        try {
+          this.hls.destroy(); 
+        } catch(e) {}
         this.hls = null; 
       }
       if (this.videoEl) { 
-        this.videoEl.pause(); 
-        this.videoEl.src = ''; 
-        this.videoEl.load(); 
+        try {
+          this.videoEl.pause(); 
+          this.videoEl.src = ''; 
+          this.videoEl.load(); 
+        } catch(e) {}
+        this.videoEl = null;
       }
       this.container.innerHTML = '';
     }
 
     escapeHtml(text) {
+      if (!text) return '';
       const d = document.createElement('div');
       d.textContent = text;
       return d.innerHTML;
     }
   }
 
-  // Initialize app
+  // Initialize
   document.addEventListener('DOMContentLoaded', () => { 
     window.chatApp = new ChatApp(); 
   });
 </script>
 </body>
-</html>
+  </html>
