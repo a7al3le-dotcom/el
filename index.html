@@ -1,1428 +1,1087 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>سكرة ليبيا - النسخة المطورة</title>
-  
-  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
-  
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>سكرة ليبيا</title>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<style>
+  :root{
+    --ink:#f4f6fb; --ink-dim:#8b93a7; --ink-faint:#5b6478;
+    --surface-0:#0d0f16; --surface-1:#151826; --surface-2:#1c2032; --surface-3:#262c42;
+    --line:#2a2f45;
+    --brand-a:#7c5cff; --brand-b:#22d3ee;
+    --ok:#34d399; --warn:#fbbf24; --bad:#f87171;
+    --r-sm:10px; --r-md:16px; --r-lg:26px;
+    --shadow:0 20px 50px -12px rgba(0,0,0,.6);
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html,body{height:100%;}
+  body{
+    font-family:'Tajawal',sans-serif; background:var(--surface-0); color:var(--ink);
+    height:100dvh; overflow:hidden; display:flex; flex-direction:column;
+    -webkit-tap-highlight-color:transparent; user-select:none;
+  }
+  ::selection{background:rgba(124,92,255,.35);}
+  ::-webkit-scrollbar{width:6px;}
+  ::-webkit-scrollbar-thumb{background:var(--surface-3); border-radius:3px;}
 
-  <style>
-    :root {
-      --bg-primary: #0a0a0a;
-      --bg-secondary: #1e1e1e;
-      --bg-tertiary: #2a2a2a;
-      --text-primary: #ffffff;
-      --text-secondary: #a0a0a0;
-      --accent-color: #4da8da;
-      --accent-hover: #3b8ab5;
-      --danger-color: #e57373;
-      --success-color: #81c784;
-      --warning-color: #ffb74d;
-      --border-color: #333333;
-      --shadow: 0 8px 30px rgba(0, 0, 0, 0.6);
-      --radius-sm: 8px;
-      --radius-md: 12px;
-      --radius-lg: 24px;
-      --transition: all 0.2s ease;
-    }
+  /* ---------- Gate (login) ---------- */
+  #gate{
+    position:fixed; inset:0; z-index:9999; display:flex; align-items:center; justify-content:center;
+    background:
+      radial-gradient(1200px 600px at 15% -10%, rgba(124,92,255,.25), transparent 60%),
+      radial-gradient(1000px 500px at 100% 110%, rgba(34,211,238,.18), transparent 60%),
+      var(--surface-0);
+  }
+  #gateCard{
+    width:92%; max-width:400px; background:rgba(21,24,38,.75); backdrop-filter:blur(18px);
+    border:1px solid var(--line); border-radius:var(--r-lg); padding:2.2rem 1.8rem; box-shadow:var(--shadow);
+    text-align:center;
+  }
+  #gateCard .logo{
+    width:56px; height:56px; margin:0 auto 1rem; border-radius:18px;
+    background:linear-gradient(135deg,var(--brand-a),var(--brand-b));
+    display:flex; align-items:center; justify-content:center; font-size:26px;
+  }
+  #gateCard h1{font-size:1.5rem; font-weight:800; margin-bottom:.35rem;}
+  #gateCard p.sub{color:var(--ink-dim); font-size:.85rem; margin-bottom:1.4rem;}
+  #gateStatus{
+    font-size:.8rem; color:var(--ink-dim); min-height:18px; margin-bottom:.9rem;
+    display:flex; align-items:center; justify-content:center; gap:6px;
+  }
+  .dot-pulse{width:7px; height:7px; border-radius:50%; background:var(--brand-b); animation:pulse 1.2s infinite;}
+  @keyframes pulse{0%,100%{opacity:.3; transform:scale(.8);}50%{opacity:1; transform:scale(1);}}
+  #nameField{
+    width:100%; padding:14px 18px; border-radius:var(--r-md); border:1px solid var(--line);
+    background:var(--surface-2); color:var(--ink); font-family:inherit; font-size:16px; text-align:center;
+    margin-bottom:.8rem; transition:.2s;
+  }
+  #nameField:focus{outline:none; border-color:var(--brand-a); box-shadow:0 0 0 3px rgba(124,92,255,.2);}
+  #nameField:disabled{opacity:.4;}
+  #enterBtn{
+    width:100%; padding:14px; border:none; border-radius:var(--r-md); cursor:pointer; font-family:inherit;
+    font-weight:800; font-size:16px; color:#fff; background:linear-gradient(135deg,var(--brand-a),var(--brand-b));
+    transition:.2s; letter-spacing:.3px;
+  }
+  #enterBtn:hover:not(:disabled){filter:brightness(1.08); transform:translateY(-1px);}
+  #enterBtn:disabled{opacity:.45; cursor:not-allowed;}
+  #gateHint{color:var(--bad); font-size:.78rem; min-height:16px; margin-top:.6rem;}
 
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+  /* ---------- App shell ---------- */
+  #app{display:flex; flex-direction:column; height:100dvh; opacity:0; transition:opacity .35s ease;}
+  #app.on{opacity:1;}
 
-    body {
-      font-family: 'Tajawal', sans-serif;
-      background: var(--bg-primary);
-      color: var(--text-primary);
-      height: 100vh; height: 100dvh;
-      overflow: hidden;
-      display: flex;
-      flex-direction: column;
-      user-select: none;
-      -webkit-tap-highlight-color: transparent;
-    }
+  #bar{
+    display:flex; align-items:center; gap:8px; padding:10px 14px; background:var(--surface-1);
+    border-bottom:1px solid var(--line); flex-shrink:0; flex-wrap:wrap;
+  }
+  #bar .brand{font-weight:800; font-size:1rem; background:linear-gradient(135deg,var(--brand-a),var(--brand-b)); -webkit-background-clip:text; background-clip:text; color:transparent; margin-left:4px;}
+  .pill{
+    display:flex; align-items:center; gap:6px; padding:8px 14px; border-radius:99px; border:1px solid var(--line);
+    background:var(--surface-2); color:var(--ink); font-family:inherit; font-size:.85rem; font-weight:600;
+    cursor:pointer; transition:.15s;
+  }
+  .pill:hover{border-color:var(--brand-a); background:var(--surface-3);}
+  .pill svg{width:16px; height:16px; fill:currentColor; flex-shrink:0;}
+  .pill.grow{margin-right:auto;}
+  #onlineDot{width:7px; height:7px; border-radius:50%; background:var(--ok); box-shadow:0 0 6px var(--ok);}
 
-    #loginScreen {
-      position: fixed; inset: 0; background: rgba(10, 10, 10, 0.97);
-      display: flex; justify-content: center; align-items: center; z-index: 10000;
-      backdrop-filter: blur(5px);
-    }
-    #loginBox {
-      background: var(--bg-secondary); padding: 2.5rem; border-radius: var(--radius-md);
-      text-align: center; width: 90%; max-width: 380px; box-shadow: var(--shadow);
-      border: 1px solid var(--border-color);
-    }
-    #loginBox h2 {
-      margin-bottom: 1.5rem; font-weight: 700; font-size: 1.8rem;
-      background: linear-gradient(135deg, var(--accent-color), #67d8f5);
-      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
-    }
-    #loginStatus {
-      color: var(--text-secondary); font-size: 14px; margin-bottom: 15px;
-      min-height: 20px;
-    }
-    #usernameInput {
-      width: 100%; padding: 14px 20px; margin: 15px 0; border: 1px solid var(--border-color);
-      border-radius: var(--radius-lg); font-size: 16px; text-align: center; font-family: inherit;
-      background: var(--bg-primary); color: var(--text-primary); transition: var(--transition);
-    }
-    #usernameInput:focus { border-color: var(--accent-color); outline: none; box-shadow: 0 0 0 2px rgba(77, 168, 218, 0.3); }
-    #usernameInput:disabled { opacity: 0.5; cursor: not-allowed; }
-    #loginBtn {
-      background: linear-gradient(135deg, var(--accent-color), #67d8f5); color: white; border: none;
-      padding: 14px 30px; border-radius: var(--radius-lg); font-size: 18px; cursor: pointer;
-      font-family: inherit; font-weight: 700; width: 100%; transition: var(--transition);
-    }
-    #loginBtn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(77, 168, 218, 0.4); }
-    #loginBtn:active:not(:disabled) { transform: scale(0.98); }
-    #loginBtn:disabled { opacity: 0.6; cursor: not-allowed; }
+  #feed{
+    flex:1; overflow-y:auto; padding:16px; display:flex; flex-direction:column; gap:6px;
+    overscroll-behavior:contain; scroll-behavior:smooth;
+  }
+  .bubble{
+    display:flex; align-items:flex-start; gap:9px; padding:8px 10px; border-radius:var(--r-sm);
+    animation:rise .25s ease; transition:background .15s; max-width:100%;
+  }
+  .bubble:hover{background:rgba(255,255,255,.025);}
+  @keyframes rise{from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:translateY(0);}}
+  .tag{
+    font-weight:700; font-size:.78rem; color:var(--brand-b); background:rgba(34,211,238,.1);
+    border:1px solid rgba(34,211,238,.25); padding:2px 9px; border-radius:99px; white-space:nowrap; flex-shrink:0;
+  }
+  .bubble-text{flex:1; line-height:1.55; word-break:break-word; font-size:.95rem; padding-top:1px;}
+  .bubble-time{font-size:.7rem; color:var(--ink-faint); white-space:nowrap; flex-shrink:0; padding-top:2px;}
+  .bubble-del{
+    background:none; border:none; color:var(--ink-faint); cursor:pointer; opacity:0; transition:.15s;
+    border-radius:50%; padding:3px; display:flex; flex-shrink:0;
+  }
+  .bubble:hover .bubble-del{opacity:.6;}
+  .bubble-del:hover{opacity:1 !important; color:var(--bad); background:rgba(248,113,113,.15);}
+  .bubble-del svg{width:14px; height:14px;}
+  .note{
+    align-self:center; font-size:.72rem; color:var(--ink-faint); background:var(--surface-2);
+    border:1px solid var(--line); padding:4px 12px; border-radius:99px; animation:rise .3s ease;
+  }
 
-    #chat-container { 
-      display: flex; flex-direction: column; height: 100vh; height: 100dvh; 
-      opacity: 0; transition: opacity 0.3s ease; visibility: hidden;
-    }
-    #chat-container.visible { opacity: 1; visibility: visible; }
+  #typeline{
+    padding:2px 16px; font-size:.75rem; color:var(--ink-dim); min-height:22px; opacity:0; transition:.2s;
+    display:flex; align-items:center; gap:6px; flex-shrink:0;
+  }
+  #typeline.on{opacity:1;}
+  .tdots{display:inline-flex; gap:3px;}
+  .tdots i{width:4px; height:4px; border-radius:50%; background:var(--brand-b); display:block; animation:tb 1.3s infinite;}
+  .tdots i:nth-child(2){animation-delay:.15s;} .tdots i:nth-child(3){animation-delay:.3s;}
+  @keyframes tb{0%,80%,100%{opacity:.25; transform:translateY(0);}40%{opacity:1; transform:translateY(-2px);}}
 
-    #topButtons {
-      display: flex; gap: 10px; padding: 10px 15px; background: var(--bg-secondary);
-      border-bottom: 1px solid var(--border-color); flex-shrink: 0; align-items: center;
-      flex-wrap: wrap;
-    }
-    .btn {
-      background: var(--bg-tertiary); border: 1px solid var(--border-color); border-radius: var(--radius-lg);
-      padding: 8px 16px; cursor: pointer; font-size: 15px; display: flex; align-items: center; gap: 6px;
-      color: var(--text-primary); transition: var(--transition); font-family: inherit; font-weight: 500;
-      white-space: nowrap;
-    }
-    .btn:hover { background: #3a3a3a; border-color: var(--accent-color); }
-    .btn svg { width: 20px; height: 20px; fill: currentColor; }
-    .btn-primary { background: var(--accent-color); border-color: var(--accent-color); }
-    .btn-primary:hover { background: var(--accent-hover); }
+  #dock{
+    display:flex; gap:10px; padding:12px 14px; background:var(--surface-1); border-top:1px solid var(--line);
+    flex-shrink:0;
+  }
+  #textField{
+    flex:1; font-size:16px; padding:12px 18px; border-radius:99px; border:1px solid var(--line);
+    background:var(--surface-2); color:var(--ink); font-family:inherit; transition:.15s;
+  }
+  #textField:focus{outline:none; border-color:var(--brand-a);}
+  #textField:disabled{opacity:.4;}
+  #shootBtn{
+    border:none; border-radius:99px; padding:0 22px; cursor:pointer; font-family:inherit; font-weight:700;
+    color:#fff; background:linear-gradient(135deg,var(--brand-a),var(--brand-b)); display:flex; align-items:center;
+    gap:6px; transition:.15s;
+  }
+  #shootBtn:disabled{opacity:.4; cursor:not-allowed;}
+  #shootBtn:hover:not(:disabled){filter:brightness(1.1);}
+  #shootBtn svg{width:18px; height:18px; fill:currentColor;}
 
-    #messages {
-      flex: 1; overflow-y: auto; padding: 15px; scroll-behavior: smooth;
-      display: flex; flex-direction: column; gap: 4px;
-      overscroll-behavior: contain;
-    }
-    #messages::-webkit-scrollbar { width: 6px; }
-    #messages::-webkit-scrollbar-track { background: transparent; }
-    #messages::-webkit-scrollbar-thumb { background: #444; border-radius: 3px; }
+  /* ---------- Overlay / modal ---------- */
+  .veil{
+    position:fixed; inset:0; background:rgba(6,7,12,.7); backdrop-filter:blur(3px); z-index:900;
+    display:flex; align-items:center; justify-content:center; animation:rise .15s ease;
+  }
+  .sheet{
+    width:90%; max-width:380px; background:var(--surface-1); border:1px solid var(--line);
+    border-radius:var(--r-md); padding:1.4rem; box-shadow:var(--shadow); animation:pop .18s ease;
+  }
+  @keyframes pop{from{transform:scale(.94); opacity:0;} to{transform:scale(1); opacity:1;}}
+  .sheet h3{font-size:1.05rem; margin-bottom:1rem; text-align:center; color:var(--brand-b);}
+  .sheet input{
+    width:100%; padding:12px 14px; border-radius:var(--r-sm); border:1px solid var(--line);
+    background:var(--surface-2); color:var(--ink); font-family:inherit; text-align:center; margin-bottom:12px;
+  }
+  .sheet input:focus{outline:none; border-color:var(--brand-a);}
+  .sheet small{display:block; text-align:center; color:var(--ink-faint); margin-bottom:14px; font-size:.72rem;}
+  .btn-full{
+    width:100%; padding:12px; border:none; border-radius:var(--r-sm); cursor:pointer; font-family:inherit;
+    font-weight:700; color:#fff; background:linear-gradient(135deg,var(--brand-a),var(--brand-b)); transition:.15s;
+    display:flex; align-items:center; justify-content:center; gap:8px;
+  }
+  .btn-full:hover{filter:brightness(1.08);}
+  .btn-full:disabled{opacity:.5; cursor:not-allowed;}
+  .btn-full.ghost{background:var(--surface-3); color:var(--ink);}
+  .btn-full.danger{background:var(--bad);}
+  .row2{display:flex; gap:10px;}
+  .spin{
+    width:14px; height:14px; border-radius:50%; border:2px solid rgba(255,255,255,.35);
+    border-top-color:#fff; animation:spin .7s linear infinite;
+  }
+  @keyframes spin{to{transform:rotate(360deg);}}
 
-    .msg {
-      display: flex; align-items: baseline; gap: 8px; padding: 6px 10px;
-      border-radius: var(--radius-sm); animation: fadeIn 0.3s ease; transition: background 0.2s;
-    }
-    .msg:hover { background: rgba(255,255,255,0.03); }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+  #roster{max-height:280px; overflow-y:auto; margin:-4px;}
+  .roster-row{display:flex; align-items:center; gap:10px; padding:10px 4px; border-bottom:1px solid var(--line); font-size:.9rem;}
+  .roster-row:last-child{border-bottom:none;}
+  .beacon{width:9px; height:9px; border-radius:50%; flex-shrink:0;}
+  .beacon.up{background:var(--ok); box-shadow:0 0 6px var(--ok);}
+  .beacon.idle{background:var(--warn); box-shadow:0 0 6px var(--warn);}
+  .beacon.down{background:var(--ink-faint);}
+  .roster-status{margin-right:auto; font-size:.72rem; color:var(--ink-faint);}
+  .roster-empty{text-align:center; color:var(--ink-faint); font-size:.85rem; padding:14px 0;}
 
-    .user-badge {
-      font-weight: 700; color: var(--accent-color); background: rgba(77, 168, 218, 0.15);
-      padding: 2px 8px; border-radius: 12px; font-size: 13px; white-space: nowrap; flex-shrink: 0;
-      border: 1px solid rgba(77, 168, 218, 0.3);
-    }
-    .msg-text { flex: 1; word-break: break-word; line-height: 1.5; }
-    .msg-time { font-size: 11px; color: var(--text-secondary); white-space: nowrap; flex-shrink: 0; }
+  /* ---------- Video widget ---------- */
+  #screen{
+    position:fixed; top:64px; left:20px; width:380px; min-width:280px; max-width:92vw;
+    background:#000; border-radius:var(--r-md); overflow:hidden auto; z-index:850; display:none;
+    flex-direction:column; box-shadow:var(--shadow); border:1px solid var(--line); resize:both; touch-action:none;
+    transition:height .25s ease, min-height .25s ease;
+  }
+  #screen.small{height:44px !important; min-height:44px !important;}
+  .screen-head{
+    background:var(--surface-1); padding:8px 12px; display:flex; align-items:center; justify-content:space-between;
+    gap:10px; cursor:move; touch-action:none; border-bottom:1px solid var(--line); min-height:38px;
+  }
+  .screen-head .who{font-size:.8rem; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .screen-actions{display:flex; gap:4px; align-items:center; flex-shrink:0;}
+  .screen-btn{
+    background:none; border:none; color:var(--ink-dim); cursor:pointer; padding:5px; border-radius:50%;
+    display:flex; transition:.15s;
+  }
+  .screen-btn:hover{color:var(--brand-b); background:rgba(255,255,255,.1);}
+  .screen-btn.danger:hover{color:var(--bad);}
+  .screen-btn svg{width:16px; height:16px;}
+  .screen-body{position:relative; width:100%; flex:1; min-height:190px; background:#000;}
+  .screen-body.hide{display:none;}
+  .screen-msg{
+    position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); text-align:center; padding:14px;
+    background:rgba(0,0,0,.82); border-radius:var(--r-sm); z-index:5; max-width:80%;
+  }
+  .screen-msg.err{color:var(--bad); font-size:.85rem;}
+  .screen-msg.wait{color:var(--brand-b);}
+  .screen-tab{
+    display:none; padding:6px; text-align:center; font-size:.72rem; color:var(--ink-dim); cursor:pointer;
+    background:var(--surface-1); border-top:1px solid var(--line);
+  }
+  .screen-tab:hover{background:var(--surface-2);}
 
-    .delete-btn {
-      background: none; border: none; color: var(--text-secondary); cursor: pointer;
-      padding: 4px; border-radius: 50%; display: flex; align-items: center; opacity: 0; transition: var(--transition);
-    }
-    .msg:hover .delete-btn { opacity: 0.7; }
-    .delete-btn:hover { color: var(--danger-color); background: rgba(229, 115, 115, 0.2); opacity: 1 !important; }
-    .delete-btn svg { width: 16px; height: 16px; }
+  #bringBack{
+    position:fixed; bottom:78px; left:20px; z-index:840; display:none; border:none; cursor:pointer;
+    color:#fff; font-family:inherit; font-weight:700; padding:10px 18px; border-radius:99px;
+    background:linear-gradient(135deg,var(--brand-a),var(--brand-b)); box-shadow:var(--shadow); transition:.15s;
+  }
+  #bringBack:hover{transform:scale(1.04);}
 
-    .sys-msg {
-      text-align: center; color: var(--text-secondary); font-size: 12px; margin: 8px auto;
-      background: var(--bg-tertiary); padding: 4px 12px; border-radius: 12px; width: fit-content;
-      animation: fadeIn 0.5s ease; border: 1px solid var(--border-color);
-    }
+  #pulseBar{
+    position:fixed; bottom:78px; right:50%; transform:translateX(50%); z-index:900; display:none;
+    padding:7px 16px; border-radius:99px; font-size:.75rem; background:var(--surface-1); border:1px solid var(--line);
+  }
+  #pulseBar.show{display:block;}
+  #pulseBar.up{border-color:var(--ok); color:var(--ok);}
+  #pulseBar.down{border-color:var(--bad); color:var(--bad);}
 
-    #typingIndicator {
-      padding: 4px 15px; font-size: 12px; color: var(--text-secondary);
-      min-height: 20px; flex-shrink: 0; text-align: right;
-      transition: var(--transition); opacity: 0;
-    }
-    #typingIndicator.active { opacity: 1; }
-    .typing-dots { display: inline-flex; gap: 3px; margin-right: 5px; }
-    .typing-dots span {
-      width: 6px; height: 6px; background: var(--accent-color); border-radius: 50%;
-      animation: typingBounce 1.4s infinite ease-in-out;
-    }
-    .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
-    .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
-    @keyframes typingBounce { 0%,80%,100% { transform: scale(0.6); opacity:0.3; } 40% { transform: scale(1); opacity:1; } }
+  #toastHost{position:fixed; bottom:130px; right:50%; transform:translateX(50%); z-index:9500; display:flex; flex-direction:column; gap:8px; align-items:center;}
+  .toast{
+    background:var(--surface-2); border:1px solid var(--line); color:var(--ink); padding:10px 20px;
+    border-radius:99px; font-size:.82rem; box-shadow:var(--shadow); animation:rise .2s ease;
+  }
 
-    #inputArea {
-      display: flex; gap: 10px; padding: 12px 15px; background: var(--bg-secondary);
-      border-top: 1px solid var(--border-color); flex-shrink: 0;
-    }
-    #messageInput {
-      flex: 1; font-size: 16px; padding: 12px 20px; border: 1px solid var(--border-color);
-      border-radius: var(--radius-lg); font-family: inherit; background: var(--bg-tertiary);
-      color: var(--text-primary); transition: var(--transition);
-    }
-    #messageInput:focus { border-color: var(--accent-color); outline: none; }
-    #messageInput:disabled { opacity: 0.5; cursor: not-allowed; }
-    #sendBtn {
-      background: linear-gradient(135deg, var(--accent-color), #67d8f5); color: white; border: none;
-      border-radius: var(--radius-lg); padding: 0 20px; cursor: pointer; font-family: inherit;
-      font-weight: 700; display: flex; align-items: center; gap: 6px; transition: var(--transition);
-    }
-    #sendBtn:disabled { opacity: 0.6; transform: none; cursor: not-allowed; }
-    #sendBtn:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 3px 10px rgba(77, 168, 218, 0.3); }
-    #sendBtn svg { width: 20px; height: 20px; fill: currentColor; }
-
-    .modal-overlay {
-      position: fixed; inset: 0; background: rgba(0,0,0,0.75); z-index: 999;
-      display: flex; justify-content: center; align-items: center; backdrop-filter: blur(2px);
-    }
-    .modal-box {
-      background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: var(--radius-md);
-      padding: 20px; width: 90%; max-width: 400px; box-shadow: var(--shadow); animation: scaleIn 0.2s ease;
-    }
-    @keyframes scaleIn { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-    .modal-box h4 { margin-bottom: 15px; font-size: 18px; text-align: center; color: var(--accent-color); }
-    .modal-box input {
-      width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid var(--border-color);
-      border-radius: var(--radius-sm); background: var(--bg-primary); color: var(--text-primary);
-      font-family: inherit; text-align: center;
-    }
-    .modal-box button {
-      width: 100%; padding: 12px; background: var(--accent-color); color: white; border: none;
-      border-radius: var(--radius-sm); cursor: pointer; font-family: inherit; font-weight: 700; transition: var(--transition);
-    }
-    .modal-box button:hover { background: var(--accent-hover); }
-    #usersList { max-height: 250px; overflow-y: auto; }
-    .user-item {
-      display: flex; align-items: center; gap: 10px; padding: 10px 8px;
-      border-bottom: 1px solid var(--border-color); font-size: 15px;
-    }
-    .status-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
-    .status-online { background: var(--success-color); box-shadow: 0 0 8px rgba(129, 199, 132, 0.5); }
-    .status-idle { background: var(--warning-color); box-shadow: 0 0 8px rgba(255, 183, 77, 0.5); }
-    .status-offline { background: #757575; }
-
-    #pinnedVideoPlayer {
-      position: fixed; top: 60px; right: 20px; width: 400px; min-width: 320px; max-width: 90vw;
-      background: #000; border-radius: var(--radius-md); overflow: hidden; z-index: 998;
-      display: none; flex-direction: column; box-shadow: var(--shadow); border: 1px solid var(--border-color);
-      resize: both; overflow: auto; touch-action: none;
-      transition: all 0.3s ease;
-    }
-    #pinnedVideoPlayer.minimized {
-      height: 45px !important;
-      min-height: 45px !important;
-    }
-    .video-header {
-      background: var(--bg-secondary); padding: 8px 15px; display: flex;
-      justify-content: space-between; align-items: center; cursor: move; font-weight: 500;
-      border-bottom: 1px solid var(--border-color); touch-action: none;
-      min-height: 40px;
-      gap: 10px;
-    }
-    .video-header-actions {
-      display: flex; gap: 8px; align-items: center;
-    }
-    .video-control-btn {
-      background: none; border: none; color: var(--text-secondary); cursor: pointer;
-      padding: 4px 6px; border-radius: 50%; display: flex; align-items: center;
-      transition: var(--transition); font-size: 18px;
-    }
-    .video-control-btn:hover { 
-      color: var(--accent-color); 
-      background: rgba(255,255,255,0.1); 
-    }
-    .video-control-btn.danger:hover { 
-      color: var(--danger-color); 
-    }
-    .video-body { 
-      position: relative; width: 100%; background: #000; flex:1; min-height: 200px;
-      transition: all 0.3s ease;
-    }
-    .video-body.hidden { display: none; }
-    .video-status {
-      position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-      color: white; text-align: center; z-index: 5; padding: 15px; background: rgba(0,0,0,0.8);
-      border-radius: var(--radius-sm);
-    }
-    .video-error { color: var(--danger-color); font-size: 14px; }
-    .video-loading { color: var(--accent-color); }
-    .video-minimize-bar {
-      display: none; padding: 6px; text-align: center; color: var(--text-secondary);
-      font-size: 12px; background: var(--bg-secondary); 
-      border-top: 1px solid var(--border-color); cursor: pointer;
-      transition: var(--transition);
-    }
-    .video-minimize-bar:hover { background: var(--bg-tertiary); }
-
-    #connectionStatus {
-      position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);
-      background: var(--bg-secondary); padding: 8px 16px; border-radius: var(--radius-lg);
-      border: 1px solid var(--border-color); font-size: 12px; z-index: 999;
-      display: none; box-shadow: var(--shadow);
-    }
-    #connectionStatus.visible { display: block; }
-    #connectionStatus.offline { border-color: var(--danger-color); color: var(--danger-color); }
-    #connectionStatus.online { border-color: var(--success-color); color: var(--success-color); }
-
-    #restoreVideoBtn {
-      position: fixed; bottom: 80px; right: 20px; z-index: 997;
-      display: none; background: var(--accent-color); color: white;
-      border: none; border-radius: var(--radius-lg); padding: 10px 18px;
-      font-family: inherit; font-weight: 700; cursor: pointer;
-      box-shadow: var(--shadow); transition: var(--transition);
-    }
-    #restoreVideoBtn:hover { transform: scale(1.05); background: var(--accent-hover); }
-
-    /* RTL fixes for video controls */
-    [dir="rtl"] .video-control-btn svg { transform: scaleX(-1); }
-
-    @media (max-width: 600px) {
-      #pinnedVideoPlayer { width: 95vw; right: 2.5vw; top: 10px; min-width: unset; }
-      #topButtons .btn span { font-size: 13px; }
-      #topButtons .btn { padding: 6px 12px; }
-    }
-  </style>
+  @media (max-width:600px){
+    #screen{width:94vw; left:3vw; top:8px;}
+    #bringBack{left:3vw;}
+    .pill span.lbl{display:none;}
+  }
+</style>
 </head>
 <body>
 
-<div id="loginScreen">
-  <div id="loginBox">
-    <h2>👋 أهلاً بك في سكرة ليبيا</h2>
-    <div id="loginStatus">🔄 جاري الاتصال بالخادم...</div>
-    <input type="text" id="usernameInput" placeholder="اكتب اسمك المستعار" maxlength="15" autofocus autocomplete="off" disabled>
-    <button id="loginBtn" disabled>⏳ جاري التحميل...</button>
+<div id="gate">
+  <div id="gateCard">
+    <div class="logo">💬</div>
+    <h1>سكرة ليبيا</h1>
+    <p class="sub">دردشة لحظية بسيطة وسريعة</p>
+    <div id="gateStatus"><span class="dot-pulse"></span><span id="gateStatusTxt">جاري الاتصال بالخادم...</span></div>
+    <input id="nameField" type="text" placeholder="اسمك المستعار" maxlength="15" autocomplete="off" disabled>
+    <button id="enterBtn" disabled>ادخل الدردشة</button>
+    <div id="gateHint"></div>
   </div>
 </div>
 
-<div id="chat-container">
-  <div id="topButtons">
-    <button class="btn" id="setVideoBtn" aria-label="تثبيت فيديو جديد" role="button">
+<div id="app">
+  <div id="bar">
+    <span class="brand">سكرة</span>
+    <button class="pill" id="videoPillBtn">
       <svg viewBox="0 0 24 24"><path d="M17 10.5V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-3.5l4 4V6.5l-4 4Z"/></svg>
-      <span>فيديو</span>
+      <span class="lbl">فيديو</span>
     </button>
-    <button class="btn" id="onlineListBtn" aria-label="عرض المتصلين" role="button">
-      <svg viewBox="0 0 24 24"><circle cx="12" cy="6" r="4"/><path d="M12 14c-6 0-8 3-8 5v1h16v-1c0-2-2-5-8-5Z"/></svg>
-      <span id="userCount">0</span>
+    <button class="pill grow" id="rosterPillBtn">
+      <span id="onlineDot"></span>
+      <span id="onlineCount">0</span>
+      <span class="lbl">متصل</span>
     </button>
-    <button class="btn" id="restoreVideoBtn" style="display:none;" aria-label="استعادة الفيديو المصغر" role="button">
-      🎬 عرض الفيديو
-    </button>
+    <button class="pill" id="bringBackTop" style="display:none;">🎬 <span class="lbl">إظهار الفيديو</span></button>
   </div>
 
-  <div id="messages"></div>
+  <div id="feed"></div>
+  <div id="typeline"></div>
 
-  <div id="typingIndicator"></div>
-
-  <form id="inputArea" autocomplete="off">
-    <input type="text" id="messageInput" placeholder="اكتب رسالتك..." maxlength="500" autocomplete="off" disabled>
-    <button type="submit" id="sendBtn" disabled>
+  <form id="dock" autocomplete="off">
+    <input id="textField" type="text" placeholder="اكتب رسالتك..." maxlength="500" disabled>
+    <button id="shootBtn" type="submit" disabled>
       <svg viewBox="0 0 24 24"><path d="M2 21l21-9L2 3v7l15 2-15 2v7z"/></svg>
       إرسال
     </button>
   </form>
 
-  <div id="pinnedVideoPlayer"></div>
+  <div id="screen"></div>
 </div>
 
-<div id="modalContainer"></div>
-<div id="connectionStatus"></div>
+<button id="bringBack">🎬 إظهار الفيديو</button>
+<div id="pulseBar"></div>
+<div id="modalHost"></div>
+<div id="toastHost"></div>
 
 <script>
-  const icons = {
-    close: '<svg viewBox="0 0 24 24" width="20" height="20"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" fill="currentColor"/></svg>',
-    trash: '<svg viewBox="0 0 24 24" width="18" height="18"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z" fill="currentColor"/></svg>',
-    minimize: '<svg viewBox="0 0 24 24" width="20" height="20"><path d="M19 13H5v-2h14v2z" fill="currentColor"/></svg>',
-    maximize: '<svg viewBox="0 0 24 24" width="20" height="20"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" fill="currentColor"/></svg>',
-  };
+(function(){
+"use strict";
 
-  class ChatApp {
-    constructor() {
-      // DOM elements
-      this.loginScreen = document.getElementById('loginScreen');
-      this.usernameInput = document.getElementById('usernameInput');
-      this.loginBtn = document.getElementById('loginBtn');
-      this.loginStatus = document.getElementById('loginStatus');
-      this.chatContainer = document.getElementById('chat-container');
-      this.messagesDiv = document.getElementById('messages');
-      this.messageInput = document.getElementById('messageInput');
-      this.sendBtn = document.getElementById('sendBtn');
-      this.userCountSpan = document.getElementById('userCount');
-      this.modalContainer = document.getElementById('modalContainer');
-      this.pinnedVideoContainer = document.getElementById('pinnedVideoPlayer');
-      this.onlineListBtn = document.getElementById('onlineListBtn');
-      this.setVideoBtn = document.getElementById('setVideoBtn');
-      this.typingIndicator = document.getElementById('typingIndicator');
-      this.connectionStatus = document.getElementById('connectionStatus');
-      this.restoreVideoBtn = document.getElementById('restoreVideoBtn');
-      
-      // State
-      this.username = '';
-      this.uid = null;
-      this.userRef = null;
-      this.messagesRef = null;
-      this.onlineRef = null;
-      this.pinnedVideoRef = null;
-      this.typingRef = null;
-      this.serverTimeOffset = 0;
-      this.renderedMessages = new Set();
-      this.videoPlayerManager = null;
-      this.timeElements = new Map();
-      this.atBottom = true;
-      this.isTyping = false;
-      this.typingTimeout = null;
-      this.timeObserver = null;
-      this.isLoggedIn = false;
-      this.messageListeners = [];
-      this.isVideoMinimized = false;
-      this.isFirstConnect = true;
-      this.presenceInterval = null;
-      this.cleanupInterval = null;
-      this.connectedRef = null;
-      this.serverTimeRef = null;
-      this.onlineUsersListener = null;
-      this.typingListener = null;
+/* ============================================================
+   ICONS
+============================================================ */
+const ICO = {
+  close:  '<svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" fill="currentColor"/></svg>',
+  trash:  '<svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z" fill="currentColor"/></svg>',
+  shrink: '<svg viewBox="0 0 24 24"><path d="M19 13H5v-2h14v2z" fill="currentColor"/></svg>',
+};
 
-      // Constants
-      this.INACTIVE_THRESHOLD = 120000; // 2 minutes
-      this.IDLE_THRESHOLD = 60000; // 1 minute
-      this.TYPING_TIMEOUT = 3000; // 3 seconds
+/* ============================================================
+   TINY DOM / UTIL HELPERS
+============================================================ */
+const $ = (sel, root=document) => root.querySelector(sel);
+const esc = (s) => { const d = document.createElement('div'); d.textContent = s || ''; return d.innerHTML; };
+const nowMs = () => Date.now();
 
-      // Initialize
-      this.initFirebase();
-      this.initEventListeners();
-      this.initTimeObserver();
-      this.monitorConnection();
+function toast(msg){
+  const host = $('#toastHost');
+  const t = document.createElement('div');
+  t.className = 'toast';
+  t.textContent = msg;
+  host.appendChild(t);
+  setTimeout(() => { t.style.opacity='0'; t.style.transition='opacity .3s'; setTimeout(()=>t.remove(),300); }, 2600);
+}
 
-      // Start authentication
-      this.initAuth();
+/* ============================================================
+   FIREBASE CORE
+============================================================ */
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyCHk0PYGp96vyfbeC-GyN7Q9e1MqM7rgRo",
+  authDomain: "gemiapp.firebaseapp.com",
+  databaseURL: "https://gemiapp-default-rtdb.firebaseio.com",
+  projectId: "gemiapp",
+  storageBucket: "gemiapp.firebasestorage.app",
+  messagingSenderId: "27673374613",
+  appId: "1:27673374613:web:86f977ea41e8c0e2b0909c"
+};
 
-      // Restore video button
-      this.restoreVideoBtn.onclick = () => this.restoreMinimizedVideo();
-    }
+const Core = {
+  db: null, auth: null, uid: null, timeOffset: 0,
+  init(){
+    if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
+    this.db = firebase.database();
+    this.auth = firebase.auth();
+  },
+  async signIn(){
+    const cred = await this.auth.signInAnonymously();
+    this.uid = cred.user.uid;
+    return this.uid;
+  },
+  watchOffset(cb){
+    this.db.ref('.info/serverTimeOffset').on('value', snap => {
+      this.timeOffset = snap.val() || 0;
+      cb && cb(this.timeOffset);
+    });
+  },
+  serverNow(){ return nowMs() + this.timeOffset; },
+  stamp(){ return firebase.database.ServerValue.TIMESTAMP; }
+};
 
-    initFirebase() {
-      const firebaseConfig = {
-        apiKey: "AIzaSyCHk0PYGp96vyfbeC-GyN7Q9e1MqM7rgRo",
-        authDomain: "gemiapp.firebaseapp.com",
-        databaseURL: "https://gemiapp-default-rtdb.firebaseio.com",
-        projectId: "gemiapp",
-        storageBucket: "gemiapp.firebasestorage.app",
-        messagingSenderId: "27673374613",
-        appId: "1:27673374613:web:86f977ea41e8c0e2b0909c"
-      };
-      
-      try {
-        if (!firebase.apps.length) {
-          firebase.initializeApp(firebaseConfig);
-        }
-        this.db = firebase.database();
-        this.auth = firebase.auth();
-      } catch(e) {
-        this.showLoginStatus('❌ خطأ في الاتصال بقاعدة البيانات', 'error');
-        console.error('Firebase init error:', e);
-      }
-    }
+/* ============================================================
+   PRESENCE  (online users, heartbeat, cleanup, typing)
+============================================================ */
+const IDLE_MS = 60000, GONE_MS = 120000, TYPE_TIMEOUT = 3000, HEARTBEAT = 30000, SWEEP = 60000;
 
-    initAuth() {
-      this.showLoginStatus('🔄 جاري المصادقة...', 'loading');
-      this.usernameInput.disabled = true;
-      this.loginBtn.disabled = true;
+const Presence = {
+  username:'', ref:null, typingRef:null,
+  heartbeatTimer:null, sweepTimer:null, typingClearTimer:null, isTyping:false,
+  onlineListener:null, typingUpdateListener:null,
+  countCb:null, typersCb:null,
 
-      this.auth.signInAnonymously()
-        .then((userCredential) => {
-          this.uid = userCredential.user.uid;
-          this.showLoginStatus('✅ تم المصادقة بنجاح! أدخل اسمك', 'success');
-          this.usernameInput.disabled = false;
-          this.loginBtn.disabled = false;
-          this.loginBtn.textContent = '🚀 دخول إلى الدردشة';
-          this.usernameInput.focus();
-        })
-        .catch((error) => {
-          console.error('Auth error:', error);
-          this.showLoginStatus('❌ فشل المصادقة: ' + error.message, 'error');
-          this.loginBtn.disabled = true;
-        });
-    }
+  start(username){
+    this.username = username;
+    this.ref = Core.db.ref(`online/${Core.uid}`);
+    this.typingRef = Core.db.ref('typing');
 
-    showLoginStatus(message, type) {
-      this.loginStatus.textContent = message;
-      this.loginStatus.style.color = type === 'error' ? 'var(--danger-color)' : 
-                                    type === 'success' ? 'var(--success-color)' : 
-                                    'var(--text-secondary)';
-    }
+    this.ref.set({ username, lastActive: Core.stamp(), uid: Core.uid });
+    this.ref.onDisconnect().remove();
+    this.typingRef.child(Core.uid).onDisconnect().remove();
 
-    initEventListeners() {
-      this.loginBtn.onclick = () => this.attemptLogin();
-      this.usernameInput.onkeypress = (e) => { if (e.key === 'Enter') this.attemptLogin(); };
-      this.onlineListBtn.onclick = () => this.showOnlineUsersModal();
-      this.setVideoBtn.onclick = () => this.showSetVideoModal();
-      
-      document.getElementById('inputArea').addEventListener('submit', (e) => this.sendMessage(e));
-      this.messagesDiv.addEventListener('scroll', () => {
-        const threshold = 50;
-        this.atBottom = (this.messagesDiv.scrollHeight - this.messagesDiv.scrollTop - this.messagesDiv.clientHeight) < threshold;
+    this.heartbeatTimer = setInterval(() => {
+      this.ref.update({ lastActive: Core.stamp() });
+    }, HEARTBEAT);
+
+    this.sweepTimer = setInterval(() => this.sweepInactive(), SWEEP);
+
+    this.onlineListener = Core.db.ref('online').on('value', snap => {
+      this.countCb && this.countCb(snap.numChildren());
+    });
+
+    this.typingUpdateListener = this.typingRef.on('value', snap => {
+      const data = snap.val() || {};
+      const others = Object.keys(data).filter(k => k !== Core.uid).map(k => data[k]).filter(Boolean);
+      this.typersCb && this.typersCb(others);
+    });
+  },
+
+  sweepInactive(){
+    const now = Core.serverNow();
+    Core.db.ref('online').once('value', snap => {
+      snap.forEach(child => {
+        if (child.key === Core.uid) return;
+        const d = child.val();
+        if (now - (d.lastActive || 0) > GONE_MS) child.ref.remove();
       });
+    });
+  },
 
-      // Typing indicator
-      this.messageInput.addEventListener('input', () => this.handleTyping());
-      this.messageInput.addEventListener('blur', () => this.clearTyping());
-    }
-
-    attemptLogin() {
-      if (this.isLoggedIn || this.loginBtn.disabled) return;
-      
-      const name = this.usernameInput.value.trim();
-      
-      // ✅ FIX: Added / to forbidden characters
-      if (/[.#$\[\]\/]/.test(name)) {
-        this.showLoginStatus('⚠️ الرجاء عدم استخدام رموز خاصة: . # $ [ ] /', 'error');
-        return;
-      }
-      if (name.length < 2) {
-        this.showLoginStatus('⚠️ الاسم قصير جداً (أقل من حرفين)', 'error');
-        return;
-      }
-      if (name.length > 15) {
-        this.showLoginStatus('⚠️ الاسم طويل جداً (أكثر من 15 حرف)', 'error');
-        return;
-      }
-
-      this.username = name;
-      this.userRef = this.db.ref(`online/${this.uid}`);
-      this.messagesRef = this.db.ref("messages");
-      this.onlineRef = this.db.ref("online");
-      this.pinnedVideoRef = this.db.ref("pinned_video");
-      this.typingRef = this.db.ref("typing");
-      
-      this.startChat();
-    }
-
-    startChat() {
-      this.isLoggedIn = true;
-      this.loginScreen.style.display = 'none';
-      this.chatContainer.classList.add('visible');
-      setTimeout(() => this.chatContainer.style.opacity = '1', 50);
-
-      // Enable inputs
-      this.messageInput.disabled = false;
-      this.sendBtn.disabled = false;
-
-      // ✅ FIX: Store server time offset reference for cleanup
-      this.serverTimeRef = this.db.ref('.info/serverTimeOffset');
-      this.serverTimeRef.on('value', snap => {
-        this.serverTimeOffset = snap.val() || 0;
-      });
-
-      // Presence - store username immediately
-      this.userRef.set({ 
-        username: this.username,
-        lastActive: firebase.database.ServerValue.TIMESTAMP,
-        uid: this.uid 
-      });
-      this.userRef.onDisconnect().remove();
-      
-      // Keep alive
-      this.presenceInterval = setInterval(() => {
-        if (this.isLoggedIn) {
-          this.userRef.update({ 
-            lastActive: firebase.database.ServerValue.TIMESTAMP 
-          });
-        }
-      }, 30000);
-
-      // Clean inactive users
-      this.cleanupInterval = setInterval(() => this.cleanInactiveUsers(), 60000);
-
-      // Typing cleanup on disconnect
-      this.typingRef.child(this.uid).onDisconnect().remove();
-
-      // Messages
-      const messagesListener = this.messagesRef.orderByChild('timestamp').limitToLast(100);
-      this.messageListeners.push(
-        messagesListener.on("child_added", snap => {
-          if (this.renderedMessages.has(snap.key)) return;
-          this.renderedMessages.add(snap.key);
-          this.addMessageToUI(snap.key, snap.val());
-        })
-      );
-
-      this.messageListeners.push(
-        this.messagesRef.on("child_removed", snap => {
-          this.renderedMessages.delete(snap.key);
-          this.timeElements.delete(snap.key);
-          const el = document.getElementById(`msg-${snap.key}`);
-          if (el) {
-            el.style.transition = 'opacity 0.3s, transform 0.3s';
-            el.style.opacity = '0';
-            el.style.transform = 'scale(0.9)';
-            setTimeout(() => el.remove(), 300);
-          }
-        })
-      );
-
-      // ✅ FIX: Store online users listener reference for cleanup
-      this.onlineUsersListener = this.onlineRef.on("value", snap => {
-        const count = snap.numChildren();
-        this.userCountSpan.textContent = count;
-      });
-
-      // Pinned video
-      this.pinnedVideoRef.on("value", snap => {
-        this.handlePinnedVideo(snap.val());
-      });
-
-      // ✅ FIX: Store typing listener reference for cleanup
-      this.typingListener = this.typingRef.on('value', snap => {
-        this.handleTypingUpdate(snap.val());
-      });
-
-      this.addSystemMessage(`👋 مرحباً ${this.escapeHtml(this.username)}!`);
-    }
-
-    cleanInactiveUsers() {
-      if (!this.isLoggedIn) return;
-      const now = Date.now() + this.serverTimeOffset;
-      this.onlineRef.once('value', snap => {
-        snap.forEach(child => {
-          // ✅ FIX: Don't delete current user
-          if (child.key === this.uid) return;
-          
-          const data = child.val();
-          if (now - (data.lastActive || 0) > this.INACTIVE_THRESHOLD) {
-            child.ref.remove();
-          }
-        });
-      });
-    }
-
-    addMessageToUI(key, data) {
-      // Sanitize data
-      const user = this.escapeHtml(data.user || 'مجهول');
-      const text = this.escapeHtml(data.text || '');
-      const timestamp = data.timestamp || null;
-      const uid = data.uid || null;
-      
-      const div = document.createElement("div");
-      div.className = "msg";
-      div.id = `msg-${key}`;
-      
-      const isMe = uid === this.uid;
-      div.innerHTML = `
-        <span class="user-badge">${user}</span>
-        <span class="msg-text">${text}</span>
-        <span class="msg-time" data-timestamp="${timestamp || ''}"></span>
-      `;
-      
-      const timeSpan = div.querySelector('.msg-time');
-      
-      // ✅ FIX: Set data-msg-key for IntersectionObserver
-      if (timestamp) {
-        timeSpan.dataset.msgKey = key;
-        this.updateRelativeTime(timestamp, timeSpan);
-        this.timeElements.set(key, { el: timeSpan, timestamp });
-        if (this.timeObserver) {
-          this.timeObserver.observe(timeSpan);
-        }
-      }
-
-      // Delete button - only for messages from this user
-      if (isMe) {
-        const del = document.createElement("button");
-        del.className = "delete-btn";
-        del.innerHTML = icons.trash;
-        del.title = "حذف";
-        del.setAttribute('aria-label', 'حذف الرسالة');
-        del.onclick = () => {
-          this.showConfirmModal('حذف الرسالة؟', () => {
-            this.messagesRef.child(key).remove();
-          });
-        };
-        div.appendChild(del);
-      }
-
-      this.messagesDiv.appendChild(div);
-      if (this.atBottom) this.scrollToBottom();
-    }
-
-    updateRelativeTime(timestamp, el) {
-      if (!timestamp || !el) return;
-      const diff = Math.max(0, Math.floor((Date.now() + this.serverTimeOffset - timestamp) / 1000));
-      let txt = "الآن";
-      if (diff < 60) txt = `${diff} ث`;
-      else if (diff < 3600) txt = `منذ ${Math.floor(diff/60)} د`;
-      else if (diff < 86400) txt = `منذ ${Math.floor(diff/3600)} س`;
-      else txt = `منذ ${Math.floor(diff/86400)} ي`;
-      el.textContent = txt;
-    }
-
-    initTimeObserver() {
-      this.timeObserver = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-          if (entry.isIntersecting) {
-            const key = entry.target.dataset.msgKey;
-            if (key && this.timeElements.has(key)) {
-              const data = this.timeElements.get(key);
-              this.updateRelativeTime(data.timestamp, data.el);
-            }
-          }
-        });
-      }, { threshold: 0.1 });
-    }
-
-    addSystemMessage(text) {
-      const div = document.createElement("div");
-      div.className = "sys-msg";
-      div.textContent = text;
-      this.messagesDiv.appendChild(div);
-      if (this.atBottom) this.scrollToBottom();
-    }
-
-    sendMessage(e) {
-      e.preventDefault();
-      if (this.sendBtn.disabled || !this.isLoggedIn) return;
-      
-      const text = this.messageInput.value.trim();
-      if (!text) return;
-      
-      // ✅ FIX: Extra validation for length
-      if (text.length > 500) {
-        this.addSystemMessage('⚠️ الرسالة طويلة جداً (الحد 500 حرف)');
-        return;
-      }
-      
-      this.sendBtn.disabled = true;
-      setTimeout(() => { this.sendBtn.disabled = false; }, 1000);
-
-      this.messagesRef.push({
-        user: this.username,
-        text: text,
-        timestamp: firebase.database.ServerValue.TIMESTAMP,
-        uid: this.uid
-      }).catch(err => {
-        console.error('Send message error:', err);
-        this.addSystemMessage('❌ فشل إرسال الرسالة');
-        this.sendBtn.disabled = false;
-      });
-      
-      this.messageInput.value = "";
+  markTyping(hasText){
+    if (!this.typingRef) return;
+    if (hasText && !this.isTyping){
+      this.isTyping = true;
+      this.typingRef.child(Core.uid).set(this.username);
+      clearTimeout(this.typingClearTimer);
+      this.typingClearTimer = setTimeout(() => this.clearTyping(), TYPE_TIMEOUT);
+    } else if (!hasText){
       this.clearTyping();
+    }
+  },
+  clearTyping(){
+    if (this.isTyping && this.typingRef){
+      this.typingRef.child(Core.uid).remove();
       this.isTyping = false;
-      this.userRef.update({ lastActive: firebase.database.ServerValue.TIMESTAMP });
     }
+    clearTimeout(this.typingClearTimer);
+  },
 
-    handleTyping() {
-      if (!this.typingRef || !this.isLoggedIn) return;
-      
-      const text = this.messageInput.value.trim();
-      if (text.length > 0 && !this.isTyping) {
-        this.isTyping = true;
-        this.typingRef.child(this.uid).set(this.username);
-        clearTimeout(this.typingTimeout);
-        this.typingTimeout = setTimeout(() => this.clearTyping(), this.TYPING_TIMEOUT);
-      } else if (text.length === 0) {
-        this.clearTyping();
-      }
-    }
+  listRoster(cb){
+    // returns an unsubscribe function
+    const ref = Core.db.ref('online');
+    const listener = ref.on('value', snap => cb(snap.val() || {}));
+    return () => ref.off('value', listener);
+  },
 
-    clearTyping() {
-      if (this.typingRef && this.isTyping) {
-        this.typingRef.child(this.uid).remove();
-        this.isTyping = false;
-      }
-    }
+  dispose(){
+    clearInterval(this.heartbeatTimer);
+    clearInterval(this.sweepTimer);
+    clearTimeout(this.typingClearTimer);
+    if (this.onlineListener) Core.db.ref('online').off('value', this.onlineListener);
+    if (this.typingUpdateListener && this.typingRef) this.typingRef.off('value', this.typingUpdateListener);
+    if (this.typingRef) this.typingRef.child(Core.uid).remove();
+    if (this.ref) this.ref.remove();
+  }
+};
 
-    handleTypingUpdate(data) {
-      if (!data) {
-        this.typingIndicator.classList.remove('active');
-        this.typingIndicator.innerHTML = '';
-        return;
-      }
-      
-      const typers = Object.keys(data).filter(key => key !== this.uid);
-      if (typers.length === 0) {
-        this.typingIndicator.classList.remove('active');
-        this.typingIndicator.innerHTML = '';
-      } else {
-        const names = typers.map(key => this.escapeHtml(data[key])).filter(n => n);
-        let message = '';
-        if (names.length === 1) {
-          message = `${names[0]} <span style="color:var(--accent-color)">يكتب...</span>`;
-        } else if (names.length === 2) {
-          message = `${names[0]} و ${names[1]} <span style="color:var(--accent-color)">يكتبان...</span>`;
-        } else {
-          message = `${names.length} أشخاص <span style="color:var(--accent-color)">يكتبون...</span>`;
-        }
-        this.typingIndicator.innerHTML = `${message} <span class="typing-dots"><span></span><span></span><span></span></span>`;
-        this.typingIndicator.classList.add('active');
-      }
-    }
+/* ============================================================
+   MESSAGES
+============================================================ */
+const Messages = {
+  ref:null, addListener:null, removeListener:null,
+  seen:new Set(), timeEls:new Map(), timeObserver:null, tickTimer:null,
 
-    monitorConnection() {
-      this.connectedRef = this.db.ref('.info/connected');
-      
-      // ✅ FIX: Reset first connect flag when page loads
-      this.isFirstConnect = true;
-      
-      this.connectedRef.on('value', (snap) => {
-        const isConnected = snap.val() === true;
-        this.connectionStatus.textContent = isConnected ? '🟢 متصل' : '🔴 غير متصل';
-        this.connectionStatus.className = 'visible ' + (isConnected ? 'online' : 'offline');
-        
-        if (isConnected) {
-          setTimeout(() => {
-            this.connectionStatus.classList.remove('visible');
-          }, 3000);
-          
-          // ✅ FIX: Don't show "restored" on first connection
-          if (!this.isFirstConnect && this.isLoggedIn) {
-            this.addSystemMessage('🟢 تم استعادة الاتصال بالخادم');
-          }
-          this.isFirstConnect = false;
-        } else if (!isConnected) {
-          this.addSystemMessage('🔴 انقطع الاتصال... جاري المحاولة');
-        }
+  init(feedEl){
+    this.feedEl = feedEl;
+    this.timeObserver = new IntersectionObserver(entries => {
+      entries.forEach(e => { if (e.isIntersecting) this.refreshOne(e.target.dataset.mkey); });
+    }, { threshold:.1 });
+    // periodic refresh so visible timestamps stay accurate even without scrolling
+    this.tickTimer = setInterval(() => {
+      this.timeEls.forEach((v, key) => {
+        const rect = v.el.getBoundingClientRect();
+        if (rect.bottom > 0 && rect.top < window.innerHeight) this.refreshOne(key);
       });
-    }
+    }, 30000);
+  },
 
-    // ==================== Modal Functions ====================
-    showModal(title, content) {
-      const overlay = document.createElement('div');
-      overlay.className = 'modal-overlay';
-      const box = document.createElement('div');
-      box.className = 'modal-box';
-      box.innerHTML = `<h4>${title}</h4>${content}`;
-      overlay.appendChild(box);
-      overlay.onclick = (e) => { if (e.target === overlay) this.closeModal(overlay); };
-      this.modalContainer.appendChild(overlay);
-      
-      // ✅ FIX: Focus management
-      const firstInput = box.querySelector('input, button');
-      if (firstInput) setTimeout(() => firstInput.focus(), 100);
-      
-      // ✅ FIX: Keyboard navigation - Escape to close
-      const handleKeydown = (e) => {
-        if (e.key === 'Escape') {
-          this.closeModal(overlay);
-          document.removeEventListener('keydown', handleKeydown);
-        }
-      };
-      document.addEventListener('keydown', handleKeydown);
-      overlay._keydownHandler = handleKeydown;
-      
-      return { overlay, box };
-    }
+  start(onAdd, onRemove){
+    this.ref = Core.db.ref('messages');
+    const q = this.ref.orderByChild('timestamp').limitToLast(100);
+    this.addListener = q.on('child_added', snap => {
+      if (this.seen.has(snap.key)) return;
+      this.seen.add(snap.key);
+      onAdd(snap.key, snap.val());
+    });
+    this.removeListener = this.ref.on('child_removed', snap => {
+      this.seen.delete(snap.key);
+      const meta = this.timeEls.get(snap.key);
+      if (meta) { this.timeObserver.unobserve(meta.el); this.timeEls.delete(snap.key); }
+      onRemove(snap.key);
+    });
+  },
 
-    closeModal(overlay) {
-      if (overlay._keydownHandler) {
-        document.removeEventListener('keydown', overlay._keydownHandler);
-      }
-      overlay.remove();
-    }
+  send(username, text){
+    return this.ref.push({ user: username, text, timestamp: Core.stamp(), uid: Core.uid });
+  },
 
-    showConfirmModal(message, onConfirm) {
-      const content = `
-        <p style="text-align:center;margin-bottom:20px;font-size:16px;">${message}</p>
-        <div style="display:flex;gap:10px;">
-          <button id="confirmYes" style="flex:1;background:var(--danger-color);">نعم</button>
-          <button id="confirmNo" style="flex:1;background:var(--bg-tertiary);">إلغاء</button>
+  remove(key){ this.ref.child(key).remove(); },
+
+  registerTimeEl(key, timestamp, el){
+    this.timeEls.set(key, { el, timestamp });
+    this.timeObserver.observe(el);
+    this.refreshOne(key);
+  },
+
+  refreshOne(key){
+    const meta = this.timeEls.get(key);
+    if (!meta) return;
+    meta.el.textContent = relTime(meta.timestamp);
+  },
+
+  dispose(){
+    if (this.addListener) this.ref.off('child_added', this.addListener);
+    if (this.removeListener) this.ref.off('child_removed', this.removeListener);
+    clearInterval(this.tickTimer);
+    if (this.timeObserver) this.timeObserver.disconnect();
+    this.seen.clear();
+    this.timeEls.clear();
+  }
+};
+
+function relTime(ts){
+  if (!ts) return '';
+  const diff = Math.max(0, Math.floor((Core.serverNow() - ts) / 1000));
+  if (diff < 60) return `${diff} ث`;
+  if (diff < 3600) return `منذ ${Math.floor(diff/60)} د`;
+  if (diff < 86400) return `منذ ${Math.floor(diff/3600)} س`;
+  return `منذ ${Math.floor(diff/86400)} ي`;
+}
+
+/* ============================================================
+   VIDEO — url parsing + validation
+============================================================ */
+const VideoParse = {
+  YT: /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/,
+  TW: /(?:twitter\.com|x\.com)\/\w+\/status\/(\d+)/,
+  FILE: /\.(mp4|webm|ogv|mov)(\?.*)?$/i,
+  HLS_EXT: /\.m3u8(\?.*)?$/i,
+
+  async parse(rawUrl){
+    const url = rawUrl.trim();
+    let m = url.match(this.YT);
+    if (m) return { type:'youtube', id:m[1] };
+    m = url.match(this.TW);
+    if (m) return { type:'twitter', id:m[1] };
+    if (this.FILE.test(url)) return { type:'direct', src:url };
+    // Only trust explicit .m3u8 extension or an obvious /hls/ path segment.
+    // We do NOT pre-validate with a fetch() call: CORS on live/token streams
+    // routinely blocks HEAD/GET requests to otherwise perfectly valid streams,
+    // which used to reject working links. hls.js itself will report a real
+    // error if the stream truly doesn't work.
+    if (this.HLS_EXT.test(url) || /\/hls\//i.test(url)) return { type:'hls', src:url };
+    return null;
+  }
+};
+
+/* ============================================================
+   VIDEO — player widget
+============================================================ */
+class VideoWidget {
+  constructor(container, data, myUid, actions){
+    this.el = container;
+    this.data = data;
+    this.myUid = myUid;
+    this.actions = actions; // { onClose, onMinimize, onRestore }
+    this.videoEl = null;
+    this.hls = null;
+    this.minimized = false;
+    this._render();
+    this._load();
+  }
+
+  _render(){
+    const isOwner = this.data.uid === this.myUid;
+    this.el.innerHTML = `
+      <div class="screen-head">
+        <span class="who">🎬 ${esc(this.data.setBy || '')}</span>
+        <div class="screen-actions">
+          <button class="screen-btn" data-act="min" title="تصغير">${ICO.shrink}</button>
+          ${isOwner ? `<button class="screen-btn danger" data-act="close" title="حذف للجميع">${ICO.close}</button>` : ''}
         </div>
-      `;
-      const { overlay, box } = this.showModal('تأكيد', content);
-      
-      box.querySelector('#confirmYes').onclick = () => {
-        this.closeModal(overlay);
-        onConfirm();
-      };
-      box.querySelector('#confirmNo').onclick = () => {
-        this.closeModal(overlay);
-      };
-    }
+      </div>
+      <div class="screen-body" id="scrBody"><div class="screen-msg wait">⏳ جاري التحميل...</div></div>
+      <div class="screen-tab" id="scrTab">⬆ اضغط للتكبير</div>
+    `;
+    this.el.querySelector('[data-act="min"]').onclick = () => { this._toggleMin(true); this.actions.onMinimize(); };
+    const closeBtn = this.el.querySelector('[data-act="close"]');
+    if (closeBtn) closeBtn.onclick = () => this.actions.onClose();
+    this.el.querySelector('#scrTab').onclick = () => { this._toggleMin(false); this.actions.onRestore(); };
+    this._makeDraggable();
+  }
 
-    showOnlineUsersModal() {
-      // ✅ FIX: Use real-time listener for online users
-      const { overlay } = this.showModal('👥 المتصلون الآن', '<div id="usersList"><p style="text-align:center;color:var(--text-secondary);">جاري التحميل...</p></div>');
-      
-      const usersList = overlay.querySelector('#usersList');
-      const listener = this.onlineRef.on('value', snap => {
-        const users = snap.val() || {};
-        const now = Date.now() + this.serverTimeOffset;
-        const arr = Object.entries(users).sort((a,b) => (b[1].lastActive||0) - (a[1].lastActive||0));
-        let list = '';
-        arr.forEach(([key, data]) => {
-          const name = this.escapeHtml(data.username || 'مجهول');
-          const diff = now - (data.lastActive||0);
-          let cls = 'status-online', txt = 'متصل';
-          if (diff > this.INACTIVE_THRESHOLD) { cls = 'status-offline'; txt = 'غير متصل'; }
-          else if (diff > this.IDLE_THRESHOLD) { cls = 'status-idle'; txt = 'خامل'; }
-          list += `<div class="user-item"><span class="status-dot ${cls}"></span><span>${name}</span><span style="margin-right:auto;font-size:12px;color:var(--text-secondary)">${txt}</span></div>`;
-        });
-        usersList.innerHTML = list || '<p style="text-align:center;color:var(--text-secondary);">لا يوجد متصلون</p>';
-      });
-      
-      // Clean up listener when modal closes
-      const originalClose = this.closeModal.bind(this);
-      this.closeModal = (modal) => {
-        if (modal === overlay) {
-          this.onlineRef.off('value', listener);
-        }
-        originalClose(modal);
-      };
-      
-      // Restore closeModal after
-      overlay._closeModal = () => {
-        this.onlineRef.off('value', listener);
-        originalClose(overlay);
-      };
-      
-      // Override close for this modal
-      const cleanupListener = () => {
-        this.onlineRef.off('value', listener);
-      };
-      overlay._cleanup = cleanupListener;
-      
-      // When overlay is clicked to close
-      overlay.onclick = (e) => {
-        if (e.target === overlay) {
-          cleanupListener();
-          this.closeModal(overlay);
-        }
-      };
-    }
+  _toggleMin(min){
+    this.minimized = min;
+    const body = this.el.querySelector('#scrBody');
+    const tab = this.el.querySelector('#scrTab');
+    body.classList.toggle('hide', min);
+    tab.style.display = min ? 'block' : 'none';
+    this.el.classList.toggle('small', min);
+  }
 
-    showSetVideoModal() {
-      const content = `
-        <input type="text" id="videoUrlInput" placeholder="أدخل رابط الفيديو" style="margin-bottom:10px;">
-        <small style="display:block;text-align:center;color:var(--text-secondary);margin-bottom:15px;">YouTube | Twitter/X | HLS (.m3u8) | MP4</small>
-        <button id="submitVideoBtn" class="btn-primary">🎬 تثبيت الفيديو</button>
-      `;
-      const { overlay, box } = this.showModal('📺 تثبيت فيديو', content);
-      const btn = box.querySelector('#submitVideoBtn');
-      const inp = box.querySelector('#videoUrlInput');
-      
-      btn.onclick = () => {
-        const url = inp.value.trim();
-        if (!url) {
-          this.showToast('⚠️ أدخل رابطاً');
-          return;
-        }
-        this.validateAndSetVideo(url, overlay);
-      };
-      
-      inp.onkeypress = e => { if (e.key === 'Enter') btn.click(); };
-    }
+  restoreFromExternal(){ this._toggleMin(false); }
+  minimizeFromExternal(){ this._toggleMin(true); }
 
-    async validateAndSetVideo(url, overlay) {
-      const data = await this.parseVideoUrl(url);
-      if (data) {
-        data.setBy = this.username;
-        data.uid = this.uid;
-        this.pinnedVideoRef.set(data);
-        this.closeModal(overlay);
-        this.addSystemMessage(`🎬 ${this.escapeHtml(this.username)} ثبت فيديو`);
-      } else {
-        this.showToast('⚠️ الرابط غير مدعوم. جرب: YouTube, Twitter, HLS, أو MP4 مباشر');
-      }
-    }
-
-    showToast(message) {
-      const toast = document.createElement('div');
-      toast.style.cssText = `
-        position: fixed; bottom: 120px; left: 50%; transform: translateX(-50%);
-        background: var(--bg-secondary); color: var(--text-primary);
-        padding: 12px 24px; border-radius: var(--radius-lg);
-        border: 1px solid var(--border-color); z-index: 10000;
-        font-family: 'Tajawal', sans-serif; font-size: 14px;
-        box-shadow: var(--shadow); animation: fadeIn 0.3s ease;
-      `;
-      toast.textContent = message;
-      document.body.appendChild(toast);
-      setTimeout(() => {
-        toast.style.opacity = '0';
-        toast.style.transition = 'opacity 0.3s';
-        setTimeout(() => toast.remove(), 300);
-      }, 3000);
-    }
-
-    async parseVideoUrl(url) {
-      url = url.trim();
-      
-      // YouTube
-      const ytMatch = url.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
-      if (ytMatch) return { type: 'youtube', id: ytMatch[1] };
-      
-      // Twitter/X
-      const twMatch = url.match(/(?:twitter\.com|x\.com)\/\w+\/status\/(\d+)/);
-      if (twMatch) return { type: 'twitter', id: twMatch[1] };
-      
-      // Direct video files
-      if (/\.(mp4|webm|ogv|mov)(\?.*)?$/i.test(url)) return { type: 'direct', src: url };
-      
-      // ✅ FIX: Validate HLS before accepting
-      if (url.includes('.m3u8') || url.includes('/hls/') || url.includes('m3u8')) {
-        const isValid = await this.validateHLS(url);
-        if (isValid) return { type: 'hls', src: url };
-      }
-      
-      // ✅ FIX: More specific HLS detection with validation
-      if (url.includes('master') || url.includes('playlist') || url.includes('live') || url.includes('token')) {
-        const isValid = await this.validateHLS(url);
-        if (isValid) return { type: 'hls', src: url };
-      }
-      
-      return null;
-    }
-
-    async validateHLS(url) {
-      try {
-        const r = await fetch(url, { method: 'HEAD' });
-        const ct = r.headers.get('content-type') || '';
-        return ct.includes('mpegurl') || 
-               ct.includes('application/vnd.apple.mpegurl') ||
-               ct.includes('octet-stream') ||
-               ct.includes('vnd.apple.mpegurl');
-      } catch {
-        // If HEAD fails, try GET with small range
-        try {
-          const r = await fetch(url, { headers: { 'Range': 'bytes=0-1024' } });
-          const text = await r.text();
-          return text.includes('#EXTM3U') || text.includes('#EXT-X');
-        } catch {
-          return false;
-        }
-      }
-    }
-
-    handlePinnedVideo(data) {
-      if (this.videoPlayerManager) {
-        this.videoPlayerManager.dispose();
-        this.videoPlayerManager = null;
-      }
-      this.pinnedVideoContainer.innerHTML = '';
-      this.isVideoMinimized = false;
-      
-      // ✅ FIX: Only show restore button if there's a video
-      if (!data) {
-        this.pinnedVideoContainer.style.display = 'none';
-        this.restoreVideoBtn.style.display = 'none';
-        return;
-      }
-      
-      this.pinnedVideoContainer.style.display = 'flex';
-      this.pinnedVideoContainer.classList.remove('minimized');
-      
-      // ✅ FIX: Don't show restore button for everyone, only when minimized
-      this.restoreVideoBtn.style.display = 'none';
-      
-      this.videoPlayerManager = new UniversalPlayer(
-        this.pinnedVideoContainer, 
-        data, 
-        this.uid,
-        (action, payload) => {
-          if (action === 'close' && data.uid === this.uid) {
-            this.showConfirmModal('🗑️ حذف الفيديو للجميع؟', () => {
-              this.pinnedVideoRef.remove();
-              this.addSystemMessage('🗑️ تم إزالة الفيديو');
-              this.restoreVideoBtn.style.display = 'none';
-            });
-          } else if (action === 'minimize') {
-            this.minimizeVideo();
-          } else if (action === 'restore') {
-            this.restoreVideo();
-          }
-        }
-      );
-    }
-
-    minimizeVideo() {
-      this.isVideoMinimized = true;
-      this.pinnedVideoContainer.classList.add('minimized');
-      this.restoreVideoBtn.style.display = 'flex';
-      this.addSystemMessage('📹 تم تصغير الفيديو');
-    }
-
-    restoreVideo() {
-      this.isVideoMinimized = false;
-      this.pinnedVideoContainer.classList.remove('minimized');
-      this.restoreVideoBtn.style.display = 'none';
-      if (this.videoPlayerManager) {
-        this.videoPlayerManager.restoreFromMinimize();
-      }
-    }
-
-    restoreMinimizedVideo() {
-      this.restoreVideo();
-    }
-
-    scrollToBottom() {
-      requestAnimationFrame(() => {
-        this.messagesDiv.scrollTop = this.messagesDiv.scrollHeight;
-      });
-    }
-
-    escapeHtml(text) {
-      if (!text) return '';
-      const d = document.createElement('div');
-      d.textContent = text;
-      return d.innerHTML;
-    }
-
-    dispose() {
-      this.isLoggedIn = false;
-      
-      // Clean up message listeners
-      this.messageListeners.forEach(listener => {
-        if (listener && typeof listener.off === 'function') {
-          listener.off();
-        }
-      });
-      this.messageListeners = [];
-      
-      // Clean up intervals
-      if (this.presenceInterval) {
-        clearInterval(this.presenceInterval);
-        this.presenceInterval = null;
-      }
-      if (this.cleanupInterval) {
-        clearInterval(this.cleanupInterval);
-        this.cleanupInterval = null;
-      }
-      if (this.typingTimeout) {
-        clearTimeout(this.typingTimeout);
-        this.typingTimeout = null;
-      }
-      
-      // ✅ FIX: Clean up all listeners
-      if (this.timeObserver) {
-        this.timeObserver.disconnect();
-        this.timeObserver = null;
-      }
-      
-      if (this.serverTimeRef) {
-        this.serverTimeRef.off();
-        this.serverTimeRef = null;
-      }
-      
-      if (this.connectedRef) {
-        this.connectedRef.off();
-        this.connectedRef = null;
-      }
-      
-      if (this.typingRef) {
-        this.typingRef.off();
-        if (this.uid) {
-          this.typingRef.child(this.uid).remove();
-        }
-        this.typingRef = null;
-      }
-      
-      if (this.onlineRef && this.onlineUsersListener) {
-        this.onlineRef.off('value', this.onlineUsersListener);
-        this.onlineUsersListener = null;
-      }
-      
-      if (this.pinnedVideoRef) {
-        this.pinnedVideoRef.off();
-        this.pinnedVideoRef = null;
-      }
-      
-      if (this.userRef) {
-        this.userRef.remove();
-        this.userRef = null;
-      }
-      
-      // Clean up video player
-      if (this.videoPlayerManager) {
-        this.videoPlayerManager.dispose();
-        this.videoPlayerManager = null;
-      }
-      
-      // Clear data
-      this.renderedMessages.clear();
-      this.timeElements.clear();
-      
-      console.log('ChatApp disposed successfully');
+  async _load(){
+    const body = this.el.querySelector('#scrBody');
+    if (!body) return;
+    try{
+      if (this.data.type === 'youtube') return this._youtube(body);
+      if (this.data.type === 'twitter') return this._twitter(body);
+      return await this._directOrHls(body);
+    } catch(e){
+      console.error('video load error', e);
+      this._err(body, 'تعذر تحميل المشغل');
     }
   }
 
-  // ======================== Universal Player ========================
-  class UniversalPlayer {
-    constructor(container, data, currentUid, onAction) {
-      this.container = container;
-      this.data = data;
-      this.currentUid = currentUid;
-      this.onAction = onAction;
-      this.videoEl = null;
-      this.hls = null;
-      this.isMinimized = false;
-      this.buildUI();
-      this.init();
+  _youtube(body){
+    body.innerHTML = `<iframe src="https://www.youtube.com/embed/${this.data.id}?autoplay=1&mute=1&controls=1&playsinline=1&enablejsapi=1"
+      allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen
+      style="position:absolute;inset:0;width:100%;height:100%;border:0;"></iframe>`;
+  }
+  _twitter(body){
+    body.innerHTML = `<iframe src="https://twitframe.com/show?url=https://twitter.com/i/status/${this.data.id}"
+      style="position:absolute;inset:0;width:100%;height:100%;border:0;" allow="autoplay; encrypted-media" allowfullscreen></iframe>`;
+  }
+
+  async _directOrHls(body){
+    body.innerHTML = '';
+    const v = document.createElement('video');
+    v.setAttribute('playsinline','');
+    v.setAttribute('crossorigin','anonymous');
+    v.controls = true;
+    v.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;background:#000;';
+    body.appendChild(v);
+    this.videoEl = v;
+
+    const looksLikeHls = this.data.type === 'hls' || /\.m3u8(\?.*)?$/i.test(this.data.src);
+    if (looksLikeHls){
+      this._hls(v, this.data.src, body);
+      return;
     }
+    v.src = this.data.src;
+    try { await v.play(); this._hideMsg(); }
+    catch { this._err(body, 'لا يمكن تشغيل هذا الفيديو، تأكد من الرابط.'); }
+  }
 
-    buildUI() {
-      const isOwner = this.data.uid === this.currentUid;
-      this.container.innerHTML = `
-        <div class="video-header">
-          <span style="font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">🎬 ${this.escapeHtml(this.data.setBy || '')}</span>
-          <div class="video-header-actions">
-            <button class="video-control-btn minimize-btn" title="تصغير" aria-label="تصغير الفيديو">
-              ${icons.minimize}
-            </button>
-            ${isOwner ? `<button class="video-control-btn danger close-btn" title="حذف الفيديو للجميع" aria-label="حذف الفيديو">${icons.close}</button>` : ''}
-          </div>
-        </div>
-        <div class="video-body" id="videoBody">
-          <div class="video-status video-loading">⏳ جاري التحميل...</div>
-        </div>
-        <div class="video-minimize-bar" id="minimizeBar">
-          ⬆ اضغط للتكبير
-        </div>
-      `;
-
-      // Event listeners for buttons
-      const minimizeBtn = this.container.querySelector('.minimize-btn');
-      minimizeBtn.onclick = () => {
-        this.toggleMinimize();
-        this.onAction('minimize');
-      };
-
-      const closeBtn = this.container.querySelector('.close-btn');
-      if (closeBtn) {
-        closeBtn.onclick = () => {
-          this.onAction('close');
-        };
-      }
-
-      const bar = this.container.querySelector('#minimizeBar');
-      bar.onclick = () => {
-        this.toggleMinimize();
-        this.onAction('restore');
-      };
-
-      this.makeDraggable();
-    }
-
-    toggleMinimize() {
-      this.isMinimized = !this.isMinimized;
-      const body = this.container.querySelector('.video-body');
-      const bar = this.container.querySelector('#minimizeBar');
-      
-      if (this.isMinimized) {
-        body.classList.add('hidden');
-        bar.style.display = 'block';
-        this.container.style.minHeight = '45px';
-        this.container.style.height = '45px';
-      } else {
-        body.classList.remove('hidden');
-        bar.style.display = 'none';
-        this.container.style.minHeight = '';
-        this.container.style.height = '';
-        this.restoreFromMinimize();
-      }
-    }
-
-    restoreFromMinimize() {
-      this.isMinimized = false;
-      const body = this.container.querySelector('.video-body');
-      const bar = this.container.querySelector('#minimizeBar');
-      if (body) body.classList.remove('hidden');
-      if (bar) bar.style.display = 'none';
-      this.container.style.minHeight = '';
-      this.container.style.height = '';
-    }
-
-    async init() {
-      const body = document.getElementById('videoBody');
-      if (!body) return;
-      
-      try {
-        if (this.data.type === 'youtube') {
-          this.loadYouTube(body);
-        } else if (this.data.type === 'twitter') {
-          this.loadTwitter(body);
+  _hls(video, url, body){
+    if (window.Hls && Hls.isSupported()){
+      const hls = new Hls({ enableWorker:true, lowLatencyMode:false });
+      hls.loadSource(url);
+      hls.attachMedia(video);
+      hls.on(Hls.Events.MANIFEST_PARSED, (_e, data) => {
+        if (data && data.details && data.details.live) hls.config.lowLatencyMode = true;
+        this._hideMsg();
+        video.play().catch(()=>{});
+      });
+      hls.on(Hls.Events.ERROR, (_e, data) => {
+        if (!data.fatal) return;
+        if (data.type === Hls.ErrorTypes.NETWORK_ERROR){
+          this._err(body, 'تعذر الاتصال بالبث، تأكد من الرابط.');
+        } else if (data.type === Hls.ErrorTypes.MEDIA_ERROR){
+          try { hls.recoverMediaError(); } catch { this._err(body, 'فشل استرداد البث'); }
         } else {
-          await this.loadVideo(body, this.data.src);
+          this._err(body, 'فشل تشغيل البث');
+          hls.destroy();
         }
-      } catch (e) {
-        console.error('Video load error:', e);
-        this.showError(body, 'فشل تحميل المشغل');
-      }
-    }
-
-    loadYouTube(body) {
-      body.innerHTML = `<iframe src="https://www.youtube.com/embed/${this.data.id}?autoplay=1&mute=1&controls=1&playsinline=1&enablejsapi=1" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen style="position:absolute;top:0;left:0;width:100%;height:100%;border:0;"></iframe>`;
-    }
-
-    loadTwitter(body) {
-      body.innerHTML = `<iframe src="https://twitframe.com/show?url=https://twitter.com/i/status/${this.data.id}" style="position:absolute;top:0;left:0;width:100%;height:100%;border:0;" allow="autoplay; encrypted-media" allowfullscreen></iframe>`;
-    }
-
-    async loadVideo(body, url) {
-      body.innerHTML = '';
-      const video = document.createElement('video');
-      video.setAttribute('playsinline', '');
-      video.setAttribute('crossorigin', 'anonymous');
-      video.controls = true;
-      video.style.width = '100%';
-      video.style.height = '100%';
-      video.style.background = '#000';
-      body.appendChild(video);
-      this.videoEl = video;
-
-      try {
-        await video.play();
-        this.hideStatus();
-      } catch (err) {
-        if (this.data.type === 'hls' || url.includes('m3u8')) {
-          this.tryHLS(video, url, body);
-        } else {
-          this.showError(body, 'لا يمكن تشغيل هذا الفيديو. تأكد من أن الرابط يدعم التشغيل المباشر أو جرب رابطاً آخر.');
-        }
-      }
-    }
-
-    tryHLS(video, url, body) {
-      if (Hls.isSupported()) {
-        // ✅ FIX: Enable lowLatencyMode only for live streams
-        let isLive = false;
-        const hls = new Hls({ 
-          enableWorker: true,
-          lowLatencyMode: false, // Start with false, will be enabled if live
-        });
-        
-        hls.loadSource(url);
-        hls.attachMedia(video);
-        
-        hls.on(Hls.Events.MANIFEST_PARSED, (event, data) => {
-          // ✅ FIX: Enable lowLatencyMode only for live streams
-          if (data && data.details && data.details.live) {
-            hls.config.lowLatencyMode = true;
-          }
-          this.hideStatus();
-          video.play().catch(() => {});
-        });
-        
-        hls.on(Hls.Events.ERROR, (event, data) => {
-          if (data.fatal) {
-            if (data.type === Hls.ErrorTypes.NETWORK_ERROR) {
-              this.showError(body, 'تعذر الاتصال بالبث. قد يكون الرابط لا يسمح بالوصول أو معطلاً.');
-            } else if (data.type === Hls.ErrorTypes.MEDIA_ERROR) {
-              // ✅ FIX: Check if recovery succeeded
-              try {
-                hls.recoverMediaError();
-              } catch (e) {
-                this.showError(body, 'فشل استرداد البث');
-              }
-            } else {
-              this.showError(body, 'فشل تشغيل البث');
-              hls.destroy();
-            }
-          }
-        });
-        
-        this.hls = hls;
-      } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-        video.src = url;
-        video.play().catch(() => {});
-      } else {
-        this.showError(body, 'متصفحك لا يدعم تشغيل هذا النوع من البث');
-      }
-    }
-
-    hideStatus() {
-      const status = this.container.querySelector('.video-status');
-      if (status) status.style.display = 'none';
-    }
-
-    showError(body, msg) {
-      body.innerHTML = `<div class="video-status video-error"><div style="font-size:24px;">⚠️</div><div>${msg}</div></div>`;
-    }
-
-    makeDraggable() {
-      const hdr = this.container.querySelector('.video-header');
-      if (!hdr) return;
-      
-      let isDragging = false, startX, startY, initialLeft, initialTop;
-
-      const onStart = (e) => {
-        if (e.target.closest('button')) return;
-        isDragging = true;
-        const point = e.touches ? e.touches[0] : e;
-        startX = point.clientX;
-        startY = point.clientY;
-        const rect = this.container.getBoundingClientRect();
-        initialLeft = rect.left;
-        initialTop = rect.top;
-        document.addEventListener('mousemove', onMove);
-        document.addEventListener('touchmove', onMove, { passive: false });
-        document.addEventListener('mouseup', onEnd);
-        document.addEventListener('touchend', onEnd);
-        e.preventDefault();
-      };
-
-      const onMove = (e) => {
-        if (!isDragging) return;
-        e.preventDefault();
-        const point = e.touches ? e.touches[0] : e;
-        const dx = point.clientX - startX;
-        const dy = point.clientY - startY;
-        let newLeft = initialLeft + dx;
-        let newTop = initialTop + dy;
-        const maxX = window.innerWidth - this.container.offsetWidth - 10;
-        const maxY = window.innerHeight - this.container.offsetHeight - 10;
-        newLeft = Math.min(Math.max(newLeft, 10), maxX);
-        newTop = Math.min(Math.max(newTop, 10), maxY);
-        this.container.style.left = newLeft + 'px';
-        this.container.style.top = newTop + 'px';
-        this.container.style.right = 'auto';
-      };
-
-      const onEnd = () => {
-        isDragging = false;
-        document.removeEventListener('mousemove', onMove);
-        document.removeEventListener('touchmove', onMove);
-        document.removeEventListener('mouseup', onEnd);
-        document.removeEventListener('touchend', onEnd);
-      };
-
-      hdr.addEventListener('mousedown', onStart);
-      hdr.addEventListener('touchstart', onStart, { passive: false });
-    }
-
-    dispose() {
-      if (this.hls) { 
-        try {
-          this.hls.destroy(); 
-        } catch(e) {}
-        this.hls = null; 
-      }
-      if (this.videoEl) { 
-        try {
-          this.videoEl.pause(); 
-          this.videoEl.src = ''; 
-          this.videoEl.load(); 
-        } catch(e) {}
-        this.videoEl = null;
-      }
-      this.container.innerHTML = '';
-    }
-
-    escapeHtml(text) {
-      if (!text) return '';
-      const d = document.createElement('div');
-      d.textContent = text;
-      return d.innerHTML;
+      });
+      this.hls = hls;
+    } else if (video.canPlayType('application/vnd.apple.mpegurl')){
+      video.src = url;
+      video.play().catch(()=>{});
+      this._hideMsg();
+    } else {
+      this._err(body, 'المتصفح لا يدعم هذا النوع من البث');
     }
   }
 
-  // Initialize
-  document.addEventListener('DOMContentLoaded', () => { 
-    window.chatApp = new ChatApp(); 
+  _hideMsg(){ const m = this.el.querySelector('.screen-msg'); if (m) m.style.display='none'; }
+  _err(body, msg){ body.innerHTML = `<div class="screen-msg err">⚠️<br>${esc(msg)}</div>`; }
+
+  _makeDraggable(){
+    const head = this.el.querySelector('.screen-head');
+    if (!head) return;
+    let dragging=false, sx=0, sy=0, ox=0, oy=0;
+    const start = (e) => {
+      if (e.target.closest('button')) return;
+      dragging = true;
+      const p = e.touches ? e.touches[0] : e;
+      sx = p.clientX; sy = p.clientY;
+      const r = this.el.getBoundingClientRect();
+      ox = r.left; oy = r.top;
+      document.addEventListener('mousemove', move);
+      document.addEventListener('touchmove', move, { passive:false });
+      document.addEventListener('mouseup', end);
+      document.addEventListener('touchend', end);
+      e.preventDefault();
+    };
+    const move = (e) => {
+      if (!dragging) return;
+      e.preventDefault();
+      const p = e.touches ? e.touches[0] : e;
+      let nx = ox + (p.clientX - sx), ny = oy + (p.clientY - sy);
+      nx = Math.min(Math.max(nx, 8), window.innerWidth - this.el.offsetWidth - 8);
+      ny = Math.min(Math.max(ny, 8), window.innerHeight - this.el.offsetHeight - 8);
+      this.el.style.left = nx+'px'; this.el.style.top = ny+'px'; this.el.style.right='auto';
+    };
+    const end = () => {
+      dragging = false;
+      document.removeEventListener('mousemove', move);
+      document.removeEventListener('touchmove', move);
+      document.removeEventListener('mouseup', end);
+      document.removeEventListener('touchend', end);
+    };
+    head.addEventListener('mousedown', start);
+    head.addEventListener('touchstart', start, { passive:false });
+  }
+
+  dispose(){
+    if (this.hls){ try{ this.hls.destroy(); }catch{} this.hls=null; }
+    if (this.videoEl){ try{ this.videoEl.pause(); this.videoEl.src=''; this.videoEl.load(); }catch{} this.videoEl=null; }
+    this.el.innerHTML = '';
+  }
+}
+
+/* ============================================================
+   VIDEO — controller (talks to Firebase + VideoWidget)
+============================================================ */
+const VideoBoard = {
+  ref:null, listener:null, widget:null, minimized:false,
+
+  start(containerEl, restoreBtnEls, myUid){
+    this.container = containerEl;
+    this.restoreBtnEls = restoreBtnEls;
+    this.myUid = myUid;
+    this.ref = Core.db.ref('pinned_video');
+    this.listener = this.ref.on('value', snap => this._render(snap.val()));
+  },
+
+  set(data){ this.ref.set(data); },
+  clear(){ this.ref.remove(); },
+
+  _render(data){
+    if (this.widget) { this.widget.dispose(); this.widget = null; }
+    this.container.innerHTML = '';
+    this.minimized = false;
+    this.container.classList.remove('small');
+
+    if (!data){
+      this.container.style.display = 'none';
+      this._showRestoreBtns(false);
+      return;
+    }
+
+    this.container.style.display = 'flex';
+    this._showRestoreBtns(false);
+
+    this.widget = new VideoWidget(this.container, data, this.myUid, {
+      onClose: () => {
+        if (data.uid !== this.myUid) return;
+        confirmModal('حذف الفيديو للجميع؟', () => {
+          this.clear();
+          systemNote('🗑️ تم إزالة الفيديو');
+        });
+      },
+      onMinimize: () => { this.minimized = true; this._showRestoreBtns(true); systemNote('📹 تم تصغير الفيديو'); },
+      onRestore: () => { this.minimized = false; this._showRestoreBtns(false); }
+    });
+  },
+
+  restoreFromButton(){
+    this.minimized = false;
+    this._showRestoreBtns(false);
+    if (this.widget) this.widget.restoreFromExternal();
+  },
+
+  _showRestoreBtns(show){
+    this.restoreBtnEls.forEach(el => el.style.display = show ? 'flex' : 'none');
+  },
+
+  dispose(){
+    if (this.listener) this.ref.off('value', this.listener);
+    if (this.widget) this.widget.dispose();
+  }
+};
+
+/* ============================================================
+   MODALS / TOASTS
+============================================================ */
+function openModal(titleHtml, bodyHtml){
+  const host = $('#modalHost');
+  const veil = document.createElement('div');
+  veil.className = 'veil';
+  const sheet = document.createElement('div');
+  sheet.className = 'sheet';
+  sheet.innerHTML = `<h3>${titleHtml}</h3>${bodyHtml}`;
+  veil.appendChild(sheet);
+  host.appendChild(veil);
+
+  const onKey = (e) => { if (e.key === 'Escape') close(); };
+  document.addEventListener('keydown', onKey);
+  veil.addEventListener('click', (e) => { if (e.target === veil) close(); });
+
+  let cleanupFns = [];
+  function close(){
+    document.removeEventListener('keydown', onKey);
+    cleanupFns.forEach(fn => { try{ fn(); }catch{} });
+    veil.remove();
+  }
+  const firstFocusable = sheet.querySelector('input, button');
+  if (firstFocusable) setTimeout(() => firstFocusable.focus(), 80);
+
+  return {
+    sheet, close,
+    onClose(fn){ cleanupFns.push(fn); }
+  };
+}
+
+function confirmModal(message, onYes){
+  const m = openModal('تأكيد', `
+    <p style="text-align:center;margin-bottom:18px;font-size:.95rem;">${esc(message)}</p>
+    <div class="row2">
+      <button class="btn-full danger" id="mYes" style="flex:1">نعم</button>
+      <button class="btn-full ghost" id="mNo" style="flex:1">إلغاء</button>
+    </div>
+  `);
+  $('#mYes', m.sheet).onclick = () => { m.close(); onYes(); };
+  $('#mNo', m.sheet).onclick = () => m.close();
+}
+
+function rosterModal(){
+  const m = openModal('👥 المتصلون الآن', `<div id="rosterList"><p class="roster-empty">جاري التحميل...</p></div>`);
+  const listEl = $('#rosterList', m.sheet);
+  const unsubscribe = Presence.listRoster(users => {
+    const now = Core.serverNow();
+    const rows = Object.values(users).sort((a,b)=>(b.lastActive||0)-(a.lastActive||0));
+    if (!rows.length){ listEl.innerHTML = '<p class="roster-empty">لا يوجد متصلون</p>'; return; }
+    listEl.innerHTML = rows.map(u => {
+      const diff = now - (u.lastActive || 0);
+      let cls='up', label='متصل';
+      if (diff > GONE_MS){ cls='down'; label='غير متصل'; }
+      else if (diff > IDLE_MS){ cls='idle'; label='خامل'; }
+      return `<div class="roster-row"><span class="beacon ${cls}"></span><span>${esc(u.username||'مجهول')}</span><span class="roster-status">${label}</span></div>`;
+    }).join('');
   });
+  m.onClose(unsubscribe);
+}
+
+function videoModal(onSubmit){
+  const m = openModal('📺 تثبيت فيديو', `
+    <input id="vUrl" type="text" placeholder="أدخل رابط الفيديو">
+    <small>YouTube · Twitter/X · HLS (.m3u8) · MP4 مباشر</small>
+    <button class="btn-full" id="vGo">🎬 تثبيت الفيديو</button>
+  `);
+  const btn = $('#vGo', m.sheet), input = $('#vUrl', m.sheet);
+  const trigger = async () => {
+    const url = input.value.trim();
+    if (!url){ toast('⚠️ أدخل رابطاً'); return; }
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spin"></span> جارٍ التحقق...';
+    const ok = await onSubmit(url);
+    if (ok){ m.close(); }
+    else {
+      btn.disabled = false;
+      btn.innerHTML = '🎬 تثبيت الفيديو';
+      toast('⚠️ الرابط غير مدعوم. جرب YouTube، Twitter، HLS أو MP4 مباشر');
+    }
+  };
+  btn.onclick = trigger;
+  input.onkeypress = (e) => { if (e.key === 'Enter') trigger(); };
+}
+
+function systemNote(text){
+  const feed = $('#feed');
+  const div = document.createElement('div');
+  div.className = 'note';
+  div.textContent = text;
+  feed.appendChild(div);
+  Feed.maybeScroll();
+}
+
+/* ============================================================
+   FEED RENDERING
+============================================================ */
+const Feed = {
+  el:null, atBottom:true,
+  init(el){
+    this.el = el;
+    el.addEventListener('scroll', () => {
+      this.atBottom = (el.scrollHeight - el.scrollTop - el.clientHeight) < 60;
+    });
+  },
+  scrollToBottom(){ requestAnimationFrame(() => { this.el.scrollTop = this.el.scrollHeight; }); },
+  maybeScroll(){ if (this.atBottom) this.scrollToBottom(); },
+
+  addBubble(key, data, myUid){
+    const user = esc(data.user || 'مجهول');
+    const text = esc(data.text || '');
+    const ts = data.timestamp || null;
+    const div = document.createElement('div');
+    div.className = 'bubble';
+    div.id = `b-${key}`;
+    div.innerHTML = `
+      <span class="tag">${user}</span>
+      <span class="bubble-text">${text}</span>
+      <span class="bubble-time"></span>
+    `;
+    const timeEl = div.querySelector('.bubble-time');
+    if (ts){
+      Messages.registerTimeEl(key, ts, timeEl);
+      timeEl.dataset.mkey = key;
+    }
+    if (data.uid === myUid){
+      const del = document.createElement('button');
+      del.className = 'bubble-del';
+      del.innerHTML = ICO.trash;
+      del.setAttribute('aria-label','حذف الرسالة');
+      del.onclick = () => confirmModal('حذف الرسالة؟', () => Messages.remove(key));
+      div.appendChild(del);
+    }
+    this.el.appendChild(div);
+    this.maybeScroll();
+  },
+
+  removeBubble(key){
+    const el = document.getElementById(`b-${key}`);
+    if (!el) return;
+    el.style.transition = 'opacity .25s, transform .25s';
+    el.style.opacity = '0';
+    el.style.transform = 'scale(.92)';
+    setTimeout(() => el.remove(), 250);
+  }
+};
+
+/* ============================================================
+   CONNECTION STATUS
+============================================================ */
+const Connection = {
+  first:true,
+  watch(loggedInGetter){
+    Core.db.ref('.info/connected').on('value', snap => {
+      const up = snap.val() === true;
+      const bar = $('#pulseBar');
+      bar.textContent = up ? '🟢 متصل' : '🔴 غير متصل';
+      bar.className = 'show ' + (up ? 'up' : 'down');
+      if (up){
+        setTimeout(() => bar.classList.remove('show'), 2600);
+        if (!this.first && loggedInGetter()) systemNote('🟢 تم استعادة الاتصال');
+        this.first = false;
+      } else {
+        systemNote('🔴 انقطع الاتصال... جارٍ المحاولة');
+      }
+    });
+  }
+};
+
+/* ============================================================
+   APP BOOTSTRAP
+============================================================ */
+const App = {
+  username:'', loggedIn:false,
+
+  async boot(){
+    Core.init();
+    Feed.init($('#feed'));
+    Messages.init($('#feed'));
+    this._bindGate();
+    try{
+      $('#gateStatusTxt').textContent = 'جاري المصادقة...';
+      await Core.signIn();
+      $('#gateStatusTxt').textContent = 'تم! أدخل اسمك للمتابعة';
+      $('#gate .dot-pulse').style.background = 'var(--ok)';
+      $('#nameField').disabled = false;
+      $('#enterBtn').disabled = false;
+      $('#nameField').focus();
+    } catch(err){
+      console.error(err);
+      $('#gateStatusTxt').textContent = 'فشلت المصادقة: ' + (err.message || '');
+      $('#gateStatusTxt').style.color = 'var(--bad)';
+    }
+  },
+
+  _bindGate(){
+    $('#enterBtn').onclick = () => this._tryEnter();
+    $('#nameField').onkeypress = (e) => { if (e.key === 'Enter') this._tryEnter(); };
+  },
+
+  _tryEnter(){
+    if (this.loggedIn || $('#enterBtn').disabled) return;
+    const name = $('#nameField').value.trim();
+    const hint = $('#gateHint');
+    if (/[.#$\[\]\/]/.test(name)){ hint.textContent = '⚠️ لا تستخدم الرموز: . # $ [ ] /'; return; }
+    if (name.length < 2){ hint.textContent = '⚠️ الاسم قصير جداً'; return; }
+    if (name.length > 15){ hint.textContent = '⚠️ الاسم طويل جداً'; return; }
+    hint.textContent = '';
+    this.username = name;
+    this._enter();
+  },
+
+  _enter(){
+    this.loggedIn = true;
+    $('#gate').style.display = 'none';
+    $('#app').classList.add('on');
+    $('#textField').disabled = false;
+    $('#shootBtn').disabled = false;
+
+    Core.watchOffset();
+
+    Presence.countCb = (n) => { $('#onlineCount').textContent = n; };
+    Presence.start(this.username);
+
+    Messages.start(
+      (key, data) => Feed.addBubble(key, data, Core.uid),
+      (key) => Feed.removeBubble(key)
+    );
+
+    VideoBoard.start($('#screen'), [$('#bringBack'), $('#bringBackTop')], Core.uid);
+
+    Connection.watch(() => this.loggedIn);
+
+    this._bindDock();
+    this._bindTopBar();
+
+    systemNote(`👋 مرحباً ${this.username}!`);
+  },
+
+  _bindDock(){
+    $('#dock').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const input = $('#textField');
+      const text = input.value.trim();
+      if (!text) return;
+      if (text.length > 500){ systemNote('⚠️ الرسالة طويلة جداً (الحد 500 حرف)'); return; }
+      const btn = $('#shootBtn');
+      btn.disabled = true;
+      setTimeout(() => btn.disabled = false, 800);
+      Messages.send(this.username, text).catch(err => {
+        console.error(err);
+        systemNote('❌ فشل إرسال الرسالة');
+        btn.disabled = false;
+      });
+      input.value = '';
+      Presence.markTyping(false);
+    });
+
+    const tline = $('#typeline');
+    $('#textField').addEventListener('input', (e) => Presence.markTyping(e.target.value.trim().length > 0));
+    $('#textField').addEventListener('blur', () => Presence.markTyping(false));
+
+    Presence.typersCb = (names) => {
+      if (!names.length){ tline.classList.remove('on'); tline.innerHTML=''; return; }
+      let phrase;
+      if (names.length === 1) phrase = `${esc(names[0])} يكتب`;
+      else if (names.length === 2) phrase = `${esc(names[0])} و${esc(names[1])} يكتبان`;
+      else phrase = `${names.length} أشخاص يكتبون`;
+      tline.innerHTML = `${phrase}<span class="tdots"><i></i><i></i><i></i></span>`;
+      tline.classList.add('on');
+    };
+  },
+
+  _bindTopBar(){
+    $('#rosterPillBtn').onclick = () => rosterModal();
+    $('#videoPillBtn').onclick = () => videoModal(async (url) => {
+      const parsed = await VideoParse.parse(url);
+      if (!parsed) return false;
+      parsed.setBy = this.username;
+      parsed.uid = Core.uid;
+      VideoBoard.set(parsed);
+      systemNote(`🎬 ${this.username} ثبت فيديو`);
+      return true;
+    });
+    $('#bringBack').onclick = () => VideoBoard.restoreFromButton();
+    $('#bringBackTop').onclick = () => VideoBoard.restoreFromButton();
+  },
+
+  dispose(){
+    this.loggedIn = false;
+    Presence.dispose();
+    Messages.dispose();
+    VideoBoard.dispose();
+  }
+};
+
+document.addEventListener('DOMContentLoaded', () => App.boot());
+window.addEventListener('beforeunload', () => App.dispose());
+
+})();
 </script>
 </body>
-  </html>
+</html>
