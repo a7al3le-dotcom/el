@@ -1,4 +1,3 @@
-<!DOCTYPE html>
 <html>
 <head><meta charset="UTF-8"><title>دردشة زوار</title>
 <style>body{margin:0;background:#1a1a2e;font-family:sans-serif}#app{max-width:500px;margin:auto;background:#fff;height:100vh;display:flex;flex-direction:column}#login{padding:40px 20px;text-align:center;background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;flex:1;display:flex;flex-direction:column;justify-content:center}#login input{padding:14px;border-radius:30px;border:0;width:80%;margin:10px auto;font-size:16px}#login button{padding:14px 40px;border-radius:30px;border:0;background:#fff;color:#764ba2;font-weight:bold;font-size:18px;cursor:pointer;margin:10px auto}#chat{display:none;flex-direction:column;height:100vh}#header{background:#1a1a2e;color:#fff;padding:12px 18px;display:flex;justify-content:space-between;align-items:center;flex-shrink:0}#header span{font-size:14px;background:#2ecc71;padding:4px 14px;border-radius:20px}#messages{flex:1;overflow-y:auto;padding:12px;background:#f2f2f7}#messages .msg{max-width:80%;padding:10px 16px;border-radius:18px;margin-bottom:10px;word-wrap:break-word;font-size:15px}#messages .sent{background:#007aff;color:#fff;margin-right:auto;border-bottom-left-radius:6px}#messages .rec{background:#fff;color:#000;margin-left:auto;border-bottom-right-radius:6px;box-shadow:0 1px 4px #ccc}#messages .sender{font-size:12px;font-weight:bold;opacity:.7;display:block}#messages .time{font-size:10px;opacity:.5;display:block;margin-top:3px;text-align:left}#input{display:flex;padding:10px;background:#fff;border-top:1px solid #ddd;gap:8px;flex-shrink:0}#input input{flex:1;padding:12px 18px;border-radius:30px;border:2px solid #eee;font-size:15px;outline:0}#input input:focus{border-color:#007aff}#input button{padding:12px 24px;border-radius:30px;border:0;background:#007aff;color:#fff;font-weight:bold;font-size:15px;cursor:pointer}#users{background:#1a1a2e;color:#fff;padding:10px 16px;max-height:150px;overflow-y:auto;flex-shrink:0;border-top:1px solid #333}#users .u{padding:6px 0;font-size:14px;border-bottom:1px solid #333}#users .u .dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-left:8px}.online{background:#2ecc71}.offline{background:#e74c3c}</style>
@@ -7,7 +6,7 @@
 <div id="app">
 <div id="login">
 <h1>💬 دردشة الزوار</h1>
-<input id="nameInput" placeholder="اسمك في الدردشة" value="زائر">
+<input id="nameInput" placeholder="اسمك في الدردشة" value="زائر_"+Math.floor(Math.random()*999)>
 <button id="joinBtn">🚀 دخول</button>
 <div id="err" style="color:#ff6b6b;font-size:14px;margin-top:10px;display:none"></div>
 </div>
@@ -18,121 +17,65 @@
 <div id="input"><input id="msgInput" placeholder="اكتب رسالتك..."><button id="sendBtn">إرسال</button></div>
 </div>
 </div>
+<script src="https://cdn.socket.io/4.7.0/socket.io.min.js"></script>
+<script>
+const socket = io('https://gemiapp-default-rtdb.firebaseio.com', {path:'/.fp/socket.io', transports:['polling']});
+const db = firebase.database();
+const auth = firebase.auth();
+let myUid=null, myName='';
+
+document.getElementById('joinBtn').onclick=()=>{
+const name=document.getElementById('nameInput').value.trim()||'زائر';
+firebase.auth().signInAnonymously().then(r=>{
+myUid=r.user.uid;
+myName=name;
+r.user.updateProfile({displayName:name});
+db.ref('users/'+myUid).set({name,online:true,uid:myUid});
+document.getElementById('login').style.display='none';
+document.getElementById('chat').style.display='flex';
+document.getElementById('msgInput').focus();
+}).catch(e=>{document.getElementById('err').textContent=e.message;document.getElementById('err').style.display='block';});
+};
+
+db.ref('messages').limitToLast(50).on('child_added',sn=>{
+const d=sn.val();if(!d)return;
+const c=document.getElementById('messages');
+if(c.querySelector('.msg:last-child')?.textContent===d.text)return;
+const div=document.createElement('div');div.className='msg '+(d.uid===myUid?'sent':'rec');
+div.innerHTML='<span class="sender">'+d.name+'</span>'+d.text+'<span class="time">'+new Date(d.time).toLocaleTimeString()+'</span>';
+c.appendChild(div);c.scrollTop=c.scrollHeight;
+});
+
+db.ref('users').on('value',sn=>{
+const data=sn.val()||{};
+const list=document.getElementById('users');
+let html='<div style="color:#888;font-size:12px;padding:4px 0">المتصلون</div>';
+let count=0;
+Object.keys(data).forEach(k=>{
+if(k===myUid)return;
+const u=data[k];
+if(u.online)count++;
+html+='<div class="u"><span class="dot '+(u.online?'online':'offline')+'"></span> '+u.name+'</div>';
+});
+list.innerHTML=html;
+document.getElementById('onlineCount').textContent=count+' متصل';
+});
+
+document.getElementById('sendBtn').onclick=()=>{
+const input=document.getElementById('msgInput');
+const text=input.value.trim();if(!text||!myUid)return;
+db.ref('messages').push({uid:myUid,name:myName,text:text,time:Date.now()});
+input.value='';
+};
+document.getElementById('msgInput').onkeydown=e=>{if(e.key==='Enter')document.getElementById('sendBtn').click();};
+
+window.onbeforeunload=()=>{if(myUid)db.ref('users/'+myUid).update({online:false});};
+</script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 <script>
-firebase.initializeApp({
-  apiKey: "AIzaSyCHk0PYGp96vyfbeC-GyN7Q9e1MqM7rgRo",
-  authDomain: "gemiapp.firebaseapp.com",
-  databaseURL: "https://gemiapp-default-rtdb.firebaseio.com",
-  projectId: "gemiapp",
-  storageBucket: "gemiapp.firebasestorage.app",
-  messagingSenderId: "27673374613",
-  appId: "1:27673374613:web:86f977ea41e8c0e2b0909c"
-});
-
-const auth = firebase.auth();
-const db = firebase.database();
-let myUid = null, myName = '';
-
-document.getElementById('joinBtn').onclick = () => {
-  const name = document.getElementById('nameInput').value.trim() || 'زائر';
-  document.getElementById('err').style.display = 'none';
-  document.getElementById('joinBtn').disabled = true;
-  document.getElementById('joinBtn').textContent = 'جاري الدخول...';
-  
-  auth.signInAnonymously()
-    .then(result => {
-      myUid = result.user.uid;
-      myName = name;
-      return result.user.updateProfile({ displayName: name });
-    })
-    .then(() => {
-      return db.ref('users/' + myUid).set({
-        name: myName,
-        online: true,
-        uid: myUid,
-        joinedAt: firebase.database.ServerValue.TIMESTAMP
-      });
-    })
-    .then(() => {
-      document.getElementById('login').style.display = 'none';
-      document.getElementById('chat').style.display = 'flex';
-      document.getElementById('msgInput').focus();
-      listenMessages();
-      listenUsers();
-    })
-    .catch(error => {
-      document.getElementById('err').textContent = 'خطأ: ' + error.message;
-      document.getElementById('err').style.display = 'block';
-      document.getElementById('joinBtn').disabled = false;
-      document.getElementById('joinBtn').textContent = '🚀 دخول';
-      console.error(error);
-    });
-};
-
-function listenMessages() {
-  const messagesRef = db.ref('messages').limitToLast(50);
-  messagesRef.on('child_added', snapshot => {
-    const d = snapshot.val();
-    if (!d) return;
-    const container = document.getElementById('messages');
-    const existing = container.querySelector(`[data-key="${snapshot.key}"]`);
-    if (existing) return;
-    const div = document.createElement('div');
-    div.setAttribute('data-key', snapshot.key);
-    div.className = 'msg ' + (d.uid === myUid ? 'sent' : 'rec');
-    div.innerHTML = '<span class="sender">' + (d.name || 'زائر') + '</span>' + 
-                    (d.text || '') + 
-                    '<span class="time">' + new Date(d.time || Date.now()).toLocaleTimeString() + '</span>';
-    container.appendChild(div);
-    container.scrollTop = container.scrollHeight;
-  });
-}
-
-function listenUsers() {
-  db.ref('users').on('value', snapshot => {
-    const data = snapshot.val() || {};
-    const list = document.getElementById('users');
-    let html = '<div style="color:#888;font-size:12px;padding:4px 0">المتصلون</div>';
-    let count = 0;
-    Object.keys(data).forEach(key => {
-      if (key === myUid) return;
-      const u = data[key];
-      if (u && u.online) count++;
-      if (u && u.name) {
-        html += '<div class="u"><span class="dot ' + (u.online ? 'online' : 'offline') + '"></span> ' + u.name + '</div>';
-      }
-    });
-    list.innerHTML = html;
-    document.getElementById('onlineCount').textContent = count + ' متصل';
-  });
-}
-
-document.getElementById('sendBtn').onclick = () => {
-  const input = document.getElementById('msgInput');
-  const text = input.value.trim();
-  if (!text || !myUid) return;
-  db.ref('messages').push({
-    uid: myUid,
-    name: myName,
-    text: text,
-    time: Date.now()
-  }).then(() => {
-    input.value = '';
-  }).catch(console.error);
-};
-
-document.getElementById('msgInput').onkeydown = (e) => {
-  if (e.key === 'Enter') document.getElementById('sendBtn').click();
-};
-
-window.onbeforeunload = () => {
-  if (myUid) {
-    db.ref('users/' + myUid).update({ online: false });
-  }
-};
+firebase.initializeApp({apiKey:"AIzaSyCHk0PYGp96vyfbeC-GyN7Q9e1MqM7rgRo",authDomain:"gemiapp.firebaseapp.com",databaseURL:"https://gemiapp-default-rtdb.firebaseio.com",projectId:"gemiapp",storageBucket:"gemiapp.firebasestorage.app",messagingSenderId:"27673374613",appId:"1:27673374613:web:86f977ea41e8c0e2b0909c"});
 </script>
 </body>
 </html>
