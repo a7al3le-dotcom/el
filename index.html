@@ -3,17 +3,18 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Gemiapp Chat - دردشة الزوار</title>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js"></script>
+    <title>Gemiapp Chat</title>
+    <!-- تحميل Firebase من CDN -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            font-family: 'Segoe UI', system-ui, sans-serif;
         }
         body {
             background: #0a0e17;
@@ -35,7 +36,6 @@
             overflow: hidden;
             box-shadow: 0 25px 80px rgba(0, 0, 0, 0.95);
             border: 1px solid #1e2a3a;
-            position: relative;
         }
         #login-screen {
             display: flex;
@@ -49,18 +49,15 @@
         }
         #login-screen .logo {
             font-size: 60px;
-            margin-bottom: 4px;
         }
         #login-screen h1 {
             color: #fff;
             font-size: 34px;
             font-weight: 700;
-            letter-spacing: -0.5px;
         }
         #login-screen .sub {
             color: #6a8bb0;
             font-size: 14px;
-            margin-bottom: 10px;
             text-align: center;
         }
         #login-screen input {
@@ -104,15 +101,11 @@
             transform: scale(1.02);
             box-shadow: 0 8px 30px rgba(45, 122, 255, 0.4);
         }
-        #login-btn:active {
-            transform: scale(0.96);
-        }
         .guest-hint {
             color: #6a8bb0;
             font-size: 13px;
             cursor: pointer;
             transition: color 0.2s;
-            margin-top: 4px;
             text-align: center;
         }
         .guest-hint:hover {
@@ -160,7 +153,6 @@
             font-size: 10px;
             padding: 2px 12px;
             border-radius: 30px;
-            font-weight: 500;
         }
         #header .online-count {
             color: #6a8bb0;
@@ -205,9 +197,6 @@
         #messages::-webkit-scrollbar {
             width: 4px;
         }
-        #messages::-webkit-scrollbar-track {
-            background: transparent;
-        }
         #messages::-webkit-scrollbar-thumb {
             background: #2a3a52;
             border-radius: 10px;
@@ -220,7 +209,6 @@
             line-height: 1.5;
             word-wrap: break-word;
             animation: fadeUp 0.25s ease;
-            position: relative;
         }
         .msg.self {
             background: linear-gradient(135deg, #1a5cdb, #2d7aff);
@@ -279,9 +267,6 @@
             text-decoration: underline;
             font-weight: 600;
             cursor: pointer;
-        }
-        .msg .file-link:hover {
-            color: #5a9cff;
         }
         .msg img.msg-image {
             max-width: 220px;
@@ -355,9 +340,6 @@
         #send-btn:hover {
             transform: scale(1.04);
             box-shadow: 0 6px 24px rgba(45, 122, 255, 0.45);
-        }
-        #send-btn:active {
-            transform: scale(0.93);
         }
         #send-btn:disabled {
             opacity: 0.5;
@@ -445,12 +427,6 @@
                 max-height: none;
                 border-radius: 0;
             }
-            #login-screen {
-                padding: 30px 18px;
-            }
-            #header h2 {
-                font-size: 14px;
-            }
             .msg {
                 max-width: 92%;
                 font-size: 13px;
@@ -474,7 +450,6 @@
 </head>
 <body>
     <div id="app">
-        <!-- شاشة تسجيل الدخول للزوار -->
         <div id="login-screen">
             <div class="logo">💬</div>
             <h1>Gemiapp Chat</h1>
@@ -484,10 +459,7 @@
             <button id="login-btn">🚀 دخول كزائر</button>
             <span class="guest-hint" id="guest-hint">👤 أو ادخل كـ "زائر" تلقائيًا</span>
         </div>
-
-        <!-- واجهة الدردشة -->
         <div id="chat-screen">
-            <!-- الرأس -->
             <div id="header">
                 <div class="left">
                     <span class="dot"></span>
@@ -500,20 +472,12 @@
                     <button id="logout-btn">🚪 خروج</button>
                 </div>
             </div>
-
-            <!-- الرسائل -->
             <div id="messages"></div>
-
-            <!-- مؤشر الكتابة -->
             <div id="typing-indicator"></div>
-
-            <!-- معاينة الصورة -->
             <div id="image-preview">
                 <img id="preview-img" alt="معاينة" />
                 <span class="remove-preview" id="remove-preview">✕</span>
             </div>
-
-            <!-- منطقة الإدخال -->
             <div id="input-area">
                 <div class="input-row">
                     <input type="text" id="msg-input" placeholder="اكتب رسالة... أو أرسل ملف" maxlength="1000" />
@@ -532,7 +496,7 @@
 
     <script>
         // ============================================================
-        // 1. تهيئة Firebase - المفاتيح مضمنة
+        // 1. تهيئة Firebase - استخدام النسخة المتوافقة (compat)
         // ============================================================
         const firebaseConfig = {
             apiKey: "AIzaSyCHk0PYGp96vyfbeC-GyN7Q9e1MqM7rgRo",
@@ -545,16 +509,15 @@
             measurementId: "G-G5XN8H9MG9"
         };
 
-        // التحقق من وجود Firebase
+        // التحقق من تحميل Firebase
         if (typeof firebase === 'undefined') {
             document.getElementById('login-error').textContent = '❌ Firebase لم يتم تحميله. تأكد من اتصال الإنترنت.';
         } else {
             try {
                 firebase.initializeApp(firebaseConfig);
-                console.log('✅ Firebase initialized successfully');
+                console.log('✅ Firebase initialized');
             } catch (e) {
-                console.error('Firebase init error:', e);
-                document.getElementById('login-error').textContent = '❌ خطأ في تهيئة Firebase: ' + e.message;
+                document.getElementById('login-error').textContent = '❌ خطأ في Firebase: ' + e.message;
             }
         }
 
@@ -588,7 +551,7 @@
         const nameChangeBtn = document.getElementById('name-change-btn');
 
         // ============================================================
-        // 3. متغيرات الحالة
+        // 3. المتغيرات
         // ============================================================
         let currentUser = null;
         let currentGuestName = 'زائر';
@@ -597,15 +560,14 @@
         let typingTimeout = null;
         let isTyping = false;
         let selectedFile = null;
-        let selectedImage = null;
 
         // ============================================================
-        // 4. قائمة الإيموجي
+        // 4. الإيموجي
         // ============================================================
         const emojis = ['😀', '😁', '😂', '🤣', '😃', '😄', '😅', '😆', '😉', '😊', '😋', '😎', '😍', '🥰', '😘', '😗', '😙', '😚', '☺️', '🙂', '🤗', '🤩', '🤔', '🤨', '😐', '😑', '😶', '🙄', '😏', '😣', '😥', '😮', '🤐', '😯', '😪', '😫', '😴', '😌', '😛', '😜', '😝', '🤤', '😒', '😓', '😔', '😕', '🙃', '🤑', '😲', '☹️', '🙁', '😖', '😞', '😟', '😤', '😢', '😭', '😦', '😧', '😨', '😩', '🤯', '😬', '😰', '😱', '🥵', '🥶', '😳', '🤪', '😵', '😡', '😠', '🤬', '👍', '👎', '👊', '✊', '🤛', '🤜', '👏', '🙌', '👐', '🤲', '🤝', '🙏', '✌️', '🤟', '🤘', '👌', '❤️', '🧡', '💛', '💚', '💙', '💜', '🖤', '💔', '💕', '💞', '💓', '💗', '💖', '💘', '💝', '✨', '🌟', '⭐', '🌙', '☀️', '🔥', '💧', '🌈', '☁️', '⛅', '🌊', '🌸', '🌺', '🌻', '🌹', '🌷', '🌱', '🌲', '🌳', '🍎', '🍊', '🍋', '🍌', '🍉', '🍇', '🍓', '🍑', '🍒', '🥝', '🍅', '🍆', '🥑', '🥦', '🥬', '🥒', '🌽', '🥕', '🧄', '🧅', '🍞', '🥐', '🥖', '🥨', '🧀', '🥚', '🍳', '🥞', '🥓', '🍔', '🍟', '🌭', '🍕', '🥪', '🥙', '🧆', '🌮', '🌯', '🥗', '🥘', '🍝', '🍣', '🍤', '🥮', '🍡', '🥟', '🥠', '🥡', '🍦', '🍧', '🍨', '🍩', '🍪', '🎂', '🧁', '🍰', '🍫', '🍬', '🍭', '🍮', '🍯', '🧃', '🥤', '🧋', '🍵', '☕', '🍶', '🍺', '🍻', '🥂', '🥃', '⚽', '🏀', '🏈', '⚾', '🎾', '🏐', '🏉', '🎱', '🏓', '🏸', '🏒', '🏑', '🥍', '🏏', '⛳', '🎣', '🤿', '🥊', '🥋', '🎽', '🛹', '🛷', '⛸️', '🎿', '⛷️', '🏂', '🪂', '🏋️', '🤼', '🤸', '⛹️', '🤾', '🏌️', '🏇', '🧘', '🏄', '🏊', '🤽', '🚣', '🧗', '🚵', '🚴', '🏆', '🥇', '🥈', '🥉', '🏅', '🎖️', '🏵️', '🎗️', '🎫', '🎟️', '🎪', '🤹', '🎭', '🎨', '🎬', '🎤', '🎧', '🎼', '🎹', '🥁', '🎷', '🎺', '🎸', '🎻', '🪕', '🎲', '♟️', '🎯', '🎳', '🎮', '🎰', '🧩', '🚗', '🚕', '🚙', '🚌', '🚎', '🏎️', '🚓', '🚑', '🚒', '🚐', '🚚', '🚛', '🚜', '🛴', '🚲', '🛵', '🏍️', '🛺', '🚨', '🚔', '🚍', '🚘', '🚖', '🚡', '🚠', '🚟', '🚃', '🚋', '🚞', '🚝', '🚄', '🚅', '🚈', '🚂', '🚆', '🚇', '🚊', '🚉', '✈️', '🛫', '🛬', '🛩️', '💺', '🛰️', '🚀', '🛸', '🚁', '🛶', '⛵', '🚤', '🛥️', '🛳️', '⛴️', '🚢', '⚓', '⛽', '🚧', '🚦', '🚥', '🚏', '🗺️', '🗿', '🗽', '🗼', '🏰', '🏯', '🏟️', '🎡', '🎢', '🎠', '⛲', '⛰️', '🏔️', '🗻', '🌋', '🏜️', '🏝️', '🏖️', '🏕️', '⛺', '🛖', '🏠', '🏡', '🏘️', '🏚️', '🏗️', '🏭', '🏢', '🏬', '🏣', '🏤', '🏥', '🏦', '🏨', '🏪', '🏫', '🏩', '💒', '🏛️', '⛪', '🕌', '🕍', '🛕', '🕋', '⛩️', '🛤️', '🛣️', '🎑', '🏞️', '🌅', '🌄', '🌠', '🎇', '🎆', '🌇', '🌆', '🏙️', '🌃', '🌌', '🌉', '🌁'];
 
         // ============================================================
-        // 5. بناء منتقي الإيموجي
+        // 5. بناء الإيموجي
         // ============================================================
         if (emojiPicker) {
             emojis.forEach(emoji => {
@@ -621,7 +583,7 @@
         }
 
         // ============================================================
-        // 6. أحداث الأزرار
+        // 6. الأزرار
         // ============================================================
         if (emojiBtn) {
             emojiBtn.onclick = () => {
@@ -644,7 +606,6 @@
                 input.onchange = (e) => {
                     const file = e.target.files[0];
                     if (file) {
-                        selectedImage = file;
                         selectedFile = file;
                         const reader = new FileReader();
                         reader.onload = (ev) => {
@@ -674,7 +635,7 @@
                             };
                             reader.readAsDataURL(file);
                         } else {
-                            alert('📎 تم اختيار ملف: ' + file.name + ' (' + (file.size / 1024).toFixed(1) + ' KB)');
+                            alert('📎 تم اختيار ملف: ' + file.name);
                         }
                     }
                 };
@@ -686,12 +647,10 @@
             removePreview.onclick = () => {
                 imagePreview.style.display = 'none';
                 previewImg.src = '';
-                selectedImage = null;
                 selectedFile = null;
             };
         }
 
-        // تغيير الاسم
         if (nameChangeBtn) {
             nameChangeBtn.onclick = () => {
                 const newName = prompt('أدخل اسمك الجديد:', currentGuestName);
@@ -708,7 +667,7 @@
         }
 
         // ============================================================
-        // 7. الدخول كزائر (بدون تسجيل)
+        // 7. الدخول كزائر
         // ============================================================
         async function loginAsGuest() {
             const name = guestName.value.trim() || 'زائر';
@@ -718,12 +677,6 @@
                 loginError.textContent = '⏳ جاري الدخول...';
                 loginBtn.disabled = true;
 
-                // التحقق من أن Firebase جاهز
-                if (!auth) {
-                    throw new Error('Firebase Auth not initialized');
-                }
-
-                // إنشاء حساب مجهول
                 const cred = await auth.signInAnonymously();
                 const user = cred.user;
 
@@ -731,12 +684,10 @@
                     throw new Error('فشل إنشاء الحساب المجهول');
                 }
 
-                // تحديث الملف الشخصي
                 await user.updateProfile({
                     displayName: currentGuestName
                 });
 
-                // حفظ البيانات في Firestore
                 await db.collection('users').doc(user.uid).set({
                     uid: user.uid,
                     displayName: currentGuestName,
@@ -769,14 +720,13 @@
         }
 
         // ============================================================
-        // 8. مراقبة حالة تسجيل الدخول
+        // 8. حالة تسجيل الدخول
         // ============================================================
         if (auth) {
             auth.onAuthStateChanged(async (user) => {
-                console.log('Auth state changed:', user ? 'User logged in' : 'No user');
+                console.log('Auth state:', user ? 'Logged in' : 'Logged out');
                 if (user) {
                     currentUser = user;
-                    // جلب الاسم من Firestore
                     try {
                         const doc = await db.collection('users').doc(user.uid).get();
                         if (doc.exists && doc.data().displayName) {
@@ -785,7 +735,6 @@
                             currentGuestName = user.displayName || 'زائر';
                         }
                     } catch (e) {
-                        console.error('Error fetching user data:', e);
                         currentGuestName = user.displayName || 'زائر';
                     }
 
@@ -805,7 +754,6 @@
                         messagesDiv.appendChild(welcome);
                     }
 
-                    // تحديث الحضور
                     try {
                         await db.collection('presence').doc(user.uid).set({
                             uid: user.uid,
@@ -815,7 +763,7 @@
                             lastSeen: firebase.firestore.FieldValue.serverTimestamp()
                         });
                     } catch (e) {
-                        console.error('Presence update error:', e);
+                        console.error('Presence error:', e);
                     }
 
                 } else {
@@ -844,7 +792,7 @@
         }
 
         // ============================================================
-        // 10. الاستماع للمستخدمين المتصلين
+        // 10. الاستماع للمتصلين
         // ============================================================
         function listenOnlineUsers() {
             if (unsubscribeOnline) { unsubscribeOnline();
@@ -854,7 +802,7 @@
                     .where('online', '==', true)
                     .onSnapshot((snap) => {
                         onlineCount.textContent = '🟢 ' + snap.size;
-                    }, (err) => console.error('Online users error:', err));
+                    }, (err) => console.error('Online error:', err));
             } catch (e) {
                 console.error('Listen online error:', e);
             }
@@ -972,7 +920,6 @@
                 await db.collection('messages').add(data);
                 msgInput.value = '';
                 selectedFile = null;
-                selectedImage = null;
                 imagePreview.style.display = 'none';
                 previewImg.src = '';
                 msgInput.focus();
@@ -1014,7 +961,7 @@
         }
 
         // ============================================================
-        // 15. الحفاظ على حالة الاتصال
+        // 15. تحديث الحضور
         // ============================================================
         setInterval(() => {
             if (currentUser) {
@@ -1024,9 +971,8 @@
             }
         }, 30000);
 
-        console.log('✅ Gemiapp Chat - نسخة الزوار تعمل!');
+        console.log('✅ Gemiapp Chat يعمل!');
         console.log('📌 دخول بدون تسجيل • دردشة فورية • صور • ملفات • إيموجي');
-        console.log('🔑 Firebase Config:', firebaseConfig);
     </script>
 </body>
 </html>
