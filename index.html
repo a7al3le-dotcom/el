@@ -532,7 +532,7 @@
 
     <script>
         // ============================================================
-        // 1. تهيئة Firebase
+        // 1. تهيئة Firebase - المفاتيح مضمنة
         // ============================================================
         const firebaseConfig = {
             apiKey: "AIzaSyCHk0PYGp96vyfbeC-GyN7Q9e1MqM7rgRo",
@@ -544,7 +544,20 @@
             appId: "1:27673374613:web:86f977ea41e8c0e2b0909c",
             measurementId: "G-G5XN8H9MG9"
         };
-        firebase.initializeApp(firebaseConfig);
+
+        // التحقق من وجود Firebase
+        if (typeof firebase === 'undefined') {
+            document.getElementById('login-error').textContent = '❌ Firebase لم يتم تحميله. تأكد من اتصال الإنترنت.';
+        } else {
+            try {
+                firebase.initializeApp(firebaseConfig);
+                console.log('✅ Firebase initialized successfully');
+            } catch (e) {
+                console.error('Firebase init error:', e);
+                document.getElementById('login-error').textContent = '❌ خطأ في تهيئة Firebase: ' + e.message;
+            }
+        }
+
         const db = firebase.firestore();
         const auth = firebase.auth();
         const storage = firebase.storage();
@@ -585,7 +598,6 @@
         let isTyping = false;
         let selectedFile = null;
         let selectedImage = null;
-        let guestUid = null;
 
         // ============================================================
         // 4. قائمة الإيموجي
@@ -595,93 +607,105 @@
         // ============================================================
         // 5. بناء منتقي الإيموجي
         // ============================================================
-        emojis.forEach(emoji => {
-            const span = document.createElement('span');
-            span.textContent = emoji;
-            span.onclick = () => {
-                msgInput.value += emoji;
-                msgInput.focus();
-                emojiPicker.style.display = 'none';
-            };
-            emojiPicker.appendChild(span);
-        });
+        if (emojiPicker) {
+            emojis.forEach(emoji => {
+                const span = document.createElement('span');
+                span.textContent = emoji;
+                span.onclick = () => {
+                    msgInput.value += emoji;
+                    msgInput.focus();
+                    emojiPicker.style.display = 'none';
+                };
+                emojiPicker.appendChild(span);
+            });
+        }
 
         // ============================================================
         // 6. أحداث الأزرار
         // ============================================================
-        emojiBtn.onclick = () => {
-            emojiPicker.style.display = emojiPicker.style.display === 'flex' ? 'none' : 'flex';
-            if (emojiPicker.style.display === 'flex') emojiPicker.scrollTop = 0;
-        };
+        if (emojiBtn) {
+            emojiBtn.onclick = () => {
+                emojiPicker.style.display = emojiPicker.style.display === 'flex' ? 'none' : 'flex';
+                if (emojiPicker.style.display === 'flex') emojiPicker.scrollTop = 0;
+            };
+        }
+
         document.addEventListener('click', (e) => {
             if (!e.target.closest('#emoji-picker') && !e.target.closest('#emoji-btn')) {
-                emojiPicker.style.display = 'none';
+                if (emojiPicker) emojiPicker.style.display = 'none';
             }
         });
 
-        imageBtn.onclick = () => {
-            const input = document.createElement('input');
-            input.type = 'file';
-            input.accept = 'image/*';
-            input.onchange = (e) => {
-                const file = e.target.files[0];
-                if (file) {
-                    selectedImage = file;
-                    selectedFile = file;
-                    const reader = new FileReader();
-                    reader.onload = (ev) => {
-                        previewImg.src = ev.target.result;
-                        imagePreview.style.display = 'flex';
-                    };
-                    reader.readAsDataURL(file);
-                }
-            };
-            input.click();
-        };
-
-        fileBtn.onclick = () => {
-            const input = document.createElement('input');
-            input.type = 'file';
-            input.onchange = (e) => {
-                const file = e.target.files[0];
-                if (file) {
-                    selectedFile = file;
-                    if (file.type.startsWith('image/')) {
+        if (imageBtn) {
+            imageBtn.onclick = () => {
+                const input = document.createElement('input');
+                input.type = 'file';
+                input.accept = 'image/*';
+                input.onchange = (e) => {
+                    const file = e.target.files[0];
+                    if (file) {
+                        selectedImage = file;
+                        selectedFile = file;
                         const reader = new FileReader();
                         reader.onload = (ev) => {
                             previewImg.src = ev.target.result;
                             imagePreview.style.display = 'flex';
                         };
                         reader.readAsDataURL(file);
-                    } else {
-                        alert('📎 تم اختيار ملف: ' + file.name + ' (' + (file.size / 1024).toFixed(1) + ' KB)');
+                    }
+                };
+                input.click();
+            };
+        }
+
+        if (fileBtn) {
+            fileBtn.onclick = () => {
+                const input = document.createElement('input');
+                input.type = 'file';
+                input.onchange = (e) => {
+                    const file = e.target.files[0];
+                    if (file) {
+                        selectedFile = file;
+                        if (file.type.startsWith('image/')) {
+                            const reader = new FileReader();
+                            reader.onload = (ev) => {
+                                previewImg.src = ev.target.result;
+                                imagePreview.style.display = 'flex';
+                            };
+                            reader.readAsDataURL(file);
+                        } else {
+                            alert('📎 تم اختيار ملف: ' + file.name + ' (' + (file.size / 1024).toFixed(1) + ' KB)');
+                        }
+                    }
+                };
+                input.click();
+            };
+        }
+
+        if (removePreview) {
+            removePreview.onclick = () => {
+                imagePreview.style.display = 'none';
+                previewImg.src = '';
+                selectedImage = null;
+                selectedFile = null;
+            };
+        }
+
+        // تغيير الاسم
+        if (nameChangeBtn) {
+            nameChangeBtn.onclick = () => {
+                const newName = prompt('أدخل اسمك الجديد:', currentGuestName);
+                if (newName && newName.trim().length > 0) {
+                    currentGuestName = newName.trim().substring(0, 20);
+                    guestBadge.textContent = '👤 ' + currentGuestName;
+                    if (currentUser) {
+                        db.collection('users').doc(currentUser.uid).update({
+                            displayName: currentGuestName
+                        }).catch(() => {});
                     }
                 }
             };
-            input.click();
-        };
-
-        removePreview.onclick = () => {
-            imagePreview.style.display = 'none';
-            previewImg.src = '';
-            selectedImage = null;
-            selectedFile = null;
-        };
-
-        // تغيير الاسم
-        nameChangeBtn.onclick = () => {
-            const newName = prompt('أدخل اسمك الجديد:', currentGuestName);
-            if (newName && newName.trim().length > 0) {
-                currentGuestName = newName.trim().substring(0, 20);
-                guestBadge.textContent = '👤 ' + currentGuestName;
-                // تحديث الاسم في قاعدة البيانات للمستخدم الحالي
-                if (currentUser) {
-                    db.collection('users').doc(currentUser.uid).update({
-                        displayName: currentGuestName
-                    }).catch(() => {});
-                }
-            }
-        };
+        }
 
         // ============================================================
         // 7. الدخول كزائر (بدون تسجيل)
@@ -691,13 +715,27 @@
             currentGuestName = name.substring(0, 20);
 
             try {
+                loginError.textContent = '⏳ جاري الدخول...';
+                loginBtn.disabled = true;
+
+                // التحقق من أن Firebase جاهز
+                if (!auth) {
+                    throw new Error('Firebase Auth not initialized');
+                }
+
                 // إنشاء حساب مجهول
                 const cred = await auth.signInAnonymously();
                 const user = cred.user;
+
+                if (!user) {
+                    throw new Error('فشل إنشاء الحساب المجهول');
+                }
+
                 // تحديث الملف الشخصي
                 await user.updateProfile({
                     displayName: currentGuestName
                 });
+
                 // حفظ البيانات في Firestore
                 await db.collection('users').doc(user.uid).set({
                     uid: user.uid,
@@ -705,116 +743,149 @@
                     isGuest: true,
                     createdAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
+
                 loginError.textContent = '';
+                loginBtn.disabled = false;
             } catch (err) {
+                console.error('Login error:', err);
                 loginError.textContent = '❌ فشل الدخول: ' + err.message;
+                loginBtn.disabled = false;
             }
         }
 
-        loginBtn.onclick = loginAsGuest;
-        guestName.onkeydown = (e) => { if (e.key === 'Enter') loginAsGuest(); };
-        guestHint.onclick = () => {
-            guestName.value = '';
-            loginAsGuest();
-        };
+        if (loginBtn) {
+            loginBtn.onclick = loginAsGuest;
+        }
+
+        if (guestName) {
+            guestName.onkeydown = (e) => { if (e.key === 'Enter') loginAsGuest(); };
+        }
+
+        if (guestHint) {
+            guestHint.onclick = () => {
+                if (guestName) guestName.value = '';
+                loginAsGuest();
+            };
+        }
 
         // ============================================================
         // 8. مراقبة حالة تسجيل الدخول
         // ============================================================
-        auth.onAuthStateChanged(async (user) => {
-            if (user) {
-                currentUser = user;
-                // جلب الاسم من Firestore
-                try {
-                    const doc = await db.collection('users').doc(user.uid).get();
-                    if (doc.exists && doc.data().displayName) {
-                        currentGuestName = doc.data().displayName;
-                    } else {
+        if (auth) {
+            auth.onAuthStateChanged(async (user) => {
+                console.log('Auth state changed:', user ? 'User logged in' : 'No user');
+                if (user) {
+                    currentUser = user;
+                    // جلب الاسم من Firestore
+                    try {
+                        const doc = await db.collection('users').doc(user.uid).get();
+                        if (doc.exists && doc.data().displayName) {
+                            currentGuestName = doc.data().displayName;
+                        } else {
+                            currentGuestName = user.displayName || 'زائر';
+                        }
+                    } catch (e) {
+                        console.error('Error fetching user data:', e);
                         currentGuestName = user.displayName || 'زائر';
                     }
-                } catch (e) {
-                    currentGuestName = user.displayName || 'زائر';
+
+                    loginScreen.style.display = 'none';
+                    chatScreen.style.display = 'flex';
+                    guestBadge.textContent = '👤 ' + currentGuestName;
+                    loginError.textContent = '';
+
+                    listenMessages();
+                    listenOnlineUsers();
+
+                    if (messagesDiv.children.length === 0) {
+                        const welcome = document.createElement('div');
+                        welcome.className = 'empty-state';
+                        welcome.innerHTML =
+                            `<span>👋</span>مرحبًا ${currentGuestName}<br><small style="color:#3a4a62;">أرسل رسالة أو ملف</small>`;
+                        messagesDiv.appendChild(welcome);
+                    }
+
+                    // تحديث الحضور
+                    try {
+                        await db.collection('presence').doc(user.uid).set({
+                            uid: user.uid,
+                            name: currentGuestName,
+                            isGuest: true,
+                            online: true,
+                            lastSeen: firebase.firestore.FieldValue.serverTimestamp()
+                        });
+                    } catch (e) {
+                        console.error('Presence update error:', e);
+                    }
+
+                } else {
+                    currentUser = null;
+                    loginScreen.style.display = 'flex';
+                    chatScreen.style.display = 'none';
+                    messagesDiv.innerHTML = '';
+                    if (unsubscribeMessages) { unsubscribeMessages();
+                        unsubscribeMessages = null; }
+                    if (unsubscribeOnline) { unsubscribeOnline();
+                        unsubscribeOnline = null; }
                 }
-
-                loginScreen.style.display = 'none';
-                chatScreen.style.display = 'flex';
-                guestBadge.textContent = '👤 ' + currentGuestName;
-                loginError.textContent = '';
-
-                listenMessages();
-                listenOnlineUsers();
-
-                if (messagesDiv.children.length === 0) {
-                    const welcome = document.createElement('div');
-                    welcome.className = 'empty-state';
-                    welcome.innerHTML =
-                        `<span>👋</span>مرحبًا ${currentGuestName}<br><small style="color:#3a4a62;">أرسل رسالة أو ملف</small>`;
-                    messagesDiv.appendChild(welcome);
-                }
-
-                // تحديث الحضور
-                db.collection('presence').doc(user.uid).set({
-                    uid: user.uid,
-                    name: currentGuestName,
-                    isGuest: true,
-                    online: true,
-                    lastSeen: firebase.firestore.FieldValue.serverTimestamp()
-                }).catch(() => {});
-
-            } else {
-                currentUser = null;
-                loginScreen.style.display = 'flex';
-                chatScreen.style.display = 'none';
-                messagesDiv.innerHTML = '';
-                if (unsubscribeMessages) { unsubscribeMessages();
-                    unsubscribeMessages = null; }
-                if (unsubscribeOnline) { unsubscribeOnline();
-                    unsubscribeOnline = null; }
-            }
-        });
-
-        logoutBtn.onclick = () => {
-            if (currentUser) {
-                db.collection('presence').doc(currentUser.uid).update({ online: false }).catch(() => {});
-            }
-            auth.signOut();
-        };
+            });
+        }
 
         // ============================================================
-        // 9. الاستماع للمستخدمين المتصلين
+        // 9. تسجيل الخروج
+        // ============================================================
+        if (logoutBtn) {
+            logoutBtn.onclick = () => {
+                if (currentUser) {
+                    db.collection('presence').doc(currentUser.uid).update({ online: false }).catch(() => {});
+                }
+                auth.signOut();
+            };
+        }
+
+        // ============================================================
+        // 10. الاستماع للمستخدمين المتصلين
         // ============================================================
         function listenOnlineUsers() {
             if (unsubscribeOnline) { unsubscribeOnline();
                 unsubscribeOnline = null; }
-            unsubscribeOnline = db.collection('presence')
-                .where('online', '==', true)
-                .onSnapshot((snap) => {
-                    onlineCount.textContent = '🟢 ' + snap.size;
-                }, (err) => console.error(err));
+            try {
+                unsubscribeOnline = db.collection('presence')
+                    .where('online', '==', true)
+                    .onSnapshot((snap) => {
+                        onlineCount.textContent = '🟢 ' + snap.size;
+                    }, (err) => console.error('Online users error:', err));
+            } catch (e) {
+                console.error('Listen online error:', e);
+            }
         }
 
         // ============================================================
-        // 10. الاستماع للرسائل
+        // 11. الاستماع للرسائل
         // ============================================================
         function listenMessages() {
             if (unsubscribeMessages) { unsubscribeMessages();
                 unsubscribeMessages = null; }
-            const query = db.collection('messages').orderBy('timestamp', 'asc').limit(500);
-            unsubscribeMessages = query.onSnapshot((snap) => {
-                const empty = messagesDiv.querySelector('.empty-state');
-                if (empty) empty.remove();
-                snap.docChanges().forEach((ch) => {
-                    if (ch.type === 'added') {
-                        const data = ch.doc.data();
-                        if (data && data.text) appendMessage(data);
-                    }
-                });
-                messagesDiv.scrollTop = messagesDiv.scrollHeight;
-            }, (err) => console.error(err));
+            try {
+                const query = db.collection('messages').orderBy('timestamp', 'asc').limit(500);
+                unsubscribeMessages = query.onSnapshot((snap) => {
+                    const empty = messagesDiv.querySelector('.empty-state');
+                    if (empty) empty.remove();
+                    snap.docChanges().forEach((ch) => {
+                        if (ch.type === 'added') {
+                            const data = ch.doc.data();
+                            if (data && data.text) appendMessage(data);
+                        }
+                    });
+                    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+                }, (err) => console.error('Messages error:', err));
+            } catch (e) {
+                console.error('Listen messages error:', e);
+            }
         }
 
         // ============================================================
-        // 11. عرض رسالة
+        // 12. عرض رسالة
         // ============================================================
         function appendMessage(data) {
             const div = document.createElement('div');
@@ -862,7 +933,7 @@
         }
 
         // ============================================================
-        // 12. إرسال رسالة
+        // 13. إرسال رسالة
         // ============================================================
         async function sendMessage() {
             const text = msgInput.value.trim();
@@ -906,37 +977,44 @@
                 previewImg.src = '';
                 msgInput.focus();
             } catch (err) {
-                console.error(err);
+                console.error('Send error:', err);
                 alert('❌ فشل الإرسال: ' + err.message);
             } finally {
                 sendBtn.disabled = false;
             }
         }
 
-        sendBtn.onclick = sendMessage;
-        msgInput.onkeydown = (e) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                sendMessage();
-            }
-        };
+        if (sendBtn) {
+            sendBtn.onclick = sendMessage;
+        }
+
+        if (msgInput) {
+            msgInput.onkeydown = (e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    sendMessage();
+                }
+            };
+        }
 
         // ============================================================
-        // 13. مؤشر الكتابة
+        // 14. مؤشر الكتابة
         // ============================================================
-        msgInput.oninput = () => {
-            if (!currentUser) return;
-            if (!isTyping && msgInput.value.length > 0) { isTyping = true; }
-            clearTimeout(typingTimeout);
-            typingTimeout = setTimeout(() => {
-                isTyping = false;
-                typingIndicator.textContent = '';
-            }, 2000);
-            typingIndicator.textContent = msgInput.value.length > 0 ? '✍️ جاري الكتابة...' : '';
-        };
+        if (msgInput) {
+            msgInput.oninput = () => {
+                if (!currentUser) return;
+                if (!isTyping && msgInput.value.length > 0) { isTyping = true; }
+                clearTimeout(typingTimeout);
+                typingTimeout = setTimeout(() => {
+                    isTyping = false;
+                    typingIndicator.textContent = '';
+                }, 2000);
+                typingIndicator.textContent = msgInput.value.length > 0 ? '✍️ جاري الكتابة...' : '';
+            };
+        }
 
         // ============================================================
-        // 14. الحفاظ على حالة الاتصال
+        // 15. الحفاظ على حالة الاتصال
         // ============================================================
         setInterval(() => {
             if (currentUser) {
@@ -948,6 +1026,7 @@
 
         console.log('✅ Gemiapp Chat - نسخة الزوار تعمل!');
         console.log('📌 دخول بدون تسجيل • دردشة فورية • صور • ملفات • إيموجي');
+        console.log('🔑 Firebase Config:', firebaseConfig);
     </script>
 </body>
 </html>
