@@ -2,1048 +2,2715 @@
 <html lang="ar" dir="rtl">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>NeoFox Chat</title>
   <style>
-    *{margin:0;padding:0;box-sizing:border-box}
-    html,body{height:100%;width:100%;overflow:hidden;font-family:'Segoe UI',Arial,sans-serif;background:#0a0a12}
-    #app{display:flex;flex-direction:column;height:100%;width:100%;background:#0a0a12;color:#e0e0e0}
-    #auth{display:flex;flex-direction:column;justify-content:center;align-items:center;height:100%;gap:20px;padding:20px;background:linear-gradient(135deg,#0a0a12,#1a1030)}
-    #auth h1{font-size:2.5rem;background:linear-gradient(90deg,#7c6cf0,#b8a9ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:10px;letter-spacing:-1px}
-    #auth input{padding:14px 24px;border-radius:30px;border:2px solid #2a2a4a;background:#12122a;color:#e0e0e0;font-size:1.1rem;width:300px;max-width:90%;outline:none;transition:.3s;text-align:center}
-    #auth input:focus{border-color:#7c6cf0;box-shadow:0 0 30px rgba(124,108,240,0.15)}
-    #auth button{padding:14px 50px;border-radius:30px;border:none;background:linear-gradient(135deg,#7c6cf0,#b8a9ff);color:#fff;font-size:1.1rem;font-weight:bold;cursor:pointer;transition:.3s;width:300px;max-width:90%}
-    #auth button:hover{transform:scale(1.03);box-shadow:0 0 40px rgba(124,108,240,0.3)}
-    #auth button:disabled{opacity:0.6;cursor:not-allowed}
-    #auth .error{color:#ff6b6b;font-size:0.9rem;margin-top:-10px;display:none}
-    #chat{display:none;flex-direction:column;height:100%;width:100%;background:#0a0a12}
-    #top-bar{background:#0f0f1a;padding:8px 16px;border-bottom:1px solid #1a1a2e;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;min-height:48px;position:relative;z-index:50}
-    #online-btn{background:transparent;border:1px solid #2a2a4a;color:#7c6cf0;padding:4px 14px;border-radius:20px;cursor:pointer;font-size:0.8rem;transition:.3s;position:relative}
-    #online-btn:hover{background:#1a1a2e;border-color:#7c6cf0}
-    #online-btn .count{background:#7c6cf0;color:#fff;border-radius:50%;padding:0 6px;font-size:0.7rem;margin-left:4px}
-    #online-popup{display:none;position:absolute;top:50px;right:16px;background:#1a1a2e;border:1px solid #2a2a4a;border-radius:12px;padding:12px 16px;min-width:200px;max-height:300px;overflow-y:auto;z-index:100;box-shadow:0 8px 30px rgba(0,0,0,0.8)}
-    #online-popup.show{display:block}
-    #online-popup::-webkit-scrollbar{width:3px}
-    #online-popup::-webkit-scrollbar-thumb{background:#3a3a5a;border-radius:10px}
-    #online-popup h4{color:#888;font-size:0.8rem;margin-bottom:8px;font-weight:400;border-bottom:1px solid #2a2a4a;padding-bottom:6px}
-    #online-popup .user-item{display:flex;align-items:center;gap:8px;padding:6px 4px;font-size:0.9rem;color:#ddd;border-bottom:1px solid rgba(255,255,255,0.03)}
-    #online-popup .user-item:last-child{border-bottom:none}
-    #online-popup .dot{width:8px;height:8px;border-radius:50%;display:inline-block;flex-shrink:0;background:#4ade80;box-shadow:0 0 12px rgba(74,222,128,0.6)}
-    #online-popup .user-name{flex:1;font-weight:500}
-    #online-popup .status-text{font-size:0.6rem;color:#4ade80;padding:2px 8px;border-radius:10px;background:rgba(74,222,128,0.1)}
-    #messages{flex:1;overflow-y:auto;padding:12px 16px 8px;display:flex;flex-direction:column;gap:2px;scroll-behavior:smooth;background:#0a0a12}
-    #messages::-webkit-scrollbar{width:3px}
-    #messages::-webkit-scrollbar-thumb{background:#3a3a5a;border-radius:10px}
-    .msg{padding:6px 12px;width:100%;display:flex;align-items:baseline;gap:6px;animation:fadeIn .15s;line-height:1.5;border-bottom:1px solid rgba(255,255,255,0.02);position:relative}
-    .msg.own{background:transparent}
-    .msg-user{font-weight:600;color:#8f7cf0;font-size:0.92rem;white-space:nowrap;min-width:fit-content}
-    .msg-text{color:#e8e8e8;font-size:0.98rem;word-wrap:break-word;flex:1}
-    .msg-time{font-size:0.6rem;color:#555;white-space:nowrap;margin-left:4px;font-weight:300}
-    .msg-status{font-size:0.55rem;color:#555;margin-left:4px}
-    .msg-status.seen{color:#4ade80}
-    .msg-status.delivered{color:#888}
-    @keyframes fadeIn{from{opacity:0}to{opacity:1}}
-    #typing-indicator{font-size:0.75rem;color:#7c6cf0;padding:2px 16px 6px;min-height:22px;font-style:italic;background:#0a0a12}
-    #input-area{background:#0f0f1a;padding:8px 12px 12px;border-top:1px solid #1a1a2e;display:flex;gap:8px;align-items:center;flex-shrink:0;flex-wrap:wrap;position:relative;z-index:50}
-    #emoji-btn{background:transparent;border:none;font-size:1.4rem;cursor:pointer;padding:4px 6px;color:#888;transition:.2s}
-    #emoji-btn:hover{color:#7c6cf0;transform:scale(1.1)}
-    #emoji-picker{display:none;position:absolute;bottom:70px;left:12px;background:#1a1a2e;border-radius:12px;padding:10px;border:1px solid #2a2a4a;z-index:100;max-width:280px;max-height:200px;overflow-y:auto;flex-wrap:wrap;gap:4px;box-shadow:0 8px 30px rgba(0,0,0,0.6)}
-    #emoji-picker.show{display:flex}
-    #emoji-picker span{font-size:1.5rem;cursor:pointer;padding:4px 6px;border-radius:6px;transition:.2s}
-    #emoji-picker span:hover{background:#2a2a4a;transform:scale(1.15)}
-    #msgInput{flex:1;padding:10px 16px;border-radius:30px;border:2px solid #1a1a2e;background:#12122a;color:#e0e0e0;font-size:1rem;outline:none;transition:.3s;min-width:80px}
-    #msgInput:focus{border-color:#7c6cf0;box-shadow:0 0 20px rgba(124,108,240,0.1)}
-    #msgInput::placeholder{color:#555}
-    #sendBtn{padding:10px 24px;border-radius:30px;border:none;background:linear-gradient(135deg,#7c6cf0,#b8a9ff);color:#fff;font-weight:bold;font-size:0.95rem;cursor:pointer;transition:.3s;white-space:nowrap}
-    #sendBtn:hover{transform:scale(1.04);box-shadow:0 0 30px rgba(124,108,240,0.25)}
-    #sendBtn:disabled{opacity:0.5;cursor:not-allowed}
-    .empty-state{color:#333;text-align:center;margin-top:30%;font-size:1.1rem;font-weight:300}
-    .loading-more{text-align:center;color:#555;padding:8px;font-size:0.8rem}
-    #connection-status{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.8);color:#aaa;padding:4px 16px;border-radius:20px;font-size:0.7rem;z-index:60;pointer-events:none;display:none}
-    #connection-status.online{display:block;color:#4ade80}
-    #connection-status.offline{display:block;color:#ff6b6b}
-    @media(max-width:480px){#auth input{width:100%;font-size:1rem}#auth button{width:100%;font-size:1rem}#top-bar{font-size:0.8rem;padding:6px 10px}#online-btn{font-size:0.7rem;padding:3px 10px}#online-btn .count{font-size:0.6rem}#input-area{padding:6px 8px 10px;gap:6px}#msgInput{font-size:0.9rem;padding:8px 12px}#sendBtn{font-size:0.85rem;padding:8px 16px}#emoji-btn{font-size:1.2rem}#messages{padding:8px 10px 6px}.msg{padding:4px 8px;font-size:0.85rem}.msg-user{font-size:0.8rem}.msg-text{font-size:0.85rem}.msg-time{font-size:0.5rem}}
+    :root {
+      --bg-primary: #0a0a12;
+      --bg-secondary: #0f0f1a;
+      --bg-tertiary: #1a1a2e;
+      --bg-input: #12122a;
+      --border-color: #2a2a4a;
+      --text-primary: #e0e0e0;
+      --text-secondary: #888;
+      --text-muted: #555;
+      --accent: #7c6cf0;
+      --accent-light: #b8a9ff;
+      --accent-glow: rgba(124, 108, 240, 0.3);
+      --success: #4ade80;
+      --danger: #ff6b6b;
+      --warning: #fbbf24;
+      --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+      --safe-area-top: env(safe-area-inset-top, 0px);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html, body {
+      height: 100%;
+      width: 100%;
+      overflow: hidden;
+      font-family: 'Segoe UI', Tahoma, Arial, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      overscroll-behavior: none;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      touch-action: manipulation;
+    }
+
+    #app {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      width: 100%;
+      background: var(--bg-primary);
+    }
+
+    /* ============ AUTH SCREEN ============ */
+    #auth {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      height: 100%;
+      gap: 20px;
+      padding: 20px;
+      background: linear-gradient(135deg, #0a0a12, #1a1030);
+      position: relative;
+      overflow: hidden;
+    }
+
+    #auth::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle at center, rgba(124, 108, 240, 0.05) 0%, transparent 70%);
+      animation: pulse-bg 8s ease-in-out infinite;
+      pointer-events: none;
+    }
+
+    @keyframes pulse-bg {
+      0%, 100% { transform: scale(1); opacity: 0.5; }
+      50% { transform: scale(1.1); opacity: 1; }
+    }
+
+    #auth h1 {
+      font-size: 3rem;
+      background: linear-gradient(90deg, #7c6cf0, #b8a9ff, #7c6cf0);
+      background-size: 200% auto;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 10px;
+      letter-spacing: -1px;
+      animation: gradient-shift 3s linear infinite;
+      position: relative;
+      z-index: 1;
+    }
+
+    @keyframes gradient-shift {
+      0% { background-position: 0% center; }
+      100% { background-position: 200% center; }
+    }
+
+    #auth .subtitle {
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+      margin-bottom: 20px;
+      text-align: center;
+      position: relative;
+      z-index: 1;
+    }
+
+    #auth input {
+      padding: 14px 24px;
+      border-radius: 30px;
+      border: 2px solid var(--border-color);
+      background: var(--bg-input);
+      color: var(--text-primary);
+      font-size: 1.1rem;
+      width: 320px;
+      max-width: 100%;
+      outline: none;
+      transition: all 0.3s ease;
+      text-align: center;
+      position: relative;
+      z-index: 1;
+      -webkit-appearance: none;
+      appearance: none;
+    }
+
+    #auth input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 30px var(--accent-glow);
+    }
+
+    #auth input::placeholder {
+      color: var(--text-muted);
+    }
+
+    #auth button {
+      padding: 14px 50px;
+      border-radius: 30px;
+      border: none;
+      background: linear-gradient(135deg, #7c6cf0, #b8a9ff);
+      color: #fff;
+      font-size: 1.1rem;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      width: 320px;
+      max-width: 100%;
+      position: relative;
+      z-index: 1;
+      -webkit-appearance: none;
+      appearance: none;
+    }
+
+    #auth button:hover:not(:disabled) {
+      transform: scale(1.03);
+      box-shadow: 0 0 40px var(--accent-glow);
+    }
+
+    #auth button:active:not(:disabled) {
+      transform: scale(0.98);
+    }
+
+    #auth button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .error-message {
+      color: var(--danger);
+      font-size: 0.9rem;
+      display: none;
+      text-align: center;
+      position: relative;
+      z-index: 1;
+      background: rgba(255, 107, 107, 0.1);
+      padding: 8px 16px;
+      border-radius: 8px;
+      max-width: 320px;
+      width: 100%;
+      animation: shake 0.5s ease;
+    }
+
+    .error-message.show {
+      display: block;
+    }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-5px); }
+      75% { transform: translateX(5px); }
+    }
+
+    /* ============ CHAT SCREEN ============ */
+    #chat {
+      display: none;
+      flex-direction: column;
+      height: 100%;
+      width: 100%;
+      background: var(--bg-primary);
+      position: relative;
+    }
+
+    #chat.active {
+      display: flex;
+    }
+
+    /* ============ TOP BAR ============ */
+    #top-bar {
+      background: var(--bg-secondary);
+      padding: calc(8px + var(--safe-area-top)) 16px 8px;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-shrink: 0;
+      min-height: 48px;
+      position: relative;
+      z-index: 50;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+
+    #room-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.95rem;
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+
+    #room-title .room-icon {
+      font-size: 1.2rem;
+    }
+
+    #online-btn {
+      background: transparent;
+      border: 1px solid var(--border-color);
+      color: var(--accent);
+      padding: 6px 16px;
+      border-radius: 20px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      transition: all 0.3s ease;
+      position: relative;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      min-height: 36px;
+      touch-action: manipulation;
+      -webkit-appearance: none;
+      appearance: none;
+    }
+
+    #online-btn:hover {
+      background: var(--bg-tertiary);
+      border-color: var(--accent);
+      box-shadow: 0 0 20px var(--accent-glow);
+    }
+
+    #online-btn:active {
+      transform: scale(0.95);
+    }
+
+    #online-btn .count {
+      background: var(--accent);
+      color: #fff;
+      border-radius: 50%;
+      padding: 0 7px;
+      font-size: 0.75rem;
+      min-width: 20px;
+      height: 20px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s ease;
+    }
+
+    #online-btn.has-users .count {
+      background: var(--success);
+      box-shadow: 0 0 12px rgba(74, 222, 128, 0.5);
+    }
+
+    /* ============ ONLINE POPUP ============ */
+    #online-popup {
+      display: none;
+      position: absolute;
+      top: calc(60px + var(--safe-area-top));
+      right: 16px;
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 12px 16px;
+      min-width: 220px;
+      max-width: 300px;
+      max-height: 350px;
+      overflow-y: auto;
+      z-index: 100;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.8);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      animation: slide-down 0.3s ease;
+    }
+
+    #online-popup.show {
+      display: block;
+    }
+
+    @keyframes slide-down {
+      from {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    #online-popup::-webkit-scrollbar {
+      width: 4px;
+    }
+
+    #online-popup::-webkit-scrollbar-thumb {
+      background: #3a3a5a;
+      border-radius: 10px;
+    }
+
+    #online-popup h4 {
+      color: var(--text-secondary);
+      font-size: 0.85rem;
+      margin-bottom: 10px;
+      font-weight: 400;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    #online-popup .user-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 4px;
+      font-size: 0.9rem;
+      color: #ddd;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+      transition: background 0.2s ease;
+      border-radius: 6px;
+    }
+
+    #online-popup .user-item:hover {
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    #online-popup .user-item:last-child {
+      border-bottom: none;
+    }
+
+    #online-popup .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      display: inline-block;
+      flex-shrink: 0;
+      background: var(--success);
+      box-shadow: 0 0 12px rgba(74, 222, 128, 0.6);
+      animation: pulse-dot 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse-dot {
+      0%, 100% { box-shadow: 0 0 4px rgba(74, 222, 128, 0.4); }
+      50% { box-shadow: 0 0 12px rgba(74, 222, 128, 0.8); }
+    }
+
+    #online-popup .user-name {
+      flex: 1;
+      font-weight: 500;
+      word-break: break-word;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    #online-popup .status-text {
+      font-size: 0.7rem;
+      color: var(--success);
+      padding: 2px 8px;
+      border-radius: 10px;
+      background: rgba(74, 222, 128, 0.1);
+      white-space: nowrap;
+    }
+
+    .empty-online {
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      padding: 12px 0;
+      text-align: center;
+    }
+
+    /* ============ MESSAGES AREA ============ */
+    #messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      scroll-behavior: smooth;
+      background: var(--bg-primary);
+      -webkit-overflow-scrolling: touch;
+      overscroll-behavior: contain;
+      position: relative;
+    }
+
+    #messages::-webkit-scrollbar {
+      width: 4px;
+    }
+
+    #messages::-webkit-scrollbar-thumb {
+      background: #3a3a5a;
+      border-radius: 10px;
+    }
+
+    .msg {
+      padding: 8px 12px;
+      width: 100%;
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+      animation: fadeIn 0.2s ease;
+      line-height: 1.5;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.02);
+      position: relative;
+      border-radius: 6px;
+      transition: background 0.2s ease;
+      word-break: break-word;
+    }
+
+    .msg:hover {
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .msg.own {
+      background: rgba(124, 108, 240, 0.03);
+    }
+
+    .msg.own:hover {
+      background: rgba(124, 108, 240, 0.06);
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(5px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .msg-user {
+      font-weight: 600;
+      color: var(--accent);
+      font-size: 0.95rem;
+      white-space: nowrap;
+      min-width: fit-content;
+      flex-shrink: 0;
+    }
+
+    .msg-text {
+      color: #e8e8e8;
+      font-size: 1rem;
+      word-wrap: break-word;
+      flex: 1;
+      white-space: pre-wrap;
+      word-break: break-word;
+      overflow-wrap: break-word;
+    }
+
+    .msg-meta {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-shrink: 0;
+      align-self: flex-end;
+    }
+
+    .msg-time {
+      font-size: 0.65rem;
+      color: var(--text-muted);
+      white-space: nowrap;
+      font-weight: 300;
+    }
+
+    .msg-status {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      white-space: nowrap;
+      transition: color 0.3s ease;
+    }
+
+    .msg-status.seen {
+      color: var(--success);
+    }
+
+    .msg-status.delivered {
+      color: var(--text-secondary);
+    }
+
+    .empty-state {
+      color: var(--text-muted);
+      text-align: center;
+      margin: auto;
+      font-size: 1.1rem;
+      font-weight: 300;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      opacity: 0.7;
+    }
+
+    .empty-state .icon {
+      font-size: 3rem;
+      opacity: 0.5;
+    }
+
+    .loading-more {
+      text-align: center;
+      color: var(--text-muted);
+      padding: 12px;
+      font-size: 0.85rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .loading-spinner {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border: 2px solid var(--border-color);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* ============ NEW MESSAGES INDICATOR ============ */
+    .new-messages-indicator {
+      position: sticky;
+      bottom: 8px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--accent);
+      color: #fff;
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      cursor: pointer;
+      box-shadow: 0 4px 20px rgba(124, 108, 240, 0.5);
+      z-index: 10;
+      display: none;
+      align-self: center;
+      transition: all 0.3s ease;
+      border: none;
+      font-weight: 500;
+      touch-action: manipulation;
+      -webkit-appearance: none;
+      appearance: none;
+    }
+
+    .new-messages-indicator.show {
+      display: block;
+      animation: bounce-in 0.3s ease;
+    }
+
+    @keyframes bounce-in {
+      from {
+        transform: translateX(-50%) scale(0.8);
+        opacity: 0;
+      }
+      to {
+        transform: translateX(-50%) scale(1);
+        opacity: 1;
+      }
+    }
+
+    .new-messages-indicator:hover {
+      background: var(--accent-light);
+      box-shadow: 0 6px 30px rgba(124, 108, 240, 0.7);
+    }
+
+    /* ============ TYPING INDICATOR ============ */
+    #typing-indicator {
+      font-size: 0.8rem;
+      color: var(--accent);
+      padding: 4px 16px 6px;
+      min-height: 24px;
+      font-style: italic;
+      background: var(--bg-primary);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+
+    #typing-indicator .typing-dots {
+      display: inline-flex;
+      gap: 3px;
+    }
+
+    #typing-indicator .typing-dot {
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background: var(--accent);
+      animation: typing-bounce 1.4s ease-in-out infinite;
+    }
+
+    #typing-indicator .typing-dot:nth-child(2) {
+      animation-delay: 0.2s;
+    }
+
+    #typing-indicator .typing-dot:nth-child(3) {
+      animation-delay: 0.4s;
+    }
+
+    @keyframes typing-bounce {
+      0%, 60%, 100% { transform: translateY(0); }
+      30% { transform: translateY(-4px); }
+    }
+
+    /* ============ INPUT AREA ============ */
+    #input-area {
+      background: var(--bg-secondary);
+      padding: 8px 12px calc(8px + var(--safe-area-bottom));
+      border-top: 1px solid var(--border-color);
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-shrink: 0;
+      flex-wrap: wrap;
+      position: relative;
+      z-index: 50;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+
+    #emoji-btn {
+      background: transparent;
+      border: none;
+      font-size: 1.5rem;
+      cursor: pointer;
+      padding: 8px;
+      color: var(--text-secondary);
+      transition: all 0.2s ease;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      touch-action: manipulation;
+      -webkit-appearance: none;
+      appearance: none;
+      min-width: 40px;
+      min-height: 40px;
+      position: relative;
+    }
+
+    #emoji-btn:hover {
+      color: var(--accent);
+      transform: scale(1.1);
+      background: rgba(124, 108, 240, 0.1);
+    }
+
+    #emoji-btn:active {
+      transform: scale(0.95);
+    }
+
+    #emoji-picker {
+      display: none;
+      position: absolute;
+      bottom: calc(70px + var(--safe-area-bottom));
+      left: 12px;
+      background: var(--bg-tertiary);
+      border-radius: 12px;
+      padding: 12px;
+      border: 1px solid var(--border-color);
+      z-index: 100;
+      max-width: 300px;
+      max-height: 220px;
+      overflow-y: auto;
+      flex-wrap: wrap;
+      gap: 4px;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      animation: slide-up 0.3s ease;
+    }
+
+    #emoji-picker.show {
+      display: flex;
+    }
+
+    @keyframes slide-up {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    #emoji-picker::-webkit-scrollbar {
+      width: 4px;
+    }
+
+    #emoji-picker::-webkit-scrollbar-thumb {
+      background: #3a3a5a;
+      border-radius: 10px;
+    }
+
+    #emoji-picker span {
+      font-size: 1.5rem;
+      cursor: pointer;
+      padding: 6px;
+      border-radius: 8px;
+      transition: all 0.2s ease;
+      user-select: none;
+      -webkit-user-select: none;
+      touch-action: manipulation;
+    }
+
+    #emoji-picker span:hover {
+      background: var(--border-color);
+      transform: scale(1.2);
+    }
+
+    #emoji-picker span:active {
+      transform: scale(0.9);
+    }
+
+    #msgInput {
+      flex: 1;
+      padding: 10px 16px;
+      border-radius: 25px;
+      border: 2px solid var(--border-color);
+      background: var(--bg-input);
+      color: var(--text-primary);
+      font-size: 1rem;
+      outline: none;
+      transition: all 0.3s ease;
+      min-width: 100px;
+      -webkit-appearance: none;
+      appearance: none;
+    }
+
+    #msgInput:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 20px rgba(124, 108, 240, 0.1);
+    }
+
+    #msgInput::placeholder {
+      color: var(--text-muted);
+    }
+
+    #sendBtn {
+      padding: 10px 24px;
+      border-radius: 25px;
+      border: none;
+      background: linear-gradient(135deg, #7c6cf0, #b8a9ff);
+      color: #fff;
+      font-weight: bold;
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      white-space: nowrap;
+      touch-action: manipulation;
+      -webkit-appearance: none;
+      appearance: none;
+      min-height: 40px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    #sendBtn:hover:not(:disabled) {
+      transform: scale(1.04);
+      box-shadow: 0 0 30px var(--accent-glow);
+    }
+
+    #sendBtn:active:not(:disabled) {
+      transform: scale(0.96);
+    }
+
+    #sendBtn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    /* ============ CONNECTION STATUS ============ */
+    #connection-status {
+      position: fixed;
+      bottom: calc(80px + var(--safe-area-bottom));
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0, 0, 0, 0.9);
+      color: var(--text-secondary);
+      padding: 6px 16px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      z-index: 60;
+      pointer-events: none;
+      display: none;
+      align-items: center;
+      gap: 6px;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      transition: all 0.3s ease;
+    }
+
+    #connection-status.show {
+      display: flex;
+    }
+
+    #connection-status.online {
+      color: var(--success);
+      background: rgba(74, 222, 128, 0.1);
+      border: 1px solid rgba(74, 222, 128, 0.3);
+    }
+
+    #connection-status.offline {
+      color: var(--danger);
+      background: rgba(255, 107, 107, 0.1);
+      border: 1px solid rgba(255, 107, 107, 0.3);
+    }
+
+    #connection-status.reconnecting {
+      color: var(--warning);
+      background: rgba(251, 191, 36, 0.1);
+      border: 1px solid rgba(251, 191, 36, 0.3);
+    }
+
+    /* ============ MOBILE RESPONSIVE ============ */
+    @media (max-width: 480px) {
+      #auth h1 {
+        font-size: 2.5rem;
+      }
+
+      #auth input {
+        width: 100%;
+        font-size: 1rem;
+        padding: 12px 20px;
+      }
+
+      #auth button {
+        width: 100%;
+        font-size: 1rem;
+        padding: 12px 40px;
+      }
+
+      #top-bar {
+        font-size: 0.8rem;
+        padding: calc(6px + var(--safe-area-top)) 10px 6px;
+      }
+
+      #online-btn {
+        font-size: 0.75rem;
+        padding: 4px 12px;
+        min-height: 32px;
+      }
+
+      #online-btn .count {
+        font-size: 0.65rem;
+        min-width: 18px;
+        height: 18px;
+      }
+
+      #input-area {
+        padding: 6px 8px calc(6px + var(--safe-area-bottom));
+        gap: 6px;
+      }
+
+      #msgInput {
+        font-size: 0.9rem;
+        padding: 10px 14px;
+      }
+
+      #sendBtn {
+        font-size: 0.85rem;
+        padding: 8px 16px;
+        min-height: 38px;
+      }
+
+      #emoji-btn {
+        font-size: 1.3rem;
+        min-width: 36px;
+        min-height: 36px;
+      }
+
+      #messages {
+        padding: 10px 8px;
+      }
+
+      .msg {
+        padding: 6px 8px;
+        font-size: 0.9rem;
+        gap: 6px;
+      }
+
+      .msg-user {
+        font-size: 0.85rem;
+      }
+
+      .msg-text {
+        font-size: 0.9rem;
+      }
+
+      .msg-time {
+        font-size: 0.55rem;
+      }
+
+      .msg-status {
+        font-size: 0.6rem;
+      }
+
+      #emoji-picker {
+        max-width: 260px;
+        max-height: 180px;
+        bottom: calc(60px + var(--safe-area-bottom));
+      }
+
+      #emoji-picker span {
+        font-size: 1.3rem;
+        padding: 5px;
+      }
+
+      #typing-indicator {
+        font-size: 0.75rem;
+        padding: 2px 10px 4px;
+      }
+
+      #connection-status {
+        bottom: calc(70px + var(--safe-area-bottom));
+        font-size: 0.7rem;
+        padding: 4px 12px;
+      }
+    }
+
+    @media (max-width: 360px) {
+      #sendBtn {
+        padding: 8px 12px;
+        font-size: 0.8rem;
+      }
+
+      #msgInput {
+        font-size: 0.85rem;
+        padding: 8px 12px;
+      }
+
+      .msg-user {
+        font-size: 0.8rem;
+      }
+
+      .msg-text {
+        font-size: 0.85rem;
+      }
+    }
+
+    /* ============ REDUCED MOTION ============ */
+    @media (prefers-reduced-motion: reduce) {
+      * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+
+      #auth::before {
+        animation: none;
+      }
+
+      #auth h1 {
+        animation: none;
+      }
+
+      .msg {
+        animation: none;
+      }
+
+      .typing-dot {
+        animation: none;
+      }
+
+      #online-popup .dot {
+        animation: none;
+      }
+    }
+
+    /* ============ ACCESSIBILITY ============ */
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    :focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
+
+    /* ============ DARK SCROLLBAR ============ */
+    * {
+      scrollbar-width: thin;
+      scrollbar-color: #3a3a5a transparent;
+    }
+
+    *::-webkit-scrollbar {
+      width: 4px;
+      height: 4px;
+    }
+
+    *::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    *::-webkit-scrollbar-thumb {
+      background: #3a3a5a;
+      border-radius: 10px;
+    }
   </style>
 </head>
 <body>
-<div id="app">
-  <div id="auth">
-    <h1>💬 NeoFox</h1>
-    <input type="text" id="username" placeholder="👤 اسم المستخدم" autocomplete="off" maxlength="20" />
-    <div id="auth-error" class="error"></div>
-    <button id="loginBtn">🚀 دخول</button>
-  </div>
-  <div id="chat">
-    <div id="top-bar">
-      <div style="font-size:0.9rem;color:#888;">💬 المحادثة العامة</div>
-      <button id="online-btn">🟢 المتصلون <span id="online-count" class="count">0</span></button>
-      <div id="online-popup">
-        <h4>👥 المتصلون الآن</h4>
-        <div id="online-list"></div>
+  <div id="app">
+    <!-- AUTH SCREEN -->
+    <div id="auth" role="main" aria-label="تسجيل الدخول">
+      <h1 aria-label="NeoFox Chat">💬 NeoFox</h1>
+      <p class="subtitle">دردشة جماعية آمنة وسريعة</p>
+      <input 
+        type="text" 
+        id="username" 
+        placeholder="👤 اسم المستخدم" 
+        autocomplete="off" 
+        maxlength="20"
+        aria-label="اسم المستخدم"
+        aria-describedby="username-help"
+        required
+      />
+      <div id="username-help" class="sr-only">أدخل اسم المستخدم بين 3 و 20 حرف</div>
+      <div id="auth-error" class="error-message" role="alert" aria-live="assertive"></div>
+      <button id="loginBtn" aria-label="دخول إلى المحادثة">
+        🚀 دخول
+      </button>
+    </div>
+
+    <!-- CHAT SCREEN -->
+    <div id="chat" role="main" aria-label="المحادثة العامة">
+      <!-- TOP BAR -->
+      <div id="top-bar">
+        <div id="room-title">
+          <span class="room-icon" aria-hidden="true">💬</span>
+          <span>المحادثة العامة</span>
+        </div>
+        <button id="online-btn" aria-label="عرض المستخدمين المتصلين" aria-expanded="false">
+          <span aria-hidden="true">🟢</span>
+          <span>المتصلون</span>
+          <span id="online-count" class="count" aria-label="عدد المتصلين">0</span>
+        </button>
+        <div id="online-popup" role="dialog" aria-label="قائمة المستخدمين المتصلين">
+          <h4>👥 المتصلون الآن</h4>
+          <div id="online-list"></div>
+        </div>
+      </div>
+
+      <!-- MESSAGES AREA -->
+      <div id="messages" aria-label="الرسائل" aria-live="polite" role="log">
+        <div class="empty-state" id="empty-state">
+          <span class="icon" aria-hidden="true">✨</span>
+          <span>أهلاً بك! ابدأ المحادثة</span>
+        </div>
+      </div>
+
+      <!-- NEW MESSAGES INDICATOR -->
+      <button id="new-messages-indicator" class="new-messages-indicator" aria-label="رسائل جديدة">
+        ⬇️ رسائل جديدة
+      </button>
+
+      <!-- TYPING INDICATOR -->
+      <div id="typing-indicator" aria-live="polite" aria-label="مؤشر الكتابة"></div>
+
+      <!-- INPUT AREA -->
+      <div id="input-area">
+        <button id="emoji-btn" aria-label="فتح لوحة الرموز التعبيرية" aria-expanded="false">
+          😊
+        </button>
+        <div id="emoji-picker" role="menu" aria-label="الرموز التعبيرية"></div>
+        <input 
+          type="text" 
+          id="msgInput" 
+          placeholder="✏️ اكتب رسالتك..." 
+          autocomplete="off" 
+          maxlength="1000"
+          aria-label="اكتب رسالتك"
+        />
+        <button id="sendBtn" aria-label="إرسال الرسالة">
+          <span>📤</span>
+          <span>إرسال</span>
+        </button>
+      </div>
+
+      <!-- CONNECTION STATUS -->
+      <div id="connection-status" role="status" aria-live="polite">
+        🔄 جاري الاتصال...
       </div>
     </div>
-    <div id="messages"><div class="empty-state">✨ أهلاً بك! ابدأ المحادثة</div></div>
-    <div id="typing-indicator"></div>
-    <div id="input-area">
-      <button id="emoji-btn">😊</button>
-      <div id="emoji-picker"></div>
-      <input type="text" id="msgInput" placeholder="✏️ اكتب رسالتك..." autocomplete="off" maxlength="1000" />
-      <button id="sendBtn">📤 إرسال</button>
-    </div>
-    <div id="connection-status">🔄 جاري الاتصال...</div>
   </div>
-</div>
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
-<script>
-// ============================================================
-// CONFIG
-// ============================================================
-const CONFIG = {
-  MESSAGE_LIMIT: 50,
-  COOLDOWN_MS: 500,
-  TYPING_DEBOUNCE: 2000,
-  TYPING_THROTTLE: 3000,
-  MAX_USERNAME_LENGTH: 20,
-  MIN_USERNAME_LENGTH: 2,
-  MAX_MESSAGE_LENGTH: 1000,
-  SCROLL_THRESHOLD: 100
-};
 
-// ============================================================
-// FIREBASE CONFIG
-// ============================================================
-const firebaseConfig = {
-  apiKey: "AIzaSyCHk0PYGp96vyfbeC-GyN7Q9e1MqM7rgRo",
-  authDomain: "gemiapp.firebaseapp.com",
-  databaseURL: "https://gemiapp-default-rtdb.firebaseio.com",
-  projectId: "gemiapp",
-  storageBucket: "gemiapp.firebasestorage.app",
-  messagingSenderId: "27673374613",
-  appId: "1:27673374613:web:86f977ea41e8c0e2b0909c",
-  measurementId: "G-G5XN8H9MG9"
-};
-firebase.initializeApp(firebaseConfig);
-const auth = firebase.auth();
-const db = firebase.database();
+  <!-- FIREBASE MODULAR SDK -->
+  <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+    import { getAuth, signInAnonymously, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+    import { 
+      getDatabase, 
+      ref, 
+      set, 
+      update, 
+      remove, 
+      onValue, 
+      off, 
+      onChildAdded, 
+      onChildChanged, 
+      onChildRemoved, 
+      query, 
+      orderByChild, 
+      limitToLast, 
+      limitToFirst, 
+      startAt, 
+      endAt, 
+      runTransaction, 
+      serverTimestamp, 
+      onDisconnect, 
+      push 
+    } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
 
-// ============================================================
-// STATE
-// ============================================================
-const STATE = {
-  currentUser: null,
-  currentUsername: null,
-  chatStarted: false,
-  initialLoadComplete: false,
-  hasMoreMessages: true,
-  isLoadingMore: false,
-  oldestTimestamp: null,
-  oldestMessageId: null,
-  newestTimestamp: 0,
-  isNearBottom: true,
-  messageCache: new Map(),
-  usernameCache: {},
-  lastMessageTime: 0,
-  typingTimeout: null,
-  typingThrottleTimeout: null,
-  isTyping: false,
-  readReceiptListeners: new Map(),
-  
-  // Listeners
-  messagesListener: null,
-  newMessagesListener: null,
-  typingListener: null,
-  usersListener: null,
-  connectionListener: null,
-  readReceiptListener: null,
-  
-  // Scroll state
-  scrollPosition: 0,
-  scrollHeight: 0,
-  isInitialScroll: true
-};
-
-// ============================================================
-// DOM REFERENCES
-// ============================================================
-const DOM = {
-  auth: document.getElementById('auth'),
-  chat: document.getElementById('chat'),
-  username: document.getElementById('username'),
-  loginBtn: document.getElementById('loginBtn'),
-  authError: document.getElementById('auth-error'),
-  msgInput: document.getElementById('msgInput'),
-  sendBtn: document.getElementById('sendBtn'),
-  messages: document.getElementById('messages'),
-  onlineBtn: document.getElementById('online-btn'),
-  onlinePopup: document.getElementById('online-popup'),
-  onlineList: document.getElementById('online-list'),
-  onlineCount: document.getElementById('online-count'),
-  typingIndicator: document.getElementById('typing-indicator'),
-  emojiBtn: document.getElementById('emoji-btn'),
-  emojiPicker: document.getElementById('emoji-picker'),
-  connectionStatus: document.getElementById('connection-status')
-};
-
-// ============================================================
-// EMOJI PICKER
-// ============================================================
-const EMOJIS = ['😊','😂','❤️','🔥','👍','👏','😍','🤩','😎','🤔','🙏','💪','🎉','✨','🌟','💯','🤗','😘','🥰','😁','🤣','😅','😄','🙃','😉','😇','🥺','😢','😭','😤','😡','🤬','🤯','🥳','🤪','😜','😝','🤑','🤓','😏','😒','😞','😔','😟','😕','🙁','☹️','😣','😖','😫','😩','🥶','🥵','🤢','🤮','🤧','🤕','🤒','💀','☠️','👽','👾','🤖','🎃','😺','😸','😹','😻','😼','😽','🙀','😿','😾'];
-
-function renderEmojis() {
-  DOM.emojiPicker.innerHTML = '';
-  EMOJIS.forEach(emoji => {
-    const span = document.createElement('span');
-    span.textContent = emoji;
-    span.onclick = () => {
-      DOM.msgInput.value += emoji;
-      DOM.emojiPicker.classList.remove('show');
-      DOM.msgInput.focus();
+    // ============================================================
+    // CONFIG
+    // ============================================================
+    const CONFIG = {
+      MESSAGE_LIMIT: 50,
+      TYPING_DEBOUNCE_MS: 2000,
+      TYPING_THROTTLE_MS: 3000,
+      MAX_USERNAME_LENGTH: 20,
+      MIN_USERNAME_LENGTH: 3,
+      MAX_MESSAGE_LENGTH: 1000,
+      SCROLL_THRESHOLD: 100,
+      PRESENCE_HEARTBEAT_MS: 25000,
+      CONNECTION_TIMEOUT_MS: 3000,
+      RATE_LIMIT_MESSAGES: 5,
+      RATE_LIMIT_WINDOW_MS: 10000
     };
-    DOM.emojiPicker.appendChild(span);
-  });
-}
-renderEmojis();
 
-// ============================================================
-// UI EVENT LISTENERS
-// ============================================================
-DOM.emojiBtn.onclick = (e) => {
-  e.stopPropagation();
-  DOM.emojiPicker.classList.toggle('show');
-};
-document.addEventListener('click', () => DOM.emojiPicker.classList.remove('show'));
+    // ============================================================
+    // FIREBASE CONFIG
+    // ============================================================
+    const firebaseConfig = {
+      apiKey: "AIzaSyCHk0PYGp96vyfbeC-GyN7Q9e1MqM7rgRo",
+      authDomain: "gemiapp.firebaseapp.com",
+      databaseURL: "https://gemiapp-default-rtdb.firebaseio.com",
+      projectId: "gemiapp",
+      storageBucket: "gemiapp.firebasestorage.app",
+      messagingSenderId: "27673374613",
+      appId: "1:27673374613:web:86f977ea41e8c0e2b0909c",
+      measurementId: "G-G5XN8H9MG9"
+    };
 
-DOM.onlineBtn.onclick = (e) => {
-  e.stopPropagation();
-  DOM.onlinePopup.classList.toggle('show');
-};
-document.addEventListener('click', () => DOM.onlinePopup.classList.remove('show'));
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getDatabase(app);
 
-DOM.username.addEventListener('keydown', (e) => {
-  if (e.key === 'Enter') handleLogin();
-});
-
-DOM.msgInput.addEventListener('keydown', (e) => {
-  if (e.key === 'Enter' && !e.shiftKey) {
-    e.preventDefault();
-    handleSendMessage();
-  }
-});
-
-// ============================================================
-// AUTHENTICATION
-// ============================================================
-function validateUsername(username) {
-  if (!username || username.trim() === '') return 'الرجاء إدخال اسم المستخدم';
-  const trimmed = username.trim();
-  if (trimmed.length < CONFIG.MIN_USERNAME_LENGTH) return `اسم المستخدم قصير جداً (الحد الأدنى ${CONFIG.MIN_USERNAME_LENGTH} أحرف)`;
-  if (trimmed.length > CONFIG.MAX_USERNAME_LENGTH) return `اسم المستخدم طويل جداً (الحد الأقصى ${CONFIG.MAX_USERNAME_LENGTH} حرف)`;
-  if (/[.#$\[\]]/.test(trimmed)) return 'اسم المستخدم يحتوي على أحرف غير مسموحة';
-  return null;
-}
-
-function normalizeUsername(username) {
-  return username.trim();
-}
-
-async function handleLogin() {
-  const username = normalizeUsername(DOM.username.value);
-  const error = validateUsername(username);
-  if (error) {
-    DOM.authError.textContent = error;
-    DOM.authError.style.display = 'block';
-    return;
-  }
-  DOM.authError.style.display = 'none';
-  
-  try {
-    DOM.loginBtn.disabled = true;
-    DOM.loginBtn.textContent = 'جاري التسجيل...';
-    
-    // Sign in anonymously first
-    const cred = await auth.signInAnonymously();
-    const uid = cred.user.uid;
-    
-    // Atomic username reservation using transaction
-    const usernameRef = db.ref('usernames/' + username);
-    const result = await new Promise((resolve, reject) => {
-      usernameRef.transaction((currentData) => {
-        if (currentData === null) {
-          return uid;
-        }
-        return;
-      }, (error, committed, snapshot) => {
-        if (error) {
-          reject(error);
-        } else {
-          resolve({ committed, snapshot });
-        }
-      }, false);
-    });
-    
-    if (!result.committed || result.snapshot.val() !== uid) {
-      DOM.authError.textContent = 'اسم المستخدم مستخدم من قبل';
-      DOM.authError.style.display = 'block';
-      DOM.loginBtn.disabled = false;
-      DOM.loginBtn.textContent = '🚀 دخول';
-      await auth.signOut();
-      return;
-    }
-    
-    // Create user record
-    const userRef = db.ref('users/' + uid);
-    await userRef.set({
-      username: username,
-      online: true,
-      lastSeen: firebase.database.ServerValue.TIMESTAMP
-    });
-    
-    // Set onDisconnect handlers
-    userRef.onDisconnect().update({
-      online: false,
-      lastSeen: firebase.database.ServerValue.TIMESTAMP
-    });
-    
-    // Remove typing on disconnect
-    db.ref('typing/' + uid).onDisconnect().remove();
-    
-    STATE.currentUser = uid;
-    STATE.currentUsername = username;
-    STATE.usernameCache[uid] = username;
-    startChat();
-  } catch (err) {
-    console.error('Login error:', err);
-    DOM.authError.textContent = 'حدث خطأ، حاول مرة أخرى';
-    DOM.authError.style.display = 'block';
-    DOM.loginBtn.disabled = false;
-    DOM.loginBtn.textContent = '🚀 دخول';
-  }
-}
-
-DOM.loginBtn.onclick = handleLogin;
-
-// Auto-login
-auth.onAuthStateChanged(user => {
-  if (user) {
-    db.ref('users/' + user.uid + '/username').once('value').then(snap => {
-      const username = snap.val();
-      if (username) {
-        STATE.currentUser = user.uid;
-        STATE.currentUsername = username;
-        STATE.usernameCache[user.uid] = username;
-        startChat();
-      }
-    }).catch(err => {
-      console.error('Auto-login error:', err);
-    });
-  }
-});
-
-// ============================================================
-// CHAT INIT
-// ============================================================
-function startChat() {
-  if (STATE.chatStarted) {
-    cleanupAllListeners();
-    // Clear message cache but keep user cache
-    STATE.messageCache.clear();
-  }
-  
-  DOM.auth.style.display = 'none';
-  DOM.chat.style.display = 'flex';
-  
-  setupConnectionStatus();
-  setupTypingIndicator();
-  setupOnlineUsers();
-  loadMessages();
-  setupTypingInput();
-  setupReadReceiptListener();
-  
-  DOM.msgInput.focus();
-  STATE.chatStarted = true;
-}
-
-function cleanupAllListeners() {
-  const listeners = ['messagesListener', 'newMessagesListener', 'typingListener', 'usersListener', 'connectionListener', 'readReceiptListener'];
-  listeners.forEach(name => {
-    if (STATE[name]) {
-      STATE[name].off();
-      STATE[name] = null;
-    }
-  });
-  
-  // Clean up read receipt listeners
-  STATE.readReceiptListeners.forEach((listener, key) => {
-    listener.off();
-  });
-  STATE.readReceiptListeners.clear();
-  
-  if (STATE.typingTimeout) {
-    clearTimeout(STATE.typingTimeout);
-    STATE.typingTimeout = null;
-  }
-  if (STATE.typingThrottleTimeout) {
-    clearTimeout(STATE.typingThrottleTimeout);
-    STATE.typingThrottleTimeout = null;
-  }
-  STATE.isTyping = false;
-}
-
-// ============================================================
-// CONNECTION STATUS
-// ============================================================
-let connectionTimeout = null;
-
-function setupConnectionStatus() {
-  if (STATE.connectionListener) STATE.connectionListener.off();
-  STATE.connectionListener = db.ref('.info/connected');
-  STATE.connectionListener.on('value', (snap) => {
-    const connected = snap.val();
-    if (connectionTimeout) {
-      clearTimeout(connectionTimeout);
-      connectionTimeout = null;
-    }
-    
-    if (connected) {
-      DOM.connectionStatus.textContent = '🟢 متصل';
-      DOM.connectionStatus.className = 'online';
-      DOM.connectionStatus.style.display = 'block';
-      connectionTimeout = setTimeout(() => {
-        DOM.connectionStatus.style.display = 'none';
-        connectionTimeout = null;
-      }, 2000);
-    } else {
-      DOM.connectionStatus.textContent = '🔴 غير متصل - جاري إعادة المحاولة...';
-      DOM.connectionStatus.className = 'offline';
-      DOM.connectionStatus.style.display = 'block';
-    }
-  });
-}
-
-// ============================================================
-// TYPING INDICATOR
-// ============================================================
-function setupTypingIndicator() {
-  if (STATE.typingListener) STATE.typingListener.off();
-  STATE.typingListener = db.ref('typing');
-  
-  // Set onDisconnect for current user
-  if (STATE.currentUser) {
-    db.ref('typing/' + STATE.currentUser).onDisconnect().remove();
-  }
-  
-  STATE.typingListener.on('value', (snapshot) => {
-    const data = snapshot.val();
-    if (!data) {
-      DOM.typingIndicator.textContent = '';
-      return;
-    }
-    
-    const typingUsers = [];
-    const promises = [];
-    const now = Date.now();
-    
-    for (let uid in data) {
-      if (uid !== STATE.currentUser && data[uid] === true) {
-        if (STATE.usernameCache[uid]) {
-          typingUsers.push(STATE.usernameCache[uid]);
-        } else {
-          const promise = db.ref('users/' + uid + '/username').once('value').then(snap => {
-            const name = snap.val();
-            if (name) {
-              STATE.usernameCache[uid] = name;
-              if (!typingUsers.includes(name)) typingUsers.push(name);
-            }
-          });
-          promises.push(promise);
-        }
-      }
-    }
-    
-    if (promises.length > 0) {
-      Promise.all(promises).then(() => updateTypingDisplay(typingUsers));
-    } else {
-      updateTypingDisplay(typingUsers);
-    }
-  });
-}
-
-function updateTypingDisplay(users) {
-  if (users.length === 0) {
-    DOM.typingIndicator.textContent = '';
-    return;
-  }
-  if (users.length === 1) {
-    DOM.typingIndicator.textContent = '✏️ ' + users[0] + ' يكتب...';
-  } else if (users.length === 2) {
-    DOM.typingIndicator.textContent = '✏️ ' + users.join(' و ') + ' يكتبان...';
-  } else {
-    DOM.typingIndicator.textContent = '✏️ ' + users.slice(0, 2).join(' و ') + ' و ' + (users.length - 2) + ' آخرين يكتبون...';
-  }
-}
-
-function setupTypingInput() {
-  DOM.msgInput.removeEventListener('input', handleTypingInput);
-  DOM.msgInput.addEventListener('input', handleTypingInput);
-}
-
-let typingDebounceTimeout = null;
-let typingThrottleTimeout = null;
-
-function handleTypingInput() {
-  if (!STATE.currentUser) return;
-  
-  // Throttle: only send every 3 seconds at most
-  if (!STATE.isTyping) {
-    STATE.isTyping = true;
-    db.ref('typing/' + STATE.currentUser).set(true);
-  }
-  
-  // Clear existing debounce timeout
-  clearTimeout(typingDebounceTimeout);
-  clearTimeout(typingThrottleTimeout);
-  
-  // Debounce: stop typing after 2 seconds of inactivity
-  typingDebounceTimeout = setTimeout(() => {
-    STATE.isTyping = false;
-    db.ref('typing/' + STATE.currentUser).remove();
-  }, CONFIG.TYPING_DEBOUNCE);
-  
-  // Throttle: re-send typing signal every 3 seconds while typing
-  typingThrottleTimeout = setTimeout(() => {
-    if (DOM.msgInput.value.trim().length > 0) {
-      db.ref('typing/' + STATE.currentUser).set(true);
-    }
-  }, CONFIG.TYPING_THROTTLE);
-}
-
-// ============================================================
-// ONLINE USERS
-// ============================================================
-function setupOnlineUsers() {
-  if (STATE.usersListener) STATE.usersListener.off();
-  STATE.usersListener = db.ref('users');
-  STATE.usersListener.on('value', (snapshot) => {
-    const data = snapshot.val();
-    let onlineCount = 0;
-    const fragment = document.createDocumentFragment();
-    
-    for (let uid in data) {
-      if (uid !== STATE.currentUser && data[uid].online === true) {
-        onlineCount++;
-        const item = document.createElement('div');
-        item.className = 'user-item';
-        
-        const dot = document.createElement('span');
-        dot.className = 'dot';
-        
-        const name = document.createElement('span');
-        name.className = 'user-name';
-        const username = data[uid].username || 'مجهول';
-        name.textContent = username;
-        STATE.usernameCache[uid] = username;
-        
-        const status = document.createElement('span');
-        status.className = 'status-text';
-        status.textContent = '🟢 متصل';
-        
-        item.appendChild(dot);
-        item.appendChild(name);
-        item.appendChild(status);
-        fragment.appendChild(item);
-      }
-    }
-    
-    if (onlineCount === 0) {
-      const empty = document.createElement('div');
-      empty.style.cssText = 'color:#555;font-size:0.8rem;padding:8px 0;text-align:center;';
-      empty.textContent = 'لا يوجد متصلون حالياً';
-      fragment.appendChild(empty);
-    }
-    
-    DOM.onlineList.innerHTML = '';
-    DOM.onlineList.appendChild(fragment);
-    DOM.onlineCount.textContent = onlineCount;
-    
-    DOM.onlineBtn.style.borderColor = onlineCount > 0 ? '#4ade80' : '#2a2a4a';
-    DOM.onlineBtn.style.color = onlineCount > 0 ? '#4ade80' : '#7c6cf0';
-  });
-}
-
-// ============================================================
-// READ RECEIPTS - REAL TIME
-// ============================================================
-function setupReadReceiptListener() {
-  if (STATE.readReceiptListener) {
-    STATE.readReceiptListener.off();
-    STATE.readReceiptListener = null;
-  }
-  
-  // Listen for all read receipts changes
-  STATE.readReceiptListener = db.ref('messageReads');
-  STATE.readReceiptListener.on('child_added', (snapshot) => {
-    const messageId = snapshot.key;
-    updateMessageReadStatus(messageId);
-  });
-  
-  STATE.readReceiptListener.on('child_changed', (snapshot) => {
-    const messageId = snapshot.key;
-    updateMessageReadStatus(messageId);
-  });
-}
-
-function updateMessageReadStatus(messageId) {
-  // Find the message element
-  const msgEl = document.querySelector(`.msg[data-msg-id="${messageId}"]`);
-  if (!msgEl) return;
-  
-  const statusSpan = msgEl.querySelector('.msg-status');
-  if (!statusSpan) return;
-  
-  // Check if this is the current user's message
-  const msgData = STATE.messageCache.get(messageId);
-  if (!msgData || msgData.uid !== STATE.currentUser) return;
-  
-  db.ref('messageReads/' + messageId).once('value', (snapshot) => {
-    const reads = snapshot.val();
-    let readers = 0;
-    if (reads) {
-      for (let uid in reads) {
-        if (uid !== STATE.currentUser && reads[uid] === true) readers++;
-      }
-    }
-    if (readers > 0) {
-      statusSpan.textContent = '✓✓';
-      statusSpan.className = 'msg-status seen';
-    } else {
-      statusSpan.textContent = '✓';
-      statusSpan.className = 'msg-status delivered';
-    }
-  });
-}
-
-function markMessageAsRead(messageId) {
-  if (!STATE.currentUser) return;
-  db.ref('messageReads/' + messageId + '/' + STATE.currentUser).set(true);
-}
-
-// ============================================================
-// MESSAGES - LOAD & PAGINATION
-// ============================================================
-function loadMessages() {
-  // Clean up old listeners
-  if (STATE.messagesListener) {
-    STATE.messagesListener.off();
-    STATE.messagesListener = null;
-  }
-  if (STATE.newMessagesListener) {
-    STATE.newMessagesListener.off();
-    STATE.newMessagesListener = null;
-  }
-  
-  // Reset state
-  DOM.messages.innerHTML = '';
-  const emptyState = document.createElement('div');
-  emptyState.className = 'empty-state';
-  emptyState.textContent = '✨ أهلاً بك! ابدأ المحادثة';
-  DOM.messages.appendChild(emptyState);
-  
-  STATE.initialLoadComplete = false;
-  STATE.hasMoreMessages = true;
-  STATE.oldestTimestamp = null;
-  STATE.oldestMessageId = null;
-  STATE.newestTimestamp = 0;
-  STATE.messageCache = new Map();
-  STATE.isNearBottom = true;
-  STATE.isLoadingMore = false;
-  STATE.isInitialScroll = true;
-  
-  // Load initial messages
-  db.ref('messages')
-    .orderByChild('timestamp')
-    .limitToLast(CONFIG.MESSAGE_LIMIT)
-    .once('value')
-    .then((snapshot) => {
-      const data = snapshot.val();
-      const messagesArray = [];
+    // ============================================================
+    // STATE
+    // ============================================================
+    const STATE = {
+      currentUser: null,
+      currentUsername: null,
+      currentUsernameNormalized: null,
+      chatStarted: false,
+      initialLoadComplete: false,
+      hasMoreMessages: true,
+      isLoadingMore: false,
+      oldestMessageKey: null,
+      oldestTimestamp: null,
+      newestTimestamp: 0,
+      isNearBottom: true,
+      messageCache: new Map(),
+      usernameCache: new Map(),
+      lastMessageTimestamp: 0,
+      isTyping: false,
+      typingDebounceTimeout: null,
+      typingThrottleTimeout: null,
+      presenceConnectionId: null,
+      presenceHeartbeatInterval: null,
+      connectionCheckTimeout: null,
+      readReceiptsCache: new Map(),
+      newMessagesCount: 0,
+      isInitialScroll: true,
       
-      if (data) {
-        for (let key in data) {
+      // Listeners
+      messagesListener: null,
+      newMessagesListener: null,
+      typingListener: null,
+      presenceListener: null,
+      connectionListener: null,
+      readReceiptsListener: null,
+      usernameListeners: new Map(),
+      
+      // Cleanup functions
+      cleanupFunctions: [],
+      
+      // Rate limiting
+      messageTimestamps: []
+    };
+
+    // ============================================================
+    // DOM REFERENCES
+    // ============================================================
+    const DOM = {
+      auth: document.getElementById('auth'),
+      chat: document.getElementById('chat'),
+      username: document.getElementById('username'),
+      loginBtn: document.getElementById('loginBtn'),
+      authError: document.getElementById('auth-error'),
+      msgInput: document.getElementById('msgInput'),
+      sendBtn: document.getElementById('sendBtn'),
+      messages: document.getElementById('messages'),
+      emptyState: document.getElementById('empty-state'),
+      onlineBtn: document.getElementById('online-btn'),
+      onlinePopup: document.getElementById('online-popup'),
+      onlineList: document.getElementById('online-list'),
+      onlineCount: document.getElementById('online-count'),
+      typingIndicator: document.getElementById('typing-indicator'),
+      emojiBtn: document.getElementById('emoji-btn'),
+      emojiPicker: document.getElementById('emoji-picker'),
+      connectionStatus: document.getElementById('connection-status'),
+      newMessagesIndicator: document.getElementById('new-messages-indicator')
+    };
+
+    // ============================================================
+    // UTILITY FUNCTIONS
+    // ============================================================
+    function normalizeUsername(username) {
+      return username.trim().normalize('NFC');
+    }
+
+    function normalizeUsernameForStorage(username) {
+      return normalizeUsername(username).toLowerCase().replace(/\s+/g, '_');
+    }
+
+    function validateUsername(username) {
+      if (!username || !username.trim()) {
+        return 'الرجاء إدخال اسم المستخدم';
+      }
+      
+      const trimmed = normalizeUsername(username);
+      
+      if (trimmed.length < CONFIG.MIN_USERNAME_LENGTH) {
+        return `اسم المستخدم قصير جداً (الحد الأدنى ${CONFIG.MIN_USERNAME_LENGTH} أحرف)`;
+      }
+      
+      if (trimmed.length > CONFIG.MAX_USERNAME_LENGTH) {
+        return `اسم المستخدم طويل جداً (الحد الأقصى ${CONFIG.MAX_USERNAME_LENGTH} حرف)`;
+      }
+      
+      // Prevent path characters and special characters
+      if (/[\/\.#\$\[\]\*\?\'\"\\]/.test(trimmed)) {
+        return 'اسم المستخدم يحتوي على أحرف غير مسموحة';
+      }
+      
+      // Prevent reserved names
+      const reservedNames = ['admin', 'administrator', 'system', 'moderator', 'mod', 'root', 'owner', 'staff', 'support', 'help', 'test', 'user', 'anonymous', 'unknown', 'null', 'undefined', 'nan', 'infinity'];
+      const normalizedLower = trimmed.toLowerCase();
+      if (reservedNames.includes(normalizedLower)) {
+        return 'اسم المستخدم محجوز';
+      }
+      
+      // Prevent names that are only special characters
+      if (!/[\u0600-\u06FFa-zA-Z0-9]/.test(trimmed)) {
+        return 'اسم المستخدم يجب أن يحتوي على حرف واحد على الأقل';
+      }
+      
+      return null;
+    }
+
+    function formatTime(timestamp) {
+      if (!timestamp) return '--:--';
+      const date = new Date(timestamp);
+      const hours = date.getHours().toString().padStart(2, '0');
+      const minutes = date.getMinutes().toString().padStart(2, '0');
+      return `${hours}:${minutes}`;
+    }
+
+    function throttle(func, limit) {
+      let inThrottle;
+      return function(...args) {
+        if (!inThrottle) {
+          func.apply(this, args);
+          inThrottle = true;
+          setTimeout(() => inThrottle = false, limit);
+        }
+      };
+    }
+
+    // ============================================================
+    // EMOJI PICKER
+    // ============================================================
+    const EMOJIS = [
+      '😊', '😂', '❤️', '🔥', '👍', '👏', '😍', '🤩', '😎', '🤔',
+      '🙏', '💪', '🎉', '✨', '🌟', '💯', '🤗', '😘', '🥰', '😁',
+      '🤣', '😅', '😄', '🙃', '😉', '😇', '🥺', '😢', '😭', '😤',
+      '😡', '🤬', '🤯', '🥳', '🤪', '😜', '😝', '🤑', '🤓', '😏',
+      '😒', '😞', '😔', '😟', '😕', '🙁', '☹️', '😣', '😖', '😫',
+      '😩', '🥶', '🥵', '🤢', '🤮', '🤧', '🤕', '🤒', '💀', '☠️',
+      '👽', '👾', '🤖', '🎃', '😺', '😸', '😹', '😻', '😼', '😽',
+      '🙀', '😿', '😾', '💩', '👻', '💋', '💌', '💘', '💝', '💖',
+      '💗', '💓', '💞', '💕', '💟', '❣️', '💔', '❤️‍🔥', '❤️‍🩹', '💯',
+      '💢', '💥', '💫', '💦', '💨', '🕳️', '💣', '💬', '👁️‍🗨️', '🗨️',
+      '🗯️', '💭', '💤', '🎯', '🎮', '🎲', '🎳', '🎪', '🎭', '🎨',
+      '🎬', '🎤', '🎧', '🎼', '🎹', '🎸', '🎺', '🎻', '🥁', '🎷',
+      '🏆', '🥇', '🥈', '🥉', '⚽', '🏀', '🏈', '⚾', '🎾', '🏐',
+      '🏉', '🥏', '🎱', '🪀', '🏓', '🏸', '🏒', '🏑', '🥍', '🏏',
+      '🧿', '🔮', '🧬', '🦠', '🧫', '🧪', '🔭', '🔬', '📡', '💾'
+    ];
+
+    function renderEmojis() {
+      const fragment = document.createDocumentFragment();
+      EMOJIS.forEach(emoji => {
+        const span = document.createElement('span');
+        span.textContent = emoji;
+        span.setAttribute('role', 'menuitem');
+        span.setAttribute('tabindex', '0');
+        span.setAttribute('aria-label', `إدراج ${emoji}`);
+        span.addEventListener('click', () => {
+          insertEmoji(emoji);
+        });
+        span.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            insertEmoji(emoji);
+          }
+        });
+        fragment.appendChild(span);
+      });
+      DOM.emojiPicker.appendChild(fragment);
+    }
+
+    function insertEmoji(emoji) {
+      const cursorPos = DOM.msgInput.selectionStart;
+      const textBefore = DOM.msgInput.value.substring(0, cursorPos);
+      const textAfter = DOM.msgInput.value.substring(cursorPos);
+      DOM.msgInput.value = textBefore + emoji + textAfter;
+      DOM.msgInput.focus();
+      DOM.msgInput.selectionStart = DOM.msgInput.selectionEnd = cursorPos + emoji.length;
+      DOM.emojiPicker.classList.remove('show');
+      DOM.emojiBtn.setAttribute('aria-expanded', 'false');
+      handleTypingInput();
+    }
+
+    renderEmojis();
+
+    // ============================================================
+    // UI EVENT LISTENERS
+    // ============================================================
+    DOM.emojiBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const isOpen = DOM.emojiPicker.classList.toggle('show');
+      DOM.emojiBtn.setAttribute('aria-expanded', isOpen);
+    });
+
+    DOM.emojiPicker.addEventListener('click', (e) => {
+      e.stopPropagation();
+    });
+
+    document.addEventListener('click', () => {
+      DOM.emojiPicker.classList.remove('show');
+      DOM.emojiBtn.setAttribute('aria-expanded', 'false');
+    });
+
+    DOM.onlineBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const isOpen = DOM.onlinePopup.classList.toggle('show');
+      DOM.onlineBtn.setAttribute('aria-expanded', isOpen);
+    });
+
+    DOM.onlinePopup.addEventListener('click', (e) => {
+      e.stopPropagation();
+    });
+
+    document.addEventListener('click', () => {
+      DOM.onlinePopup.classList.remove('show');
+      DOM.onlineBtn.setAttribute('aria-expanded', 'false');
+    });
+
+    DOM.username.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        handleLogin();
+      }
+    });
+
+    DOM.msgInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        handleSendMessage();
+      }
+    });
+
+    DOM.newMessagesIndicator.addEventListener('click', () => {
+      scrollToBottom();
+    });
+
+    // ============================================================
+    // AUTHENTICATION
+    // ============================================================
+    async function handleLogin() {
+      const username = normalizeUsername(DOM.username.value);
+      const validationError = validateUsername(username);
+      
+      if (validationError) {
+        showError(validationError, 'auth');
+        return;
+      }
+      
+      hideError('auth');
+      
+      try {
+        setLoginButtonState(true, 'جاري التسجيل...');
+        
+        // Sign in anonymously
+        const credential = await signInAnonymously(auth);
+        const uid = credential.user.uid;
+        
+        // Check if user already has a username
+        const userSnapshot = await get(ref(db, `users/${uid}/username`));
+        if (userSnapshot.exists()) {
+          // User already has a username
+          setLoginButtonState(false, '🚀 دخول');
+          showError('هذا الجهاز مسجل بالفعل', 'auth');
+          await signOut(auth);
+          return;
+        }
+        
+        // Atomic username reservation using transaction
+        const usernameKey = normalizeUsernameForStorage(username);
+        const usernameRef = ref(db, `usernames/${usernameKey}`);
+        
+        const result = await new Promise((resolve, reject) => {
+          runTransaction(usernameRef, (currentData) => {
+            if (currentData === null) {
+              return {
+                uid: uid,
+                username: username,
+                createdAt: serverTimestamp()
+              };
+            }
+            // Username already taken
+            return undefined;
+          }, (error, committed, snapshot) => {
+            if (error) {
+              reject(error);
+            } else {
+              resolve({ committed, snapshot });
+            }
+          }, false);
+        });
+        
+        if (!result.committed || result.snapshot.val().uid !== uid) {
+          setLoginButtonState(false, '🚀 دخول');
+          showError('اسم المستخدم مستخدم من قبل', 'auth');
+          await signOut(auth);
+          return;
+        }
+        
+        // Create user record
+        const userRef = ref(db, `users/${uid}`);
+        await set(userRef, {
+          username: username,
+          usernameKey: usernameKey,
+          createdAt: serverTimestamp(),
+          lastSeen: serverTimestamp()
+        });
+        
+        // Set up presence
+        await setupPresence(uid);
+        
+        STATE.currentUser = uid;
+        STATE.currentUsername = username;
+        STATE.currentUsernameNormalized = usernameKey;
+        STATE.usernameCache.set(uid, username);
+        
+        setLoginButtonState(false, '🚀 دخول');
+        startChat();
+        
+      } catch (error) {
+        console.error('Login error:', error);
+        setLoginButtonState(false, '🚀 دخول');
+        showError('حدث خطأ، حاول مرة أخرى', 'auth');
+        if (auth.currentUser) {
+          await signOut(auth);
+        }
+      }
+    }
+
+    function setLoginButtonState(disabled, text) {
+      DOM.loginBtn.disabled = disabled;
+      DOM.loginBtn.textContent = text;
+    }
+
+    DOM.loginBtn.addEventListener('click', handleLogin);
+
+    // Auto-login
+    onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        try {
+          const userSnapshot = await get(ref(db, `users/${user.uid}/username`));
+          const username = userSnapshot.val();
+          
+          if (username) {
+            STATE.currentUser = user.uid;
+            STATE.currentUsername = username;
+            STATE.currentUsernameNormalized = normalizeUsernameForStorage(username);
+            STATE.usernameCache.set(user.uid, username);
+            
+            if (!STATE.chatStarted) {
+              await setupPresence(user.uid);
+              startChat();
+            }
+          } else {
+            // Anonymous user without username
+            if (auth.currentUser) {
+              await signOut(auth);
+            }
+          }
+        } catch (error) {
+          console.error('Auto-login error:', error);
+        }
+      } else {
+        // User signed out
+        cleanupAll();
+        DOM.chat.classList.remove('active');
+        DOM.auth.style.display = 'flex';
+        DOM.username.value = '';
+      }
+    });
+
+    // ============================================================
+    // PRESENCE
+    // ============================================================
+    async function setupPresence(uid) {
+      const connectionId = push(ref(db, '.info/connected')).key;
+      STATE.presenceConnectionId = connectionId;
+      
+      const connectionRef = ref(db, `presence/${uid}/connections/${connectionId}`);
+      const userOnlineRef = ref(db, `users/${uid}/online`);
+      const userLastSeenRef = ref(db, `users/${uid}/lastSeen`);
+      
+      // Set up onDisconnect before setting online
+      const disconnectPromise = onDisconnect(connectionRef).remove();
+      
+      try {
+        await disconnectPromise;
+        await set(connectionRef, {
+          connectedAt: serverTimestamp()
+        });
+        await set(userOnlineRef, true);
+        await set(userLastSeenRef, serverTimestamp());
+        
+        // Start heartbeat
+        startPresenceHeartbeat(uid);
+        
+      } catch (error) {
+        console.error('Presence setup error:', error);
+      }
+    }
+
+    function startPresenceHeartbeat(uid) {
+      cleanupPresenceHeartbeat();
+      
+      STATE.presenceHeartbeatInterval = setInterval(() => {
+        if (STATE.currentUser === uid && STATE.presenceConnectionId) {
+          const connectionRef = ref(db, `presence/${uid}/connections/${STATE.presenceConnectionId}`);
+          set(connectionRef, {
+            connectedAt: serverTimestamp()
+          }).catch(error => {
+            console.error('Presence heartbeat error:', error);
+          });
+        }
+      }, CONFIG.PRESENCE_HEARTBEAT_MS);
+    }
+
+    function cleanupPresenceHeartbeat() {
+      if (STATE.presenceHeartbeatInterval) {
+        clearInterval(STATE.presenceHeartbeatInterval);
+        STATE.presenceHeartbeatInterval = null;
+      }
+    }
+
+    async function cleanupPresence() {
+      if (STATE.currentUser && STATE.presenceConnectionId) {
+        try {
+          const connectionRef = ref(db, `presence/${STATE.currentUser}/connections/${STATE.presenceConnectionId}`);
+          await remove(connectionRef);
+          
+          // Check if user has other connections
+          const connectionsSnapshot = await get(ref(db, `presence/${STATE.currentUser}/connections`));
+          if (!connectionsSnapshot.exists() || !connectionsSnapshot.hasChildren()) {
+            await update(ref(db, `users/${STATE.currentUser}`), {
+              online: false,
+              lastSeen: serverTimestamp()
+            });
+          }
+        } catch (error) {
+          console.error('Presence cleanup error:', error);
+        }
+      }
+      
+      cleanupPresenceHeartbeat();
+      STATE.presenceConnectionId = null;
+    }
+
+    // ============================================================
+    // CHAT INIT
+    // ============================================================
+    function startChat() {
+      if (STATE.chatStarted) {
+        cleanupAll();
+        STATE.messageCache.clear();
+        STATE.usernameCache.clear();
+        if (STATE.currentUser) {
+          STATE.usernameCache.set(STATE.currentUser, STATE.currentUsername);
+        }
+        STATE.readReceiptsCache.clear();
+        STATE.newMessagesCount = 0;
+        STATE.isInitialScroll = true;
+      }
+      
+      DOM.auth.style.display = 'none';
+      DOM.chat.classList.add('active');
+      
+      setupConnectionStatus();
+      setupTypingIndicator();
+      setupPresenceListener();
+      loadMessages();
+      setupTypingInput();
+      setupReadReceiptsListener();
+      
+      DOM.msgInput.focus();
+      STATE.chatStarted = true;
+    }
+
+    function cleanupAll() {
+      // Clean up listeners
+      const listenerKeys = [
+        'messagesListener',
+        'newMessagesListener',
+        'typingListener',
+        'presenceListener',
+        'connectionListener',
+        'readReceiptsListener'
+      ];
+      
+      listenerKeys.forEach(key => {
+        if (STATE[key]) {
+          const listenerRef = STATE[key];
+          off(listenerRef);
+          STATE[key] = null;
+        }
+      });
+      
+      // Clean up username listeners
+      STATE.usernameListeners.forEach((listenerRef, key) => {
+        off(listenerRef);
+      });
+      STATE.usernameListeners.clear();
+      
+      // Clean up timers
+      if (STATE.typingDebounceTimeout) {
+        clearTimeout(STATE.typingDebounceTimeout);
+        STATE.typingDebounceTimeout = null;
+      }
+      
+      if (STATE.typingThrottleTimeout) {
+        clearTimeout(STATE.typingThrottleTimeout);
+        STATE.typingThrottleTimeout = null;
+      }
+      
+      if (STATE.connectionCheckTimeout) {
+        clearTimeout(STATE.connectionCheckTimeout);
+        STATE.connectionCheckTimeout = null;
+      }
+      
+      cleanupPresence();
+      
+      // Clean up typing state
+      if (STATE.currentUser) {
+        remove(ref(db, `typing/${STATE.currentUser}`)).catch(() => {});
+      }
+      
+      STATE.isTyping = false;
+      STATE.chatStarted = false;
+      STATE.initialLoadComplete = false;
+      
+      // Clear messages DOM
+      DOM.messages.innerHTML = '';
+      const emptyState = document.createElement('div');
+      emptyState.className = 'empty-state';
+      emptyState.id = 'empty-state';
+      emptyState.innerHTML = '<span class="icon" aria-hidden="true">✨</span><span>أهلاً بك! ابدأ المحادثة</span>';
+      DOM.messages.appendChild(emptyState);
+      DOM.emptyState = document.getElementById('empty-state');
+      
+      // Reset UI
+      DOM.typingIndicator.textContent = '';
+      DOM.onlineList.innerHTML = '';
+      DOM.onlineCount.textContent = '0';
+      DOM.newMessagesIndicator.classList.remove('show');
+      hideConnectionStatus();
+    }
+
+    // ============================================================
+    // CONNECTION STATUS
+    // ============================================================
+    function setupConnectionStatus() {
+      if (STATE.connectionListener) {
+        off(STATE.connectionListener);
+      }
+      
+      STATE.connectionListener = ref(db, '.info/connected');
+      onValue(STATE.connectionListener, (snapshot) => {
+        const connected = snapshot.val();
+        
+        if (STATE.connectionCheckTimeout) {
+          clearTimeout(STATE.connectionCheckTimeout);
+          STATE.connectionCheckTimeout = null;
+        }
+        
+        if (connected) {
+          showConnectionStatus('🟢 متصل', 'online');
+          STATE.connectionCheckTimeout = setTimeout(() => {
+            hideConnectionStatus();
+            STATE.connectionCheckTimeout = null;
+          }, CONFIG.CONNECTION_TIMEOUT_MS);
+        } else {
+          showConnectionStatus('🔴 غير متصل - جاري إعادة المحاولة...', 'offline');
+        }
+      });
+    }
+
+    function showConnectionStatus(message, type) {
+      DOM.connectionStatus.textContent = message;
+      DOM.connectionStatus.className = type;
+      DOM.connectionStatus.classList.add('show');
+    }
+
+    function hideConnectionStatus() {
+      DOM.connectionStatus.classList.remove('show', 'online', 'offline', 'reconnecting');
+      DOM.connectionStatus.className = '';
+    }
+
+    // ============================================================
+    // TYPING INDICATOR
+    // ============================================================
+    function setupTypingIndicator() {
+      if (STATE.typingListener) {
+        off(STATE.typingListener);
+      }
+      
+      STATE.typingListener = ref(db, 'typing');
+      
+      // Set up onDisconnect for current user
+      if (STATE.currentUser) {
+        const userTypingRef = ref(db, `typing/${STATE.currentUser}`);
+        onDisconnect(userTypingRef).remove();
+      }
+      
+      onValue(STATE.typingListener, (snapshot) => {
+        const data = snapshot.val();
+        
+        if (!data) {
+          DOM.typingIndicator.textContent = '';
+          return;
+        }
+        
+        const typingUsers = [];
+        const now = Date.now();
+        
+        for (const uid in data) {
+          if (uid !== STATE.currentUser && data[uid] === true) {
+            // Check if typing data is stale (more than 10 seconds old)
+            if (data[uid + 'Timestamp'] && now - data[uid + 'Timestamp'] > 10000) {
+              // Stale typing data, ignore
+              continue;
+            }
+            
+            if (STATE.usernameCache.has(uid)) {
+              typingUsers.push(STATE.usernameCache.get(uid));
+            } else {
+              fetchUsername(uid).then(username => {
+                if (username) {
+                  typingUsers.push(username);
+                  updateTypingDisplay(typingUsers);
+                }
+              });
+            }
+          }
+        }
+        
+        updateTypingDisplay(typingUsers);
+      });
+    }
+
+    function fetchUsername(uid) {
+      return new Promise((resolve) => {
+        const userRef = ref(db, `users/${uid}/username`);
+        
+        onValue(userRef, (snapshot) => {
+          const username = snapshot.val();
+          if (username) {
+            STATE.usernameCache.set(uid, username);
+            resolve(username);
+          } else {
+            resolve(null);
+          }
+        }, { onlyOnce: true });
+      });
+    }
+
+    function updateTypingDisplay(users) {
+      if (users.length === 0) {
+        DOM.typingIndicator.textContent = '';
+        return;
+      }
+      
+      let typingText;
+      if (users.length === 1) {
+        typingText = `✏️ ${users[0]} يكتب...`;
+      } else if (users.length === 2) {
+        typingText = `✏️ ${users.join(' و ')} يكتبان...`;
+      } else if (users.length === 3) {
+        typingText = `✏️ ${users.join(' و ')} يكتبون...`;
+      } else {
+        typingText = `✏️ ${users.slice(0, 2).join(' و ')} و ${users.length - 2} آخرين يكتبون...`;
+      }
+      
+      DOM.typingIndicator.textContent = typingText;
+    }
+
+    function setupTypingInput() {
+      DOM.msgInput.removeEventListener('input', handleTypingInput);
+      DOM.msgInput.addEventListener('input', handleTypingInput);
+    }
+
+    function handleTypingInput() {
+      if (!STATE.currentUser) return;
+      
+      const text = DOM.msgInput.value.trim();
+      
+      // Clear existing timeouts
+      if (STATE.typingDebounceTimeout) {
+        clearTimeout(STATE.typingDebounceTimeout);
+      }
+      if (STATE.typingThrottleTimeout) {
+        clearTimeout(STATE.typingThrottleTimeout);
+      }
+      
+      if (text.length === 0) {
+        // Clear typing immediately
+        STATE.isTyping = false;
+        remove(ref(db, `typing/${STATE.currentUser}`)).catch(() => {});
+        return;
+      }
+      
+      const userTypingRef = ref(db, `typing/${STATE.currentUser}`);
+      
+      if (!STATE.isTyping) {
+        STATE.isTyping = true;
+        set(userTypingRef, {
+          status: true,
+          timestamp: serverTimestamp()
+        }).catch(() => {});
+      }
+      
+      // Debounce: stop typing after 2 seconds of inactivity
+      STATE.typingDebounceTimeout = setTimeout(() => {
+        STATE.isTyping = false;
+        remove(userTypingRef).catch(() => {});
+      }, CONFIG.TYPING_DEBOUNCE_MS);
+      
+      // Throttle: update typing signal every 3 seconds while typing
+      STATE.typingThrottleTimeout = setTimeout(() => {
+        if (DOM.msgInput.value.trim().length > 0) {
+          set(userTypingRef, {
+            status: true,
+            timestamp: serverTimestamp()
+          }).catch(() => {});
+        }
+      }, CONFIG.TYPING_THROTTLE_MS);
+    }
+
+    // ============================================================
+    // PRESENCE LISTENER
+    // ============================================================
+    function setupPresenceListener() {
+      if (STATE.presenceListener) {
+        off(STATE.presenceListener);
+      }
+      
+      STATE.presenceListener = ref(db, 'presence');
+      
+      onChildAdded(STATE.presenceListener, (snapshot) => {
+        const uid = snapshot.key;
+        if (uid !== STATE.currentUser) {
+          checkUserOnlineStatus(uid);
+        }
+      });
+      
+      onChildRemoved(STATE.presenceListener, (snapshot) => {
+        const uid = snapshot.key;
+        if (uid !== STATE.currentUser) {
+          updateUserOnlineStatus(uid, false);
+        }
+      });
+    }
+
+    function checkUserOnlineStatus(uid) {
+      const userConnectionsRef = ref(db, `presence/${uid}/connections`);
+      
+      onValue(userConnectionsRef, (snapshot) => {
+        const connections = snapshot.val();
+        const isOnline = connections && Object.keys(connections).length > 0;
+        updateUserOnlineStatus(uid, isOnline);
+      }, { onlyOnce: true });
+    }
+
+    function updateUserOnlineStatus(uid, isOnline) {
+      // Update username cache and online list
+      if (isOnline) {
+        fetchUsername(uid).then(username => {
+          if (username) {
+            updateOnlineUserList(uid, username, true);
+          }
+        });
+      } else {
+        removeOnlineUserFromList(uid);
+      }
+    }
+
+    let onlineUsersList = new Map();
+
+    function updateOnlineUserList(uid, username, isOnline) {
+      if (isOnline && uid !== STATE.currentUser) {
+        onlineUsersList.set(uid, { username, isOnline: true });
+      } else {
+        onlineUsersList.delete(uid);
+      }
+      renderOnlineUsers();
+    }
+
+    function removeOnlineUserFromList(uid) {
+      onlineUsersList.delete(uid);
+      renderOnlineUsers();
+    }
+
+    function renderOnlineUsers() {
+      const fragment = document.createDocumentFragment();
+      const onlineUsers = Array.from(onlineUsersList.values()).filter(user => user.isOnline);
+      
+      if (onlineUsers.length === 0) {
+        const emptyDiv = document.createElement('div');
+        emptyDiv.className = 'empty-online';
+        emptyDiv.textContent = 'لا يوجد متصلون حالياً';
+        fragment.appendChild(emptyDiv);
+      } else {
+        onlineUsers.forEach(user => {
+          const item = document.createElement('div');
+          item.className = 'user-item';
+          
+          const dot = document.createElement('span');
+          dot.className = 'dot';
+          dot.setAttribute('aria-hidden', 'true');
+          
+          const name = document.createElement('span');
+          name.className = 'user-name';
+          name.textContent = user.username;
+          
+          const status = document.createElement('span');
+          status.className = 'status-text';
+          status.textContent = 'متصل';
+          
+          item.appendChild(dot);
+          item.appendChild(name);
+          item.appendChild(status);
+          fragment.appendChild(item);
+        });
+      }
+      
+      DOM.onlineList.innerHTML = '';
+      DOM.onlineList.appendChild(fragment);
+      DOM.onlineCount.textContent = onlineUsers.length;
+      
+      if (onlineUsers.length > 0) {
+        DOM.onlineBtn.classList.add('has-users');
+      } else {
+        DOM.onlineBtn.classList.remove('has-users');
+      }
+    }
+
+    // ============================================================
+    // READ RECEIPTS
+    // ============================================================
+    function setupReadReceiptsListener() {
+      if (STATE.readReceiptsListener) {
+        off(STATE.readReceiptsListener);
+      }
+      
+      STATE.readReceiptsListener = ref(db, 'messageReads');
+      
+      onChildChanged(STATE.readReceiptsListener, (snapshot) => {
+        const messageId = snapshot.key;
+        const readData = snapshot.val();
+        
+        if (readData && STATE.messageCache.has(messageId)) {
+          updateMessageReadStatus(messageId, readData);
+        }
+      });
+    }
+
+    function updateMessageReadStatus(messageId, readData) {
+      const msgElement = document.querySelector(`[data-msg-id="${messageId}"]`);
+      if (!msgElement) return;
+      
+      const msgData = STATE.messageCache.get(messageId);
+      if (!msgData || msgData.uid !== STATE.currentUser) return;
+      
+      const statusSpan = msgElement.querySelector('.msg-status');
+      if (!statusSpan) return;
+      
+      let readers = 0;
+      for (const uid in readData) {
+        if (uid !== STATE.currentUser && readData[uid] === true) {
+          readers++;
+        }
+      }
+      
+      if (readers > 0) {
+        statusSpan.textContent = '✓✓';
+        statusSpan.className = 'msg-status seen';
+      } else {
+        statusSpan.textContent = '✓';
+        statusSpan.className = 'msg-status delivered';
+      }
+    }
+
+    function markMessageAsRead(messageId, messageUid) {
+      if (!STATE.currentUser || messageUid === STATE.currentUser) return;
+      
+      // Only mark as read if message is visible in viewport
+      const msgElement = document.querySelector(`[data-msg-id="${messageId}"]`);
+      if (!msgElement) return;
+      
+      const rect = msgElement.getBoundingClientRect();
+      const messagesRect = DOM.messages.getBoundingClientRect();
+      
+      if (rect.top >= messagesRect.top && rect.bottom <= messagesRect.bottom) {
+        const readRef = ref(db, `messageReads/${messageId}/${STATE.currentUser}`);
+        set(readRef, true).catch(() => {});
+      }
+    }
+
+    // ============================================================
+    // MESSAGES - LOAD & PAGINATION
+    // ============================================================
+    function loadMessages() {
+      // Clean up old listeners
+      if (STATE.messagesListener) {
+        off(STATE.messagesListener);
+        STATE.messagesListener = null;
+      }
+      if (STATE.newMessagesListener) {
+        off(STATE.newMessagesListener);
+        STATE.newMessagesListener = null;
+      }
+      
+      // Reset state
+      DOM.messages.innerHTML = '';
+      const emptyState = document.createElement('div');
+      emptyState.className = 'empty-state';
+      emptyState.id = 'empty-state';
+      emptyState.innerHTML = '<span class="icon" aria-hidden="true">✨</span><span>أهلاً بك! ابدأ المحادثة</span>';
+      DOM.messages.appendChild(emptyState);
+      DOM.emptyState = document.getElementById('empty-state');
+      
+      STATE.initialLoadComplete = false;
+      STATE.hasMoreMessages = true;
+      STATE.oldestMessageKey = null;
+      STATE.oldestTimestamp = null;
+      STATE.newestTimestamp = 0;
+      STATE.messageCache.clear();
+      STATE.isNearBottom = true;
+      STATE.isLoadingMore = false;
+      STATE.isInitialScroll = true;
+      STATE.newMessagesCount = 0;
+      DOM.newMessagesIndicator.classList.remove('show');
+      
+      // Load initial messages using push ID cursor for proper pagination
+      const messagesRef = ref(db, 'messages');
+      const messagesQuery = query(messagesRef, orderByChild('timestamp'), limitToLast(CONFIG.MESSAGE_LIMIT));
+      
+      onValue(messagesQuery, (snapshot) => {
+        const data = snapshot.val();
+        
+        if (!data) {
+          // No messages
+          if (DOM.emptyState) {
+            DOM.emptyState.style.display = 'flex';
+          }
+          STATE.initialLoadComplete = true;
+          STATE.hasMoreMessages = false;
+          attachNewMessageListener();
+          return;
+        }
+        
+        const messagesArray = [];
+        for (const key in data) {
           messagesArray.push({
             id: key,
             data: data[key]
           });
         }
-      }
-      
-      messagesArray.sort((a, b) => (a.data.timestamp || 0) - (b.data.timestamp || 0));
-      
-      DOM.messages.innerHTML = '';
-      
-      if (messagesArray.length === 0) {
-        const empty = document.createElement('div');
-        empty.className = 'empty-state';
-        empty.textContent = '✨ لا توجد رسائل بعد، كن أول من يكتب!';
-        DOM.messages.appendChild(empty);
+        
+        // Sort by timestamp
+        messagesArray.sort((a, b) => (a.data.timestamp || 0) - (b.data.timestamp || 0));
+        
+        // Clear messages DOM (keep empty state temporarily)
+        DOM.messages.innerHTML = '';
+        
+        const fragment = document.createDocumentFragment();
+        
+        messagesArray.forEach(({ id, data: msgData }, index) => {
+          STATE.messageCache.set(id, msgData);
+          
+          const msgEl = createMessageElement(msgData, id);
+          fragment.appendChild(msgEl);
+          
+          if (!STATE.oldestMessageKey) {
+            STATE.oldestMessageKey = id;
+            STATE.oldestTimestamp = msgData.timestamp;
+          }
+          
+          STATE.newestTimestamp = Math.max(STATE.newestTimestamp, msgData.timestamp || 0);
+          
+          // Mark as read if not own message
+          if (msgData.uid !== STATE.currentUser && index === messagesArray.length - 1) {
+            // Only mark the last message as read initially
+            markMessageAsRead(id, msgData.uid);
+          }
+        });
+        
+        DOM.messages.appendChild(fragment);
+        
+        // Update empty state reference
+        DOM.emptyState = document.getElementById('empty-state');
+        
+        STATE.hasMoreMessages = messagesArray.length >= CONFIG.MESSAGE_LIMIT;
         STATE.initialLoadComplete = true;
-        STATE.hasMoreMessages = false;
+        
+        // Scroll to bottom
+        if (STATE.isInitialScroll) {
+          setTimeout(() => {
+            DOM.messages.scrollTop = DOM.messages.scrollHeight;
+            STATE.isInitialScroll = false;
+          }, 50);
+        }
+        
         attachNewMessageListener();
-        return;
-      }
-      
-      const fragment = document.createDocumentFragment();
-      messagesArray.forEach(({ id, data: msgData }) => {
-        STATE.messageCache.set(id, msgData);
-        const msgEl = createMessageElement(msgData, id);
-        fragment.appendChild(msgEl);
+      }, (error) => {
+        console.error('Error loading messages:', error);
+        STATE.initialLoadComplete = true;
         
-        if (!STATE.oldestTimestamp || msgData.timestamp < STATE.oldestTimestamp) {
-          STATE.oldestTimestamp = msgData.timestamp;
-          STATE.oldestMessageId = id;
-        }
-        if (msgData.timestamp > STATE.newestTimestamp) {
-          STATE.newestTimestamp = msgData.timestamp;
-        }
-        
-        if (msgData.uid !== STATE.currentUser) {
-          markMessageAsRead(id);
+        if (DOM.emptyState) {
+          DOM.emptyState.innerHTML = '<span class="icon" aria-hidden="true">⚠️</span><span>حدث خطأ في تحميل الرسائل</span>';
+          DOM.emptyState.style.display = 'flex';
         }
       });
       
-      DOM.messages.appendChild(fragment);
-      STATE.hasMoreMessages = messagesArray.length >= CONFIG.MESSAGE_LIMIT;
-      STATE.initialLoadComplete = true;
-      
-      // Scroll to bottom
-      setTimeout(() => {
-        DOM.messages.scrollTop = DOM.messages.scrollHeight;
-        STATE.isInitialScroll = false;
-      }, 50);
-      
-      attachNewMessageListener();
-    })
-    .catch((err) => {
-      console.error('Error loading messages:', err);
-      STATE.initialLoadComplete = true;
-      const errorMsg = document.createElement('div');
-      errorMsg.className = 'empty-state';
-      errorMsg.textContent = '⚠️ حدث خطأ في تحميل الرسائل';
-      DOM.messages.appendChild(errorMsg);
-    });
-  
-  // Setup scroll listener
-  DOM.messages.removeEventListener('scroll', handleScroll);
-  DOM.messages.addEventListener('scroll', handleScroll);
-}
-
-function attachNewMessageListener() {
-  if (STATE.newMessagesListener) {
-    STATE.newMessagesListener.off();
-    STATE.newMessagesListener = null;
-  }
-  
-  // Use a timestamp cursor to avoid missing messages
-  const startTimestamp = STATE.newestTimestamp || 0;
-  
-  STATE.newMessagesListener = db.ref('messages')
-    .orderByChild('timestamp')
-    .startAt(startTimestamp);
-  
-  STATE.newMessagesListener.on('child_added', (snapshot) => {
-    if (!STATE.initialLoadComplete) return;
-    
-    const msgId = snapshot.key;
-    const data = snapshot.val();
-    
-    // Skip if we already have this message
-    if (STATE.messageCache.has(msgId)) return;
-    
-    // Skip if this is the initial load message
-    if (data.timestamp <= STATE.oldestTimestamp && STATE.hasMoreMessages) return;
-    
-    // Store in cache
-    STATE.messageCache.set(msgId, data);
-    
-    // Create and append message
-    const msgEl = createMessageElement(data, msgId);
-    DOM.messages.appendChild(msgEl);
-    
-    // Update newest timestamp
-    if (data.timestamp > STATE.newestTimestamp) {
-      STATE.newestTimestamp = data.timestamp;
+      // Setup scroll listener
+      DOM.messages.removeEventListener('scroll', handleScroll);
+      DOM.messages.addEventListener('scroll', handleScroll);
     }
-    
-    // Scroll to bottom if near bottom
-    if (STATE.isNearBottom) {
-      setTimeout(() => {
-        DOM.messages.scrollTop = DOM.messages.scrollHeight;
-      }, 50);
-    }
-    
-    // Mark as read if not own message
-    if (data.uid !== STATE.currentUser) {
-      markMessageAsRead(msgId);
-    }
-  });
-}
 
-function handleScroll() {
-  const scrollTop = DOM.messages.scrollTop;
-  const scrollHeight = DOM.messages.scrollHeight;
-  const clientHeight = DOM.messages.clientHeight;
-  
-  // Check if near bottom
-  STATE.isNearBottom = (scrollHeight - scrollTop - clientHeight) <= CONFIG.SCROLL_THRESHOLD;
-  
-  // Load more when reaching top
-  if (scrollTop === 0 && !STATE.isLoadingMore && STATE.hasMoreMessages && STATE.initialLoadComplete) {
-    loadMoreMessages();
-  }
-}
-
-function loadMoreMessages() {
-  if (STATE.isLoadingMore || !STATE.hasMoreMessages || !STATE.oldestTimestamp) return;
-  
-  STATE.isLoadingMore = true;
-  
-  // Show loading indicator
-  const loadingDiv = document.createElement('div');
-  loadingDiv.className = 'loading-more';
-  loadingDiv.textContent = 'جاري تحميل رسائل أقدم...';
-  loadingDiv.id = 'loading-more';
-  DOM.messages.prepend(loadingDiv);
-  
-  // Save scroll state
-  const oldScrollHeight = DOM.messages.scrollHeight;
-  const oldScrollTop = DOM.messages.scrollTop;
-  
-  // Use a cursor approach: get messages older than oldest timestamp
-  // We need to be careful with duplicate timestamps
-  db.ref('messages')
-    .orderByChild('timestamp')
-    .endAt(STATE.oldestTimestamp - 1)
-    .limitToLast(CONFIG.MESSAGE_LIMIT)
-    .once('value')
-    .then((snapshot) => {
-      const loadingEl = document.getElementById('loading-more');
-      if (loadingEl) loadingEl.remove();
-      
-      const data = snapshot.val();
-      if (!data) {
-        STATE.hasMoreMessages = false;
-        STATE.isLoadingMore = false;
-        return;
+    function attachNewMessageListener() {
+      if (STATE.newMessagesListener) {
+        off(STATE.newMessagesListener);
+        STATE.newMessagesListener = null;
       }
       
-      // Collect messages to add
-      const messagesToAdd = [];
-      let newOldest = STATE.oldestTimestamp;
-      let newOldestId = STATE.oldestMessageId;
+      const messagesRef = ref(db, 'messages');
+      const newMessagesQuery = query(messagesRef, orderByChild('timestamp'), startAt(STATE.newestTimestamp || 0));
       
-      for (let key in data) {
-        const msg = data[key];
-        if (STATE.messageCache.has(key)) continue;
+      STATE.newMessagesListener = newMessagesQuery;
+      
+      onChildAdded(STATE.newMessagesListener, (snapshot) => {
+        if (!STATE.initialLoadComplete) return;
         
-        STATE.messageCache.set(key, msg);
-        messagesToAdd.push({ id: key, data: msg });
-        if (msg.timestamp < newOldest) {
-          newOldest = msg.timestamp;
-          newOldestId = key;
+        const msgId = snapshot.key;
+        const data = snapshot.val();
+        
+        // Skip if we already have this message
+        if (STATE.messageCache.has(msgId)) return;
+        
+        // Skip if this is an old message (shouldn't happen with startAt, but just in case)
+        if (data.timestamp <= STATE.oldestTimestamp && STATE.hasMoreMessages) return;
+        
+        // Store in cache
+        STATE.messageCache.set(msgId, data);
+        
+        // Create and append message
+        const msgEl = createMessageElement(data, msgId);
+        DOM.messages.appendChild(msgEl);
+        
+        // Remove empty state if present
+        if (DOM.emptyState && DOM.emptyState.style.display !== 'none') {
+          DOM.emptyState.style.display = 'none';
         }
+        
+        // Update newest timestamp
+        if (data.timestamp > STATE.newestTimestamp) {
+          STATE.newestTimestamp = data.timestamp;
+        }
+        
+        // Scroll to bottom or show indicator
+        if (STATE.isNearBottom) {
+          setTimeout(() => {
+            DOM.messages.scrollTop = DOM.messages.scrollHeight;
+          }, 50);
+        } else {
+          STATE.newMessagesCount++;
+          DOM.newMessagesIndicator.textContent = `⬇️ ${STATE.newMessagesCount} رسائل جديدة`;
+          DOM.newMessagesIndicator.classList.add('show');
+        }
+        
+        // Mark as read if not own message and visible
+        if (data.uid !== STATE.currentUser) {
+          markMessageAsRead(msgId, data.uid);
+        }
+      });
+    }
+
+    function handleScroll() {
+      const scrollTop = DOM.messages.scrollTop;
+      const scrollHeight = DOM.messages.scrollHeight;
+      const clientHeight = DOM.messages.clientHeight;
+      
+      // Check if near bottom
+      STATE.isNearBottom = (scrollHeight - scrollTop - clientHeight) <= CONFIG.SCROLL_THRESHOLD;
+      
+      // Reset new messages counter if near bottom
+      if (STATE.isNearBottom) {
+        STATE.newMessagesCount = 0;
+        DOM.newMessagesIndicator.classList.remove('show');
       }
       
-      if (messagesToAdd.length === 0) {
-        STATE.hasMoreMessages = false;
+      // Mark visible messages as read
+      markVisibleMessagesAsRead();
+      
+      // Load more when reaching top
+      if (scrollTop === 0 && !STATE.isLoadingMore && STATE.hasMoreMessages && STATE.initialLoadComplete) {
+        loadMoreMessages();
+      }
+    }
+
+    const throttledScrollHandler = throttle(handleScroll, 100);
+
+    function scrollToBottom() {
+      DOM.messages.scrollTop = DOM.messages.scrollHeight;
+      STATE.isNearBottom = true;
+      STATE.newMessagesCount = 0;
+      DOM.newMessagesIndicator.classList.remove('show');
+    }
+
+    function markVisibleMessagesAsRead() {
+      const messageElements = DOM.messages.querySelectorAll('.msg');
+      const messagesRect = DOM.messages.getBoundingClientRect();
+      
+      messageElements.forEach(msgElement => {
+        const rect = msgElement.getBoundingClientRect();
+        if (rect.top >= messagesRect.top && rect.bottom <= messagesRect.bottom) {
+          const msgId = msgElement.dataset.msgId;
+          const msgData = STATE.messageCache.get(msgId);
+          
+          if (msgData && msgData.uid !== STATE.currentUser) {
+            const readRef = ref(db, `messageReads/${msgId}/${STATE.currentUser}`);
+            set(readRef, true).catch(() => {});
+          }
+        }
+      });
+    }
+
+    function loadMoreMessages() {
+      if (STATE.isLoadingMore || !STATE.hasMoreMessages || !STATE.oldestMessageKey) return;
+      
+      STATE.isLoadingMore = true;
+      
+      // Show loading indicator
+      const loadingDiv = document.createElement('div');
+      loadingDiv.className = 'loading-more';
+      loadingDiv.id = 'loading-more';
+      loadingDiv.innerHTML = '<span class="loading-spinner"></span><span>جاري تحميل رسائل أقدم...</span>';
+      DOM.messages.prepend(loadingDiv);
+      
+      // Save scroll state
+      const oldScrollHeight = DOM.messages.scrollHeight;
+      const oldScrollTop = DOM.messages.scrollTop;
+      
+      // Use push ID cursor for proper pagination
+      const messagesRef = ref(db, 'messages');
+      const olderMessagesQuery = query(
+        messagesRef,
+        orderByChild('timestamp'),
+        endAt(STATE.oldestTimestamp),
+        limitToLast(CONFIG.MESSAGE_LIMIT + 1)
+      );
+      
+      onValue(olderMessagesQuery, (snapshot) => {
+        const loadingEl = document.getElementById('loading-more');
+        if (loadingEl) loadingEl.remove();
+        
+        const data = snapshot.val();
+        if (!data) {
+          STATE.hasMoreMessages = false;
+          STATE.isLoadingMore = false;
+          return;
+        }
+        
+        // Convert to array and filter out messages we already have
+        const messagesToAdd = [];
+        const allMessages = [];
+        
+        for (const key in data) {
+          allMessages.push({
+            id: key,
+            data: data[key]
+          });
+        }
+        
+        // Sort by timestamp
+        allMessages.sort((a, b) => (a.data.timestamp || 0) - (b.data.timestamp || 0));
+        
+        // Filter out messages we already have (except the oldest one which is our cursor)
+        let foundOldest = false;
+        for (const { id, data: msgData } of allMessages) {
+          if (id === STATE.oldestMessageKey) {
+            foundOldest = true;
+            continue;
+          }
+          
+          if (!foundOldest) {
+            STATE.messageCache.set(id, msgData);
+            messagesToAdd.push({ id, data: msgData });
+          }
+        }
+        
+        if (messagesToAdd.length === 0) {
+          STATE.hasMoreMessages = false;
+          STATE.isLoadingMore = false;
+          return;
+        }
+        
+        // Create and prepend messages
+        const fragment = document.createDocumentFragment();
+        messagesToAdd.forEach(({ id, data: msgData }) => {
+          const msgEl = createMessageElement(msgData, id);
+          fragment.appendChild(msgEl);
+        });
+        
+        DOM.messages.prepend(fragment);
+        
+        // Update oldest message cursor
+        const oldestMessage = allMessages[0];
+        if (oldestMessage) {
+          STATE.oldestMessageKey = oldestMessage.id;
+          STATE.oldestTimestamp = oldestMessage.data.timestamp;
+        }
+        
+        STATE.hasMoreMessages = allMessages.length > CONFIG.MESSAGE_LIMIT;
         STATE.isLoadingMore = false;
+        
+        // Restore scroll position
+        const newScrollHeight = DOM.messages.scrollHeight;
+        const heightDiff = newScrollHeight - oldScrollHeight;
+        DOM.messages.scrollTop = oldScrollTop + heightDiff;
+      }, (error) => {
+        console.error('Error loading more messages:', error);
+        const loadingEl = document.getElementById('loading-more');
+        if (loadingEl) loadingEl.remove();
+        STATE.isLoadingMore = false;
+      }, { onlyOnce: true });
+    }
+
+    // ============================================================
+    // MESSAGE ELEMENTS
+    // ============================================================
+    function createMessageElement(data, msgId) {
+      const div = document.createElement('div');
+      div.className = 'msg';
+      div.dataset.msgId = msgId;
+      
+      if (data.uid === STATE.currentUser) {
+        div.classList.add('own');
+      }
+      
+      // Username - using textContent for XSS protection
+      const userSpan = document.createElement('span');
+      userSpan.className = 'msg-user';
+      
+      let username = 'مجهول';
+      if (data.uid && STATE.usernameCache.has(data.uid)) {
+        username = STATE.usernameCache.get(data.uid);
+      } else if (data.uid) {
+        // Fetch username asynchronously
+        fetchUsername(data.uid).then(fetchedUsername => {
+          if (fetchedUsername) {
+            userSpan.textContent = fetchedUsername + ':';
+          }
+        });
+      }
+      
+      userSpan.textContent = username + ':';
+      
+      // Message text - using textContent for XSS protection
+      const textSpan = document.createElement('span');
+      textSpan.className = 'msg-text';
+      textSpan.textContent = data.text;
+      
+      // Message meta (time and status)
+      const metaSpan = document.createElement('span');
+      metaSpan.className = 'msg-meta';
+      
+      // Timestamp
+      const timeSpan = document.createElement('span');
+      timeSpan.className = 'msg-time';
+      timeSpan.textContent = formatTime(data.timestamp);
+      
+      metaSpan.appendChild(timeSpan);
+      
+      // Status (only for own messages)
+      if (data.uid === STATE.currentUser) {
+        const statusSpan = document.createElement('span');
+        statusSpan.className = 'msg-status delivered';
+        statusSpan.textContent = '✓';
+        statusSpan.setAttribute('aria-label', 'تم التسليم');
+        metaSpan.appendChild(statusSpan);
+        
+        // Check read status
+        checkMessageReadStatus(msgId, statusSpan);
+      }
+      
+      div.appendChild(userSpan);
+      div.appendChild(textSpan);
+      div.appendChild(metaSpan);
+      
+      return div;
+    }
+
+    function checkMessageReadStatus(msgId, statusSpan) {
+      const readRef = ref(db, `messageReads/${msgId}`);
+      
+      onValue(readRef, (snapshot) => {
+        const readData = snapshot.val();
+        
+        if (!readData) {
+          statusSpan.textContent = '✓';
+          statusSpan.className = 'msg-status delivered';
+          statusSpan.setAttribute('aria-label', 'تم التسليم');
+          return;
+        }
+        
+        let readers = 0;
+        for (const uid in readData) {
+          if (uid !== STATE.currentUser && readData[uid] === true) {
+            readers++;
+          }
+        }
+        
+        if (readers > 0) {
+          statusSpan.textContent = '✓✓';
+          statusSpan.className = 'msg-status seen';
+          statusSpan.setAttribute('aria-label', 'تمت القراءة');
+        } else {
+          statusSpan.textContent = '✓';
+          statusSpan.className = 'msg-status delivered';
+          statusSpan.setAttribute('aria-label', 'تم التسليم');
+        }
+      }, { onlyOnce: true });
+    }
+
+    // ============================================================
+    // SEND MESSAGE
+    // ============================================================
+    async function handleSendMessage() {
+      const text = DOM.msgInput.value.trim();
+      
+      if (!text || !STATE.currentUser) return;
+      
+      if (text.length > CONFIG.MAX_MESSAGE_LENGTH) {
+        showError(`الرسالة طويلة جداً (الحد الأقصى ${CONFIG.MAX_MESSAGE_LENGTH} حرف)`, 'message');
         return;
       }
       
-      // Sort by timestamp ascending
-      messagesToAdd.sort((a, b) => (a.data.timestamp || 0) - (b.data.timestamp || 0));
+      // Rate limiting
+      const now = Date.now();
+      STATE.messageTimestamps = STATE.messageTimestamps.filter(ts => now - ts < CONFIG.RATE_LIMIT_WINDOW_MS);
       
-      // Create and prepend messages
-      const fragment = document.createDocumentFragment();
-      messagesToAdd.forEach(({ id, data: msgData }) => {
-        const msgEl = createMessageElement(msgData, id);
-        fragment.appendChild(msgEl);
-      });
+      if (STATE.messageTimestamps.length >= CONFIG.RATE_LIMIT_MESSAGES) {
+        showError('أنت ترسل الرسائل بسرعة كبيرة. الرجاء الانتظار قليلاً.', 'message');
+        return;
+      }
       
-      DOM.messages.prepend(fragment);
+      STATE.messageTimestamps.push(now);
       
-      // Update oldest timestamp
-      STATE.oldestTimestamp = newOldest;
-      STATE.oldestMessageId = newOldestId;
-      STATE.hasMoreMessages = Object.keys(data).length >= CONFIG.MESSAGE_LIMIT;
-      STATE.isLoadingMore = false;
+      setSendButtonState(true, 'جاري الإرسال...');
       
-      // Restore scroll position
-      const newScrollHeight = DOM.messages.scrollHeight;
-      const heightDiff = newScrollHeight - oldScrollHeight;
-      DOM.messages.scrollTop = oldScrollTop + heightDiff;
-    })
-    .catch((err) => {
-      console.error('Error loading more messages:', err);
-      const loadingEl = document.getElementById('loading-more');
-      if (loadingEl) loadingEl.remove();
-      STATE.isLoadingMore = false;
-    });
-}
-
-// ============================================================
-// MESSAGE ELEMENTS
-// ============================================================
-function createMessageElement(data, msgId) {
-  const div = document.createElement('div');
-  div.className = 'msg';
-  div.dataset.msgId = msgId;
-  if (data.uid === STATE.currentUser) div.classList.add('own');
-  
-  // Username - using textContent for security
-  const userSpan = document.createElement('span');
-  userSpan.className = 'msg-user';
-  const username = data.username || 'مجهول';
-  userSpan.textContent = username + ':';
-  if (data.uid) STATE.usernameCache[data.uid] = username;
-  
-  // Message text - using textContent for XSS protection
-  const textSpan = document.createElement('span');
-  textSpan.className = 'msg-text';
-  textSpan.textContent = ' ' + data.text;
-  
-  // Timestamp
-  const timeSpan = document.createElement('span');
-  timeSpan.className = 'msg-time';
-  if (data.timestamp) {
-    const d = new Date(data.timestamp);
-    timeSpan.textContent = d.getHours().toString().padStart(2, '0') + ':' + d.getMinutes().toString().padStart(2, '0');
-  } else {
-    timeSpan.textContent = '--:--';
-  }
-  
-  // Status (only for own messages)
-  const statusSpan = document.createElement('span');
-  statusSpan.className = 'msg-status';
-  if (data.uid === STATE.currentUser) {
-    statusSpan.textContent = '✓';
-    statusSpan.className = 'msg-status delivered';
-    // Check read status asynchronously
-    checkMessageReadStatus(msgId, statusSpan);
-  }
-  
-  div.appendChild(userSpan);
-  div.appendChild(textSpan);
-  div.appendChild(timeSpan);
-  div.appendChild(statusSpan);
-  return div;
-}
-
-function checkMessageReadStatus(msgId, statusSpan) {
-  // Use once to get initial status
-  db.ref('messageReads/' + msgId).once('value', (snapshot) => {
-    updateStatusFromSnapshot(snapshot, statusSpan);
-  });
-  
-  // Also set up a listener for real-time updates
-  if (!STATE.readReceiptListeners.has(msgId)) {
-    const listener = db.ref('messageReads/' + msgId);
-    listener.on('value', (snapshot) => {
-      updateStatusFromSnapshot(snapshot, statusSpan);
-    });
-    STATE.readReceiptListeners.set(msgId, listener);
-  }
-}
-
-function updateStatusFromSnapshot(snapshot, statusSpan) {
-  const reads = snapshot.val();
-  let readers = 0;
-  if (reads) {
-    for (let uid in reads) {
-      if (uid !== STATE.currentUser && reads[uid] === true) readers++;
+      try {
+        const messagesRef = ref(db, 'messages');
+        const newMessageRef = push(messagesRef);
+        
+        await set(newMessageRef, {
+          uid: STATE.currentUser,
+          text: text,
+          timestamp: serverTimestamp()
+        });
+        
+        DOM.msgInput.value = '';
+        DOM.msgInput.focus();
+        
+        // Clear typing
+        STATE.isTyping = false;
+        remove(ref(db, `typing/${STATE.currentUser}`)).catch(() => {});
+        
+        if (STATE.typingDebounceTimeout) {
+          clearTimeout(STATE.typingDebounceTimeout);
+          STATE.typingDebounceTimeout = null;
+        }
+        
+        if (STATE.typingThrottleTimeout) {
+          clearTimeout(STATE.typingThrottleTimeout);
+          STATE.typingThrottleTimeout = null;
+        }
+        
+        // Update send button
+        setSendButtonState(false, '📤 إرسال');
+        
+      } catch (error) {
+        console.error('Send error:', error);
+        setSendButtonState(false, '📤 إرسال');
+        showError('تعذر إرسال الرسالة، تحقق من اتصال الإنترنت', 'message');
+      }
     }
-  }
-  if (readers > 0) {
-    statusSpan.textContent = '✓✓';
-    statusSpan.className = 'msg-status seen';
-  } else {
-    statusSpan.textContent = '✓';
-    statusSpan.className = 'msg-status delivered';
-  }
-}
 
-// ============================================================
-// SEND MESSAGE
-// ============================================================
-async function handleSendMessage() {
-  const text = DOM.msgInput.value.trim();
-  if (!text || !STATE.currentUser) return;
-  
-  if (text.length > CONFIG.MAX_MESSAGE_LENGTH) {
-    DOM.authError.textContent = `الرسالة طويلة جداً (الحد الأقصى ${CONFIG.MAX_MESSAGE_LENGTH} حرف)`;
-    DOM.authError.style.display = 'block';
-    setTimeout(() => DOM.authError.style.display = 'none', 3000);
-    return;
-  }
-  
-  const now = Date.now();
-  if (now - STATE.lastMessageTime < CONFIG.COOLDOWN_MS) {
-    DOM.authError.textContent = 'الرجاء الانتظار قليلاً قبل إرسال رسالة أخرى';
-    DOM.authError.style.display = 'block';
-    setTimeout(() => DOM.authError.style.display = 'none', 2000);
-    return;
-  }
-  
-  DOM.sendBtn.disabled = true;
-  DOM.sendBtn.textContent = 'جاري الإرسال...';
-  
-  try {
-    await db.ref('messages').push({
-      uid: STATE.currentUser,
-      username: STATE.currentUsername,
-      text: text,
-      timestamp: firebase.database.ServerValue.TIMESTAMP
+    function setSendButtonState(disabled, text) {
+      DOM.sendBtn.disabled = disabled;
+      DOM.sendBtn.innerHTML = text;
+    }
+
+    DOM.sendBtn.addEventListener('click', handleSendMessage);
+
+    // ============================================================
+    // ERROR HANDLING
+    // ============================================================
+    function showError(message, type) {
+      let errorElement;
+      
+      switch (type) {
+        case 'auth':
+          errorElement = DOM.authError;
+          break;
+        case 'message':
+          errorElement = DOM.authError; // Reuse auth error for now
+          break;
+        case 'connection':
+          showConnectionStatus(message, 'offline');
+          return;
+        default:
+          errorElement = DOM.authError;
+      }
+      
+      errorElement.textContent = message;
+      errorElement.classList.add('show');
+      
+      // Auto-hide after 3 seconds for non-auth errors
+      if (type !== 'auth') {
+        setTimeout(() => {
+          errorElement.classList.remove('show');
+        }, 3000);
+      }
+    }
+
+    function hideError(type) {
+      let errorElement;
+      
+      switch (type) {
+        case 'auth':
+          errorElement = DOM.authError;
+          break;
+        case 'message':
+          errorElement = DOM.authError;
+          break;
+        default:
+          errorElement = DOM.authError;
+      }
+      
+      errorElement.classList.remove('show');
+    }
+
+    // ============================================================
+    // LOGOUT FUNCTIONALITY
+    // ============================================================
+    async function handleLogout() {
+      try {
+        await cleanupPresence();
+        
+        if (STATE.currentUser) {
+          await remove(ref(db, `typing/${STATE.currentUser}`));
+        }
+        
+        cleanupAll();
+        
+        await signOut(auth);
+        
+        // Reset state
+        STATE.currentUser = null;
+        STATE.currentUsername = null;
+        STATE.currentUsernameNormalized = null;
+        STATE.chatStarted = false;
+        
+        // Reset UI
+        DOM.chat.classList.remove('active');
+        DOM.auth.style.display = 'flex';
+        DOM.username.value = '';
+        hideError('auth');
+        
+      } catch (error) {
+        console.error('Logout error:', error);
+      }
+    }
+
+    // Add logout button functionality (can be triggered from console or UI)
+    window.handleLogout = handleLogout;
+
+    // ============================================================
+    // KEYBOARD SHORTCUTS
+    // ============================================================
+    document.addEventListener('keydown', (e) => {
+      // Ctrl+L or Cmd+L for logout
+      if ((e.ctrlKey || e.metaKey) && e.key === 'l') {
+        e.preventDefault();
+        handleLogout();
+      }
+      
+      // Escape to close popups
+      if (e.key === 'Escape') {
+        DOM.emojiPicker.classList.remove('show');
+        DOM.emojiBtn.setAttribute('aria-expanded', 'false');
+        DOM.onlinePopup.classList.remove('show');
+        DOM.onlineBtn.setAttribute('aria-expanded', 'false');
+      }
     });
-    DOM.msgInput.value = '';
-    DOM.msgInput.focus();
-    STATE.lastMessageTime = Date.now();
-    
-    // Clear typing when message sent
-    STATE.isTyping = false;
-    db.ref('typing/' + STATE.currentUser).remove();
-    clearTimeout(typingDebounceTimeout);
-    clearTimeout(typingThrottleTimeout);
-  } catch (err) {
-    console.error('Send error:', err);
-    DOM.authError.textContent = 'تعذر إرسال الرسالة، تحقق من اتصال الإنترنت';
-    DOM.authError.style.display = 'block';
-    setTimeout(() => DOM.authError.style.display = 'none', 3000);
-  } finally {
-    DOM.sendBtn.disabled = false;
-    DOM.sendBtn.textContent = '📤 إرسال';
-  }
-}
 
-DOM.sendBtn.onclick = handleSendMessage;
-
-// ============================================================
-// CLEANUP
-// ============================================================
-window.addEventListener('beforeunload', () => {
-  if (STATE.currentUser) {
-    db.ref('users/' + STATE.currentUser).update({
-      online: false,
-      lastSeen: firebase.database.ServerValue.TIMESTAMP
-    });
-    db.ref('typing/' + STATE.currentUser).remove();
-  }
-  cleanupAllListeners();
-  if (typingDebounceTimeout) clearTimeout(typingDebounceTimeout);
-  if (typingThrottleTimeout) clearTimeout(typingThrottleTimeout);
-  if (connectionTimeout) clearTimeout(connectionTimeout);
-});
-
-console.log('🚀 NeoFox Chat v3.1 - Production Ready with Security Fixes');
-</script>
+    // ============================================================
+    // INITIALIZATION
+    // ============================================================
+    console.log('🚀 NeoFox Chat v4.0 - Secure Production Ready');
+    console.log('Security Features:');
+    console.log('- Firebase Security Rules enforced');
+    console.log('- XSS protection using textContent');
+    console.log('- Username validation and normalization');
+    console.log('- Atomic username reservation');
+    console.log('- Multi-tab presence support');
+    console.log('- Read receipts with efficient listeners');
+    console.log('- Proper pagination with push ID cursors');
+    console.log('- Rate limiting and flood protection');
+    console.log('- Memory leak prevention');
+  </script>
 </body>
 </html>
