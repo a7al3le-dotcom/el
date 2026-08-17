@@ -104,6 +104,7 @@ const CONFIG = {
   MESSAGE_LIMIT: 50,
   COOLDOWN_MS: 500,
   TYPING_DEBOUNCE: 2000,
+  TYPING_THROTTLE: 3000,
   MAX_USERNAME_LENGTH: 20,
   MIN_USERNAME_LENGTH: 2,
   MAX_MESSAGE_LENGTH: 1000,
@@ -138,12 +139,16 @@ const STATE = {
   hasMoreMessages: true,
   isLoadingMore: false,
   oldestTimestamp: null,
-  newestTimestamp: null,
+  oldestMessageId: null,
+  newestTimestamp: 0,
   isNearBottom: true,
   messageCache: new Map(),
   usernameCache: {},
   lastMessageTime: 0,
   typingTimeout: null,
+  typingThrottleTimeout: null,
+  isTyping: false,
+  readReceiptListeners: new Map(),
   
   // Listeners
   messagesListener: null,
@@ -151,10 +156,12 @@ const STATE = {
   typingListener: null,
   usersListener: null,
   connectionListener: null,
+  readReceiptListener: null,
   
   // Scroll state
   scrollPosition: 0,
-  scrollHeight: 0
+  scrollHeight: 0,
+  isInitialScroll: true
 };
 
 // ============================================================
@@ -230,14 +237,19 @@ DOM.msgInput.addEventListener('keydown', (e) => {
 // ============================================================
 function validateUsername(username) {
   if (!username || username.trim() === '') return 'الرجاء إدخال اسم المستخدم';
-  if (username.length < CONFIG.MIN_USERNAME_LENGTH) return `اسم المستخدم قصير جداً (الحد الأدنى ${CONFIG.MIN_USERNAME_LENGTH} أحرف)`;
-  if (username.length > CONFIG.MAX_USERNAME_LENGTH) return `اسم المستخدم طويل جداً (الحد الأقصى ${CONFIG.MAX_USERNAME_LENGTH} حرف)`;
-  if (/[.#$\[\]]/.test(username)) return 'اسم المستخدم يحتوي على أحرف غير مسموحة';
+  const trimmed = username.trim();
+  if (trimmed.length < CONFIG.MIN_USERNAME_LENGTH) return `اسم المستخدم قصير جداً (الحد الأدنى ${CONFIG.MIN_USERNAME_LENGTH} أحرف)`;
+  if (trimmed.length > CONFIG.MAX_USERNAME_LENGTH) return `اسم المستخدم طويل جداً (الحد الأقصى ${CONFIG.MAX_USERNAME_LENGTH} حرف)`;
+  if (/[.#$\[\]]/.test(trimmed)) return 'اسم المستخدم يحتوي على أحرف غير مسموحة';
   return null;
 }
 
+function normalizeUsername(username) {
+  return username.trim();
+}
+
 async function handleLogin() {
-  const username = DOM.username.value.trim();
+  const username = normalizeUsername(DOM.username.value);
   const error = validateUsername(username);
   if (error) {
     DOM.authError.textContent = error;
@@ -250,14 +262,25 @@ async function handleLogin() {
     DOM.loginBtn.disabled = true;
     DOM.loginBtn.textContent = 'جاري التسجيل...';
     
+    // Sign in anonymously first
     const cred = await auth.signInAnonymously();
     const uid = cred.user.uid;
     
-    // Atomic username reservation
+    // Atomic username reservation using transaction
     const usernameRef = db.ref('usernames/' + username);
-    const result = await usernameRef.transaction((currentData) => {
-      if (currentData === null) return uid;
-      return;
+    const result = await new Promise((resolve, reject) => {
+      usernameRef.transaction((currentData) => {
+        if (currentData === null) {
+          return uid;
+        }
+        return;
+      }, (error, committed, snapshot) => {
+        if (error) {
+          reject(error);
+        } else {
+          resolve({ committed, snapshot });
+        }
+      }, false);
     });
     
     if (!result.committed || result.snapshot.val() !== uid) {
@@ -277,10 +300,14 @@ async function handleLogin() {
       lastSeen: firebase.database.ServerValue.TIMESTAMP
     });
     
+    // Set onDisconnect handlers
     userRef.onDisconnect().update({
       online: false,
       lastSeen: firebase.database.ServerValue.TIMESTAMP
     });
+    
+    // Remove typing on disconnect
+    db.ref('typing/' + uid).onDisconnect().remove();
     
     STATE.currentUser = uid;
     STATE.currentUsername = username;
@@ -308,6 +335,8 @@ auth.onAuthStateChanged(user => {
         STATE.usernameCache[user.uid] = username;
         startChat();
       }
+    }).catch(err => {
+      console.error('Auto-login error:', err);
     });
   }
 });
@@ -318,6 +347,8 @@ auth.onAuthStateChanged(user => {
 function startChat() {
   if (STATE.chatStarted) {
     cleanupAllListeners();
+    // Clear message cache but keep user cache
+    STATE.messageCache.clear();
   }
   
   DOM.auth.style.display = 'none';
@@ -328,37 +359,61 @@ function startChat() {
   setupOnlineUsers();
   loadMessages();
   setupTypingInput();
+  setupReadReceiptListener();
   
   DOM.msgInput.focus();
   STATE.chatStarted = true;
 }
 
 function cleanupAllListeners() {
-  const listeners = ['messagesListener', 'newMessagesListener', 'typingListener', 'usersListener', 'connectionListener'];
+  const listeners = ['messagesListener', 'newMessagesListener', 'typingListener', 'usersListener', 'connectionListener', 'readReceiptListener'];
   listeners.forEach(name => {
     if (STATE[name]) {
       STATE[name].off();
       STATE[name] = null;
     }
   });
+  
+  // Clean up read receipt listeners
+  STATE.readReceiptListeners.forEach((listener, key) => {
+    listener.off();
+  });
+  STATE.readReceiptListeners.clear();
+  
   if (STATE.typingTimeout) {
     clearTimeout(STATE.typingTimeout);
     STATE.typingTimeout = null;
   }
+  if (STATE.typingThrottleTimeout) {
+    clearTimeout(STATE.typingThrottleTimeout);
+    STATE.typingThrottleTimeout = null;
+  }
+  STATE.isTyping = false;
 }
 
 // ============================================================
 // CONNECTION STATUS
 // ============================================================
+let connectionTimeout = null;
+
 function setupConnectionStatus() {
   if (STATE.connectionListener) STATE.connectionListener.off();
   STATE.connectionListener = db.ref('.info/connected');
   STATE.connectionListener.on('value', (snap) => {
     const connected = snap.val();
+    if (connectionTimeout) {
+      clearTimeout(connectionTimeout);
+      connectionTimeout = null;
+    }
+    
     if (connected) {
       DOM.connectionStatus.textContent = '🟢 متصل';
       DOM.connectionStatus.className = 'online';
-      setTimeout(() => { DOM.connectionStatus.style.display = 'none'; }, 2000);
+      DOM.connectionStatus.style.display = 'block';
+      connectionTimeout = setTimeout(() => {
+        DOM.connectionStatus.style.display = 'none';
+        connectionTimeout = null;
+      }, 2000);
     } else {
       DOM.connectionStatus.textContent = '🔴 غير متصل - جاري إعادة المحاولة...';
       DOM.connectionStatus.className = 'offline';
@@ -374,6 +429,7 @@ function setupTypingIndicator() {
   if (STATE.typingListener) STATE.typingListener.off();
   STATE.typingListener = db.ref('typing');
   
+  // Set onDisconnect for current user
   if (STATE.currentUser) {
     db.ref('typing/' + STATE.currentUser).onDisconnect().remove();
   }
@@ -387,6 +443,7 @@ function setupTypingIndicator() {
     
     const typingUsers = [];
     const promises = [];
+    const now = Date.now();
     
     for (let uid in data) {
       if (uid !== STATE.currentUser && data[uid] === true) {
@@ -433,15 +490,33 @@ function setupTypingInput() {
 }
 
 let typingDebounceTimeout = null;
+let typingThrottleTimeout = null;
 
 function handleTypingInput() {
   if (!STATE.currentUser) return;
   
-  db.ref('typing/' + STATE.currentUser).set(true);
+  // Throttle: only send every 3 seconds at most
+  if (!STATE.isTyping) {
+    STATE.isTyping = true;
+    db.ref('typing/' + STATE.currentUser).set(true);
+  }
+  
+  // Clear existing debounce timeout
   clearTimeout(typingDebounceTimeout);
+  clearTimeout(typingThrottleTimeout);
+  
+  // Debounce: stop typing after 2 seconds of inactivity
   typingDebounceTimeout = setTimeout(() => {
+    STATE.isTyping = false;
     db.ref('typing/' + STATE.currentUser).remove();
   }, CONFIG.TYPING_DEBOUNCE);
+  
+  // Throttle: re-send typing signal every 3 seconds while typing
+  typingThrottleTimeout = setTimeout(() => {
+    if (DOM.msgInput.value.trim().length > 0) {
+      db.ref('typing/' + STATE.currentUser).set(true);
+    }
+  }, CONFIG.TYPING_THROTTLE);
 }
 
 // ============================================================
@@ -498,6 +573,63 @@ function setupOnlineUsers() {
 }
 
 // ============================================================
+// READ RECEIPTS - REAL TIME
+// ============================================================
+function setupReadReceiptListener() {
+  if (STATE.readReceiptListener) {
+    STATE.readReceiptListener.off();
+    STATE.readReceiptListener = null;
+  }
+  
+  // Listen for all read receipts changes
+  STATE.readReceiptListener = db.ref('messageReads');
+  STATE.readReceiptListener.on('child_added', (snapshot) => {
+    const messageId = snapshot.key;
+    updateMessageReadStatus(messageId);
+  });
+  
+  STATE.readReceiptListener.on('child_changed', (snapshot) => {
+    const messageId = snapshot.key;
+    updateMessageReadStatus(messageId);
+  });
+}
+
+function updateMessageReadStatus(messageId) {
+  // Find the message element
+  const msgEl = document.querySelector(`.msg[data-msg-id="${messageId}"]`);
+  if (!msgEl) return;
+  
+  const statusSpan = msgEl.querySelector('.msg-status');
+  if (!statusSpan) return;
+  
+  // Check if this is the current user's message
+  const msgData = STATE.messageCache.get(messageId);
+  if (!msgData || msgData.uid !== STATE.currentUser) return;
+  
+  db.ref('messageReads/' + messageId).once('value', (snapshot) => {
+    const reads = snapshot.val();
+    let readers = 0;
+    if (reads) {
+      for (let uid in reads) {
+        if (uid !== STATE.currentUser && reads[uid] === true) readers++;
+      }
+    }
+    if (readers > 0) {
+      statusSpan.textContent = '✓✓';
+      statusSpan.className = 'msg-status seen';
+    } else {
+      statusSpan.textContent = '✓';
+      statusSpan.className = 'msg-status delivered';
+    }
+  });
+}
+
+function markMessageAsRead(messageId) {
+  if (!STATE.currentUser) return;
+  db.ref('messageReads/' + messageId + '/' + STATE.currentUser).set(true);
+}
+
+// ============================================================
 // MESSAGES - LOAD & PAGINATION
 // ============================================================
 function loadMessages() {
@@ -521,10 +653,12 @@ function loadMessages() {
   STATE.initialLoadComplete = false;
   STATE.hasMoreMessages = true;
   STATE.oldestTimestamp = null;
-  STATE.newestTimestamp = null;
+  STATE.oldestMessageId = null;
+  STATE.newestTimestamp = 0;
   STATE.messageCache = new Map();
   STATE.isNearBottom = true;
   STATE.isLoadingMore = false;
+  STATE.isInitialScroll = true;
   
   // Load initial messages
   db.ref('messages')
@@ -567,8 +701,9 @@ function loadMessages() {
         
         if (!STATE.oldestTimestamp || msgData.timestamp < STATE.oldestTimestamp) {
           STATE.oldestTimestamp = msgData.timestamp;
+          STATE.oldestMessageId = id;
         }
-        if (!STATE.newestTimestamp || msgData.timestamp > STATE.newestTimestamp) {
+        if (msgData.timestamp > STATE.newestTimestamp) {
           STATE.newestTimestamp = msgData.timestamp;
         }
         
@@ -581,8 +716,10 @@ function loadMessages() {
       STATE.hasMoreMessages = messagesArray.length >= CONFIG.MESSAGE_LIMIT;
       STATE.initialLoadComplete = true;
       
+      // Scroll to bottom
       setTimeout(() => {
         DOM.messages.scrollTop = DOM.messages.scrollHeight;
+        STATE.isInitialScroll = false;
       }, 50);
       
       attachNewMessageListener();
@@ -607,13 +744,12 @@ function attachNewMessageListener() {
     STATE.newMessagesListener = null;
   }
   
-  if (!STATE.newestTimestamp) {
-    STATE.newestTimestamp = 0;
-  }
+  // Use a timestamp cursor to avoid missing messages
+  const startTimestamp = STATE.newestTimestamp || 0;
   
   STATE.newMessagesListener = db.ref('messages')
     .orderByChild('timestamp')
-    .startAt(STATE.newestTimestamp);
+    .startAt(startTimestamp);
   
   STATE.newMessagesListener.on('child_added', (snapshot) => {
     if (!STATE.initialLoadComplete) return;
@@ -621,24 +757,32 @@ function attachNewMessageListener() {
     const msgId = snapshot.key;
     const data = snapshot.val();
     
+    // Skip if we already have this message
     if (STATE.messageCache.has(msgId)) return;
-    if (data.timestamp <= STATE.oldestTimestamp) return;
     
+    // Skip if this is the initial load message
+    if (data.timestamp <= STATE.oldestTimestamp && STATE.hasMoreMessages) return;
+    
+    // Store in cache
     STATE.messageCache.set(msgId, data);
     
+    // Create and append message
     const msgEl = createMessageElement(data, msgId);
     DOM.messages.appendChild(msgEl);
     
+    // Update newest timestamp
     if (data.timestamp > STATE.newestTimestamp) {
       STATE.newestTimestamp = data.timestamp;
     }
     
+    // Scroll to bottom if near bottom
     if (STATE.isNearBottom) {
       setTimeout(() => {
         DOM.messages.scrollTop = DOM.messages.scrollHeight;
       }, 50);
     }
     
+    // Mark as read if not own message
     if (data.uid !== STATE.currentUser) {
       markMessageAsRead(msgId);
     }
@@ -650,8 +794,10 @@ function handleScroll() {
   const scrollHeight = DOM.messages.scrollHeight;
   const clientHeight = DOM.messages.clientHeight;
   
+  // Check if near bottom
   STATE.isNearBottom = (scrollHeight - scrollTop - clientHeight) <= CONFIG.SCROLL_THRESHOLD;
   
+  // Load more when reaching top
   if (scrollTop === 0 && !STATE.isLoadingMore && STATE.hasMoreMessages && STATE.initialLoadComplete) {
     loadMoreMessages();
   }
@@ -662,15 +808,19 @@ function loadMoreMessages() {
   
   STATE.isLoadingMore = true;
   
+  // Show loading indicator
   const loadingDiv = document.createElement('div');
   loadingDiv.className = 'loading-more';
   loadingDiv.textContent = 'جاري تحميل رسائل أقدم...';
   loadingDiv.id = 'loading-more';
   DOM.messages.prepend(loadingDiv);
   
+  // Save scroll state
   const oldScrollHeight = DOM.messages.scrollHeight;
   const oldScrollTop = DOM.messages.scrollTop;
   
+  // Use a cursor approach: get messages older than oldest timestamp
+  // We need to be careful with duplicate timestamps
   db.ref('messages')
     .orderByChild('timestamp')
     .endAt(STATE.oldestTimestamp - 1)
@@ -687,8 +837,10 @@ function loadMoreMessages() {
         return;
       }
       
+      // Collect messages to add
       const messagesToAdd = [];
       let newOldest = STATE.oldestTimestamp;
+      let newOldestId = STATE.oldestMessageId;
       
       for (let key in data) {
         const msg = data[key];
@@ -696,7 +848,10 @@ function loadMoreMessages() {
         
         STATE.messageCache.set(key, msg);
         messagesToAdd.push({ id: key, data: msg });
-        if (msg.timestamp < newOldest) newOldest = msg.timestamp;
+        if (msg.timestamp < newOldest) {
+          newOldest = msg.timestamp;
+          newOldestId = key;
+        }
       }
       
       if (messagesToAdd.length === 0) {
@@ -705,8 +860,10 @@ function loadMoreMessages() {
         return;
       }
       
+      // Sort by timestamp ascending
       messagesToAdd.sort((a, b) => (a.data.timestamp || 0) - (b.data.timestamp || 0));
       
+      // Create and prepend messages
       const fragment = document.createDocumentFragment();
       messagesToAdd.forEach(({ id, data: msgData }) => {
         const msgEl = createMessageElement(msgData, id);
@@ -714,7 +871,10 @@ function loadMoreMessages() {
       });
       
       DOM.messages.prepend(fragment);
+      
+      // Update oldest timestamp
       STATE.oldestTimestamp = newOldest;
+      STATE.oldestMessageId = newOldestId;
       STATE.hasMoreMessages = Object.keys(data).length >= CONFIG.MESSAGE_LIMIT;
       STATE.isLoadingMore = false;
       
@@ -740,16 +900,19 @@ function createMessageElement(data, msgId) {
   div.dataset.msgId = msgId;
   if (data.uid === STATE.currentUser) div.classList.add('own');
   
+  // Username - using textContent for security
   const userSpan = document.createElement('span');
   userSpan.className = 'msg-user';
   const username = data.username || 'مجهول';
   userSpan.textContent = username + ':';
   if (data.uid) STATE.usernameCache[data.uid] = username;
   
+  // Message text - using textContent for XSS protection
   const textSpan = document.createElement('span');
   textSpan.className = 'msg-text';
   textSpan.textContent = ' ' + data.text;
   
+  // Timestamp
   const timeSpan = document.createElement('span');
   timeSpan.className = 'msg-time';
   if (data.timestamp) {
@@ -759,9 +922,13 @@ function createMessageElement(data, msgId) {
     timeSpan.textContent = '--:--';
   }
   
+  // Status (only for own messages)
   const statusSpan = document.createElement('span');
   statusSpan.className = 'msg-status';
   if (data.uid === STATE.currentUser) {
+    statusSpan.textContent = '✓';
+    statusSpan.className = 'msg-status delivered';
+    // Check read status asynchronously
     checkMessageReadStatus(msgId, statusSpan);
   }
   
@@ -773,30 +940,36 @@ function createMessageElement(data, msgId) {
 }
 
 function checkMessageReadStatus(msgId, statusSpan) {
+  // Use once to get initial status
   db.ref('messageReads/' + msgId).once('value', (snapshot) => {
-    const reads = snapshot.val();
-    if (reads) {
-      let readers = 0;
-      for (let uid in reads) {
-        if (uid !== STATE.currentUser && reads[uid] === true) readers++;
-      }
-      if (readers > 0) {
-        statusSpan.textContent = '✓✓';
-        statusSpan.className = 'msg-status seen';
-      } else {
-        statusSpan.textContent = '✓';
-        statusSpan.className = 'msg-status delivered';
-      }
-    } else {
-      statusSpan.textContent = '✓';
-      statusSpan.className = 'msg-status delivered';
-    }
+    updateStatusFromSnapshot(snapshot, statusSpan);
   });
+  
+  // Also set up a listener for real-time updates
+  if (!STATE.readReceiptListeners.has(msgId)) {
+    const listener = db.ref('messageReads/' + msgId);
+    listener.on('value', (snapshot) => {
+      updateStatusFromSnapshot(snapshot, statusSpan);
+    });
+    STATE.readReceiptListeners.set(msgId, listener);
+  }
 }
 
-function markMessageAsRead(msgId) {
-  if (!STATE.currentUser) return;
-  db.ref('messageReads/' + msgId + '/' + STATE.currentUser).set(true);
+function updateStatusFromSnapshot(snapshot, statusSpan) {
+  const reads = snapshot.val();
+  let readers = 0;
+  if (reads) {
+    for (let uid in reads) {
+      if (uid !== STATE.currentUser && reads[uid] === true) readers++;
+    }
+  }
+  if (readers > 0) {
+    statusSpan.textContent = '✓✓';
+    statusSpan.className = 'msg-status seen';
+  } else {
+    statusSpan.textContent = '✓';
+    statusSpan.className = 'msg-status delivered';
+  }
 }
 
 // ============================================================
@@ -834,8 +1007,12 @@ async function handleSendMessage() {
     DOM.msgInput.value = '';
     DOM.msgInput.focus();
     STATE.lastMessageTime = Date.now();
+    
     // Clear typing when message sent
+    STATE.isTyping = false;
     db.ref('typing/' + STATE.currentUser).remove();
+    clearTimeout(typingDebounceTimeout);
+    clearTimeout(typingThrottleTimeout);
   } catch (err) {
     console.error('Send error:', err);
     DOM.authError.textContent = 'تعذر إرسال الرسالة، تحقق من اتصال الإنترنت';
@@ -862,9 +1039,11 @@ window.addEventListener('beforeunload', () => {
   }
   cleanupAllListeners();
   if (typingDebounceTimeout) clearTimeout(typingDebounceTimeout);
+  if (typingThrottleTimeout) clearTimeout(typingThrottleTimeout);
+  if (connectionTimeout) clearTimeout(connectionTimeout);
 });
 
-console.log('🚀 NeoFox Chat v3.0 - Fully Optimized');
+console.log('🚀 NeoFox Chat v3.1 - Production Ready with Security Fixes');
 </script>
 </body>
 </html>
